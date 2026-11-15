@@ -29,6 +29,8 @@ env:
   PLATFORMS: "linux/amd64 linux/arm64 darwin/arm64 windows/amd64"
   BUCKET_PREFIX: plugin-assets
   INDEX_TAG: plugin-index
+  # prepare 等 job 没有 checkout，需要显式告诉 gh 目标仓库。
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   matrix:
