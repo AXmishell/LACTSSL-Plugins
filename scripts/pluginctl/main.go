@@ -459,8 +459,11 @@ func cmdIndex(args []string) {
 	if err != nil {
 		fail(err.Error())
 	}
-	byKey := map[string]map[string]indexAsset{}
-	entries := map[string]assetMeta{}
+	type group struct {
+		meta   assetMeta
+		assets map[string]indexAsset
+	}
+	groups := map[string]map[string]*group{}
 	for _, path := range metas {
 		raw, err := os.ReadFile(path)
 		if err != nil {
@@ -471,32 +474,40 @@ func cmdIndex(args []string) {
 			fail(err.Error())
 		}
 		key := meta.Kind + "|" + meta.ID
-		if byKey[key] == nil {
-			byKey[key] = map[string]indexAsset{}
-			entries[key] = meta
+		if groups[key] == nil {
+			groups[key] = map[string]*group{}
+		}
+		item := groups[key][meta.Version]
+		if item == nil {
+			item = &group{meta: meta, assets: map[string]indexAsset{}}
+			groups[key][meta.Version] = item
 		}
 		releaseTag := fmt.Sprintf("%s-%s-v%s", meta.Kind, meta.ID, meta.Version)
-		byKey[key][meta.OS+"/"+meta.Arch] = indexAsset{
+		item.assets[meta.OS+"/"+meta.Arch] = indexAsset{
 			URL:    strings.TrimRight(*baseURL, "/") + "/" + releaseTag + "/" + meta.Asset,
 			SHA256: meta.SHA256,
 			Size:   meta.Size,
 		}
 	}
-	plugins := make([]indexPlugin, 0, len(byKey))
-	for key, assets := range byKey {
-		meta := entries[key]
+	plugins := make([]indexPlugin, 0, len(groups))
+	for key, versions := range groups {
+		var latest *group
+		for _, item := range versions {
+			if latest == nil || compareVersion(item.meta.Version, latest.meta.Version) > 0 {
+				latest = item
+			}
+		}
+		if latest == nil {
+			continue
+		}
+		meta := latest.meta
 		def, _ := lookupMeta(meta.Kind, meta.ID)
 		plugins = append(plugins, indexPlugin{
 			Kind: meta.Kind, ID: meta.ID, Name: def.name, Description: def.desc,
-			Version: meta.Version, Protocol: "v1", Single: true, Assets: assets,
+			Version: meta.Version, Protocol: "v1", Single: true, Assets: latest.assets,
 		})
+		_ = key
 	}
-	sort.Slice(plugins, func(i, j int) bool {
-		if plugins[i].Kind != plugins[j].Kind {
-			return plugins[i].Kind < plugins[j].Kind
-		}
-		return plugins[i].ID < plugins[j].ID
-	})
 	index := indexFile{Schema: 1, Channel: "stable", Protocol: "v1", GeneratedAt: time.Now().UTC().Format(time.RFC3339), Plugins: plugins}
 	writeJSON(*out, index)
 	fmt.Printf("wrote %s with %d plugins\n", *out, len(plugins))
@@ -574,6 +585,48 @@ func writeJSONTo(w io.Writer, v any) {
 	if err := enc.Encode(v); err != nil {
 		fail(err.Error())
 	}
+}
+
+func compareVersion(a, b string) int {
+	parse := func(v string) ([3]int, string) {
+		v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+		pre := ""
+		if idx := strings.IndexAny(v, "-+"); idx >= 0 {
+			pre = v[idx+1:]
+			v = v[:idx]
+		}
+		var out [3]int
+		for i, part := range strings.SplitN(v, ".", 3) {
+			out[i], _ = strconv.Atoi(part)
+		}
+		return out, pre
+	}
+	ca, pa := parse(a)
+	cb, pb := parse(b)
+	for i := 0; i < 3; i++ {
+		if ca[i] > cb[i] {
+			return 1
+		}
+		if ca[i] < cb[i] {
+			return -1
+		}
+	}
+	if pa == "" && pb == "" {
+		return 0
+	}
+	if pa == "" {
+		return 1
+	}
+	if pb == "" {
+		return -1
+	}
+	if pa > pb {
+		return 1
+	}
+	if pa < pb {
+		return -1
+	}
+	return 0
 }
 
 func fail(message string) {
