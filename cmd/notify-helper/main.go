@@ -12,12 +12,13 @@ import (
 
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/notify"
-	_ "github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels"
+	"github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels"
 	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/helper"
 )
 
 func main() {
+	channels.RegisterAll()
 	helper.ApplyMemoryLimit()
 	if len(os.Args) < 2 {
 		helper.Fail("用法: notify-helper manifest|send")

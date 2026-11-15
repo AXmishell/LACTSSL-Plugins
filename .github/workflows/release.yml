@@ -1,107 +1,142 @@
-name: Release
+name: Release plugins
 
 on:
+  workflow_dispatch:
   push:
     tags:
-      - "v*"
+      - "plugins-v*"
 
 permissions:
   contents: write
 
+env:
+  PLATFORMS: "linux/amd64 linux/arm64 darwin/arm64 windows/amd64"
+
 jobs:
-  build:
+  matrix:
     runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.matrix.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build matrix
+        id: matrix
+        run: |
+          {
+            echo 'plugins<<EOF'
+            go run scripts/pluginctl/main.go matrix
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: freebsd
-            goarch: amd64
-          - goos: freebsd
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
+        plugin: ${{ fromJson(needs.matrix.outputs.plugins) }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-
-      - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: go.mod
           cache: true
 
-      - name: Build
-        shell: bash
+      - name: Build packages
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          KIND: ${{ matrix.plugin.kind }}
+          ID: ${{ matrix.plugin.id }}
+          VERSION: ${{ matrix.plugin.version }}
         run: |
-          ext=""
-          if [ "$GOOS" = "windows" ]; then
-            ext=".exe"
-          fi
-          mkdir -p out
-          CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o "out/lactssl-dns-helper-extra${ext}" ./cmd/dns-helper
-          CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o "out/lactssl-deploy-helper${ext}" ./cmd/deploy-helper
-          CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o "out/lactssl-notify-helper${ext}" ./cmd/notify-helper
-          ls -lh out
-
-      - name: Package
-        shell: bash
-        env:
-          VERSION: ${{ github.ref_name }}
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          version="${VERSION#v}"
-          name="lactssl-plugins_${version}_${GOOS}_${GOARCH}"
-          mkdir -p stage dist
-          cp README.md LICENSE stage/
-          cp out/* stage/
-          if [ "$GOOS" = "windows" ]; then
-            (cd stage && zip -q -r "../dist/${name}.zip" .)
-          else
-            tar -czf "dist/${name}.tar.gz" -C stage .
-          fi
+          set -e
+          rm -rf dist
+          mkdir -p dist
+          for target in $PLATFORMS; do
+            goos="${target%/*}"
+            goarch="${target#*/}"
+            go run scripts/pluginctl/main.go build \
+              -kind "$KIND" -id "$ID" -version "$VERSION" \
+              -goos "$goos" -goarch "$goarch" -out dist
+          done
           ls -lh dist
 
-      - name: Upload artifact
+      - name: Publish plugin release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KIND: ${{ matrix.plugin.kind }}
+          ID: ${{ matrix.plugin.id }}
+          VERSION: ${{ matrix.plugin.version }}
+        run: |
+          set -e
+          tag="${KIND}-${ID}-v${VERSION}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/*.tar.gz dist/*.meta.json --clobber
+          else
+            gh release create "$tag" dist/*.tar.gz dist/*.meta.json \
+              --title "${KIND}/${ID} v${VERSION}" \
+              --notes "LACTSSL ${KIND} plugin ${ID} ${VERSION}"
+          fi
+
+      - name: Upload metadata
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: plugins-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/*
+          name: plugin-meta-${{ matrix.plugin.kind }}-${{ matrix.plugin.id }}
+          path: dist/*.meta.json
           retention-days: 7
 
-  publish:
+  index:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download metadata
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
+          pattern: plugin-meta-*
           path: dist
           merge-multiple: true
 
-      - name: Checksums
+      - name: Generate index
         run: |
-          cd dist
-          sha256sum *.tar.gz *.zip > checksums.txt
-          cat checksums.txt
+          go run scripts/pluginctl/main.go index \
+            -assets dist \
+            -base-url "https://github.com/${{ github.repository }}/releases/download" \
+            -out index.json
 
-      - name: Publish release
+      - name: Sign index
+        env:
+          SIGNING_KEY: ${{ secrets.PLUGIN_INDEX_SIGNING_KEY }}
+        run: |
+          if [ -n "$SIGNING_KEY" ]; then
+            printf '%s' "$SIGNING_KEY" > /tmp/index.key
+            go run scripts/pluginctl/main.go sign -key /tmp/index.key -in index.json -out index.json.sig
+            rm -f /tmp/index.key
+          else
+            echo "未配置 PLUGIN_INDEX_SIGNING_KEY，跳过索引签名"
+          fi
+
+      - name: Publish index release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --verify-tag \
-            --title "$GITHUB_REF_NAME" \
-            --notes "LACTSSL plugins $GITHUB_REF_NAME"
+          set -e
+          assets="index.json"
+          [ -f index.json.sig ] && assets="$assets index.json.sig"
+          if gh release view plugin-index >/dev/null 2>&1; then
+            gh release upload plugin-index $assets --clobber
+          else
+            gh release create plugin-index $assets \
+              --title "plugin index" \
+              --notes "LACTSSL plugin repository index"
+          fi

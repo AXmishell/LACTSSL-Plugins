@@ -90,13 +90,22 @@ func (safelinePlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deploySafeline(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
-func init() {
+// RegisterBaota 注册宝塔规范目标及历史兼容 ID。
+func RegisterBaota() {
 	deploy.Register(baotaPlugin{})
-	deploy.Register(onePanelPlugin{})
 	deploy.Register(baotaSitePlugin{})
 	deploy.Register(baotaPanelPlugin{})
+}
+
+// RegisterOnePanel 注册 1Panel 规范目标及历史兼容 ID。
+func RegisterOnePanel() {
+	deploy.Register(onePanelPlugin{})
 	deploy.Register(onePanelSitePlugin{})
 	deploy.Register(onePanelPanelPlugin{})
+}
+
+// RegisterSafeline 注册雷池 WAF 目标。
+func RegisterSafeline() {
 	deploy.Register(safelinePlugin{})
 }
 

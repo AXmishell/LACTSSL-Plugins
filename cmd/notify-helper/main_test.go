@@ -7,8 +7,14 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels"
 	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
+
+func TestMain(m *testing.M) {
+	channels.RegisterAll()
+	os.Exit(m.Run())
+}
 
 func TestManifestMatchesLegacy(t *testing.T) {
 	raw, err := os.ReadFile(filepath.Join("..", "..", "testdata", "legacy-notify-manifest.json"))

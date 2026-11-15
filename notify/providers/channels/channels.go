@@ -135,10 +135,32 @@ var all = []channel{
 	}, sendCustom),
 }
 
-func init() {
+// RegisterAll 注册全部通知渠道，供 bundle helper 使用。
+func RegisterAll() {
 	for _, item := range all {
 		notify.Register(item)
 	}
+}
+
+// RegisterByID 只注册指定渠道，供单插件构建使用。
+// 返回 false 表示渠道不存在。
+func RegisterByID(id string) bool {
+	for _, item := range all {
+		if item.Definition().ID == id {
+			notify.Register(item)
+			return true
+		}
+	}
+	return false
+}
+
+// IDs 返回全部渠道 ID，按声明顺序。
+func IDs() []string {
+	out := make([]string, 0, len(all))
+	for _, item := range all {
+		out = append(out, item.Definition().ID)
+	}
+	return out
 }
 
 func sendGotify(cfg map[string]any, msg notify.Message) error {

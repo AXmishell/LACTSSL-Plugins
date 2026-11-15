@@ -16,7 +16,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/aliyuncdn"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/ftp"
-	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/panels"
+	"github.com/AXmishell/LACTSSL-Plugins/deploy/providers/panels"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/qiniu"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/webhook"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
@@ -25,6 +25,9 @@ import (
 )
 
 func main() {
+	panels.RegisterBaota()
+	panels.RegisterOnePanel()
+	panels.RegisterSafeline()
 	helper.ApplyMemoryLimit()
 	if len(os.Args) < 2 {
 		helper.Fail("用法: deploy-helper manifest|deploy")

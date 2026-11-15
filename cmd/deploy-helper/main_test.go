@@ -7,8 +7,16 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/AXmishell/LACTSSL-Plugins/deploy/providers/panels"
 	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
+
+func TestMain(m *testing.M) {
+	panels.RegisterBaota()
+	panels.RegisterOnePanel()
+	panels.RegisterSafeline()
+	os.Exit(m.Run())
+}
 
 func loadLegacy(t *testing.T, name string) protocol.DeployManifest {
 	t.Helper()

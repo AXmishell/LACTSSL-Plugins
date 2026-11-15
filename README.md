@@ -1,8 +1,8 @@
 # LACTSSL-Plugins
 
-LACTSSL 官方插件实现仓库，包含 DNS、证书部署与通知三类 helper，以及它们使用的协议与元数据。
+LACTSSL 官方插件仓库：DNS、证书部署与通知插件的源码、单插件构建工具、包格式与仓库索引。
 
-主仓库 [LACTSSL](https://github.com/AXmishell/LACTSSL) 只保留插件宿主（发现、校验、执行、启停、上传 API/UI），通过 `go.mod` 固定本仓库版本并直接构建 `cmd/*-helper`。
+主仓库 [LACTSSL](https://github.com/AXmishell/LACTSSL) 只保留插件宿主，通过 `go.mod` 依赖本仓库的 `protocol` 与 `catalog`，并在运行期从本仓库的插件索引按需下载单个插件。
 
 ## 目录
 
@@ -13,47 +13,70 @@ catalog/         官方服务商 / 部署目标元数据（data.json）
 i18n/            插件侧精简文案
 outbound/        SSRF 防护出站 HTTP 客户端
 dns/             194 个 lego 服务商包装 + 注册表
-deploy/          FTP/Webhook/阿里云 CDN/七牛/面板
+  providers/<id>/
+deploy/          7 个部署目标
+  providers/{ftp,webhook,aliyuncdn,qiniu,panels}
 notify/          23 个通知渠道
-cmd/             dns-helper / deploy-helper / notify-helper
-testdata/        迁移前 manifest 基线
+  providers/channels
+cmd/
+  dns-plugin/    单服务商入口 + select_<id>.go（build tag）
+  deploy-plugin/ 单部署目标入口
+  notify-plugin/ 单通知渠道入口
+  *-helper/      旧版 bundle helper（兼容/测试，不再发布）
+plugins.json     单插件清单（kind/id/version/tag）
+testdata/        迁移前 bundle manifest 基线
+scripts/pluginctl 生成、构建、打包、索引、签名工具
 ```
 
-## 构建
+## 单插件构建
+
+每个插件通过构建标签只注册一个条目：
 
 ```bash
-make build        # 三个 helper 输出到 bin/
-make test         # 单测（含 manifest 基线对比）
-make check        # gofmt + vet + test
-make gen          # 重新生成 194 个 DNS 包装包与 all 清单
+go build -tags plugin_dns_cloudflare   -o lactssl-dns-cloudflare   ./cmd/dns-plugin
+go build -tags plugin_deploy_ftp       -o lactssl-deploy-ftp       ./cmd/deploy-plugin
+go build -tags plugin_notify_telegram  -o lactssl-notify-telegram  ./cmd/notify-plugin
 ```
 
-交叉编译与发布由 `.github/workflows/release.yml` 负责，产物：
+`manifest` 会校验注册表恰好包含一个条目，否则直接失败。
 
-- `lactssl-dns-helper-extra`
-- `lactssl-deploy-helper`
-- `lactssl-notify-helper`
-- `checksums.txt`
+## 打包与索引
 
-## 协议
+```bash
+# 生成 plugins.json 与 224 个 select_*.go
+make gen
 
-helper 协议保持 v1：
+# 构建单个插件的单个平台包
+make plugin KIND=dns ID=cloudflare GOOS=linux GOARCH=amd64
+# 输出 dist/lactssl-dns-cloudflare_1.0.0_linux_amd64.tar.gz 与 .meta.json
+
+# 从全部 meta 生成索引
+make index BASE_URL=https://github.com/AXmishell/LACTSSL-Plugins/releases/download
+```
+
+包格式：
 
 ```text
-dns-helper    manifest | present | cleanup
-deploy-helper manifest | deploy
-notify-helper manifest | send
+tar.gz
+├── plugin.json
+├── lactssl-<kind>-<id>[.exe]
+└── LICENSE
 ```
 
-- 退出码 `0` 成功，非 `0` 失败；stderr 进入主程序日志。
-- 内存预算通过 `LACTSSL_PLUGIN_MEMORY_LIMIT`（字节）传入。
-- 主程序只传递最小环境变量集合，并周期性检查 `VmRSS`。
-- 请求 JSON 与 manifest 字段定义见 `protocol/`。
+索引包含每个插件的版本、协议、最低宿主版本、各平台资产 URL、sha256 与大小。官方索引可用 Ed25519 签名，签名文件为 `index.json.sig`。
 
-`testdata/` 中的三份 manifest 是迁移前主仓库 helper 的输出基线，`cmd/*-helper` 的测试会逐字段对比，确保本次拆分没有改变任何服务商 ID、别名、字段或 `Env` 映射。
+## 发布
 
-## 版本
+`.github/workflows/release.yml`：
 
-- SemVer tag，例如 `v0.1.0`。
-- 主仓库固定版本；升级插件版本时单独提交依赖变更。
-- 协议 v1 内只做向后兼容的可选字段扩展。
+- 按 `plugins.json` 生成矩阵，每个插件一个 job，构建 4 个平台：
+  - linux/amd64、linux/arm64、darwin/arm64、windows/amd64
+- 每个插件发布一个 GitHub Release（tag `<kind>-<id>-v<version>`）。
+- 汇总全部 `.meta.json` 生成 `index.json`，发布到 `plugin-index` Release。
+- 如配置 `PLUGIN_INDEX_SIGNING_KEY`（base64 Ed25519 私钥），同时发布 `index.json.sig`。
+
+## 兼容性
+
+- 协议保持 v1；旧版 bundle helper 仍保留源码用于回归测试，但不再作为发布产物。
+- `testdata/` 中的 manifest 基线用于验证单插件与旧 bundle 的字段一致。
+- `plugins.json` 中每个插件独立 SemVer；升级插件时修改对应版本号并重新构建。
