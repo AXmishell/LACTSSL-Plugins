@@ -1,7 +1,17 @@
 name: Release plugins
 
+# 发布布局（固定 4 个 Release，不再按插件/版本各建一个）：
+#   plugin-index              仅存放 index.json / index.json.sig
+#   plugin-assets-<kind>      存放该类别全部插件的 tar.gz 资产
+# 资产名自带版本与平台，因此同一 Release 内可覆盖升级：
+#   lactssl-<kind>-<id>_<version>_<os>_<arch>.tar.gz
 on:
   workflow_dispatch:
+    inputs:
+      force_all:
+        description: "忽略增量检测，重建全部插件"
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
@@ -10,31 +20,103 @@ on:
 permissions:
   contents: write
 
+# 串行发布，避免两次运行同时改同一个 Release。
+concurrency:
+  group: release-plugins
+  cancel-in-progress: false
+
 env:
   PLATFORMS: "linux/amd64 linux/arm64 darwin/arm64 windows/amd64"
+  BUCKET_PREFIX: plugin-assets
+  INDEX_TAG: plugin-index
 
 jobs:
   matrix:
     runs-on: ubuntu-latest
     outputs:
       plugins: ${{ steps.matrix.outputs.plugins }}
+      kinds: ${{ steps.matrix.outputs.kinds }}
+      count: ${{ steps.matrix.outputs.count }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: go.mod
           cache: true
-      - name: Build matrix
+
+      - name: Detect changed plugins
         id: matrix
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_ALL: ${{ inputs.force_all }}
         run: |
+          set -euo pipefail
+          prev=prev-index.json
+          rm -f "$prev"
+          if [ "$FORCE_ALL" != "true" ] && gh release view "$INDEX_TAG" >/dev/null 2>&1; then
+            gh release download "$INDEX_TAG" --pattern index.json --output "$prev" --clobber || rm -f "$prev"
+          fi
+          if [ -s "$prev" ]; then
+            # 只构建需要重建的插件：新增、版本变化、或索引里仍是旧的直链布局
+            # （旧版 workflow 的 /<kind>-<id>-v<version>/ 资产地址）。
+            jq --arg bucket "$BUCKET_PREFIX" --slurpfile prev "$prev" '
+              ($prev[0].plugins // []
+                | map({key: (.kind + "/" + .id), value: .})
+                | from_entries) as $known
+              | [ .plugins[]
+                  | . as $p
+                  | ($known[$p.kind + "/" + $p.id]) as $old
+                  | ($old.assets // {} | to_entries | first | .value.url // "") as $url
+                  | select(
+                      $old == null
+                      or $old.version != $p.version
+                      or (($url | contains("/" + $bucket + "-" + $p.kind + "/")) | not)
+                    )
+                ]
+            ' plugins.json > changed.json
+          else
+            echo "未找到已发布索引，全量构建"
+            jq '[.plugins[]]' plugins.json > changed.json
+          fi
+
+          count=$(jq 'length' changed.json)
+          kinds=$(jq -r '[.[].kind] | unique | join(" ")' changed.json)
+          echo "待构建插件数：$count"
           {
-            echo 'plugins<<EOF'
-            go run scripts/pluginctl/main.go matrix
-            echo 'EOF'
+            echo "plugins<<EOF"
+            cat changed.json
+            echo "EOF"
+            echo "kinds=$kinds"
+            echo "count=$count"
           } >> "$GITHUB_OUTPUT"
 
-  build:
+  prepare:
     needs: matrix
+    if: needs.matrix.outputs.count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure bucket releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KINDS: ${{ needs.matrix.outputs.kinds }}
+        run: |
+          set -euo pipefail
+          for kind in $KINDS; do
+            tag="${BUCKET_PREFIX}-${kind}"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "已存在 $tag"
+            else
+              gh release create "$tag" \
+                --title "plugin assets: ${kind}" \
+                --notes "LACTSSL ${kind} 插件二进制资产（按版本+平台命名，仅保留索引中的最新版本）" \
+                --latest=false
+              echo "已创建 $tag"
+            fi
+          done
+
+  build:
+    needs: [matrix, prepare]
+    if: needs.matrix.outputs.count != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -67,22 +149,16 @@ jobs:
           done
           ls -lh dist
 
-      - name: Publish plugin release
+      - name: Publish assets
         env:
           GH_TOKEN: ${{ github.token }}
           KIND: ${{ matrix.plugin.kind }}
-          ID: ${{ matrix.plugin.id }}
-          VERSION: ${{ matrix.plugin.version }}
         run: |
-          set -e
-          tag="${KIND}-${ID}-v${VERSION}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" dist/*.tar.gz dist/*.meta.json --clobber
-          else
-            gh release create "$tag" dist/*.tar.gz dist/*.meta.json \
-              --title "${KIND}/${ID} v${VERSION}" \
-              --notes "LACTSSL ${KIND} plugin ${ID} ${VERSION}"
-          fi
+          set -euo pipefail
+          tag="${BUCKET_PREFIX}-${KIND}"
+          # 只上传 tar.gz；meta.json 仅作为 artifact 供 index 汇总，
+          # 避免单个 Release 的资产数膨胀（GitHub 上限 1000）。
+          gh release upload "$tag" dist/*.tar.gz --clobber
 
       - name: Upload metadata
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -93,6 +169,8 @@ jobs:
 
   index:
     needs: build
+    # 部分插件构建失败时仍然发布索引（沿用上一次成功的条目）。
+    if: always() && !cancelled() && needs.build.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -108,12 +186,27 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Fetch previous index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$INDEX_TAG" >/dev/null 2>&1; then
+            gh release download "$INDEX_TAG" --pattern index.json --output prev-index.json --clobber || true
+          fi
+
       - name: Generate index
         run: |
+          set -euo pipefail
+          args=()
+          [ -s prev-index.json ] && args+=(-prev prev-index.json)
           go run scripts/pluginctl/main.go index \
             -assets dist \
             -base-url "https://github.com/${{ github.repository }}/releases/download" \
+            -bucket "$BUCKET_PREFIX" \
+            "${args[@]}" \
             -out index.json
+          test "$(jq '.plugins | length' index.json)" -gt 0
 
       - name: Sign index
         env:
@@ -127,17 +220,43 @@ jobs:
             echo "未配置 PLUGIN_INDEX_SIGNING_KEY，跳过索引签名"
           fi
 
-      - name: Publish index release
+      - name: Publish index
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -e
+          set -euo pipefail
           assets="index.json"
           [ -f index.json.sig ] && assets="$assets index.json.sig"
-          if gh release view plugin-index >/dev/null 2>&1; then
-            gh release upload plugin-index $assets --clobber
+          if gh release view "$INDEX_TAG" >/dev/null 2>&1; then
+            gh release upload "$INDEX_TAG" $assets --clobber
+            gh release edit "$INDEX_TAG" --latest=false
           else
-            gh release create plugin-index $assets \
+            gh release create "$INDEX_TAG" $assets \
               --title "plugin index" \
-              --notes "LACTSSL plugin repository index"
+              --notes "LACTSSL plugin repository index" \
+              --latest=false
           fi
+
+      - name: Prune superseded assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # 索引只保留每个插件的最新版本，旧版本资产随之删除，
+          # 使 bucket Release 的资产数量保持稳定（约 4 × 插件数）。
+          jq -r '.plugins[].assets[].url | split("/") | last' index.json | sort -u > expected.txt
+          for kind in $(jq -r '[.plugins[].kind] | unique | .[]' index.json); do
+            tag="${BUCKET_PREFIX}-${kind}"
+            gh release view "$tag" >/dev/null 2>&1 || continue
+            while read -r name; do
+              [ -z "$name" ] && continue
+              if ! grep -qxF "$name" expected.txt; then
+                echo "删除过期资产 $tag/$name"
+                gh release delete-asset "$tag" "$name" -y
+              fi
+            done < <(gh release view "$tag" --json assets -q '.assets[].name')
+            total=$(gh release view "$tag" --json assets -q '.assets | length')
+            if [ "$total" -gt 950 ]; then
+              echo "::warning title=资产数接近上限::$tag 已有 $total 个资产，接近 GitHub 1000 上限，请拆分 bucket。"
+            fi
+          done

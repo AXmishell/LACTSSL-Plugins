@@ -30,8 +30,9 @@ plugin:
 	$(GO) run scripts/pluginctl/main.go build -kind "$(KIND)" -id "$(ID)" -goos "$(GOOS)" -goarch "$(GOARCH)" -out dist
 
 # 从 dist/*.meta.json 生成索引。
+BUCKET ?=
 index:
-	$(GO) run scripts/pluginctl/main.go index -assets dist -base-url "$(BASE_URL)" -out index.json
+	$(GO) run scripts/pluginctl/main.go index -assets dist -base-url "$(BASE_URL)" $(if $(BUCKET),-bucket "$(BUCKET)") -out index.json
 
 test:
 	$(GO) test ./...

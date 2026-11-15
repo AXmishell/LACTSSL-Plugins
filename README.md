@@ -50,8 +50,8 @@ make gen
 make plugin KIND=dns ID=cloudflare GOOS=linux GOARCH=amd64
 # 输出 dist/lactssl-dns-cloudflare_1.0.0_linux_amd64.tar.gz 与 .meta.json
 
-# 从全部 meta 生成索引
-make index BASE_URL=https://github.com/AXmishell/LACTSSL-Plugins/releases/download
+# 从全部 meta 生成索引（资产放在 plugin-assets-<kind> Release 中）
+make index BASE_URL=https://github.com/AXmishell/LACTSSL-Plugins/releases/download BUCKET=plugin-assets
 ```
 
 包格式：
@@ -69,10 +69,13 @@ tar.gz
 
 `.github/workflows/release.yml`：
 
-- 按 `plugins.json` 生成矩阵，每个插件一个 job，构建 4 个平台：
-  - linux/amd64、linux/arm64、darwin/arm64、windows/amd64
-- 每个插件发布一个 GitHub Release（tag `<kind>-<id>-v<version>`）。
-- 汇总全部 `.meta.json` 生成 `index.json`，发布到 `plugin-index` Release。
+- 固定只维护 4 个 Release，不再按插件/版本各建一个：
+  - `plugin-index`：只放 `index.json`（与 `index.json.sig`）。
+  - `plugin-assets-<kind>`：放该类别全部插件的 `tar.gz`，资产名自带版本与平台。
+- 增量构建：对比已发布 `index.json` 与 `plugins.json` 的版本号，只构建变化的插件（`workflow_dispatch` 可勾选 `force_all` 强制全量）。
+- 每个插件 job 构建 4 个平台：linux/amd64、linux/arm64、darwin/arm64、windows/amd64。
+- 索引生成时合并上一次索引，未重建的插件条目原样沿用；发布索引后删除被覆盖的旧版本资产，使每个 bucket 的资产数稳定在 `4 × 插件数`（GitHub 单个 Release 上限 1000 个资产）。
+- 所有插件 Release 都带 `--latest=false`，避免插件产物抢占仓库的 “Latest” 标记。
 - 如配置 `PLUGIN_INDEX_SIGNING_KEY`（base64 Ed25519 私钥），同时发布 `index.json.sig`。
 
 ## 兼容性

@@ -450,6 +450,8 @@ func cmdIndex(args []string) {
 	fs := flag.NewFlagSet("index", flag.ExitOnError)
 	assets := fs.String("assets", "dist", "directory containing *.meta.json")
 	baseURL := fs.String("base-url", "", "release download base URL")
+	bucket := fs.String("bucket", "", "release 名前缀：URL 为 <base-url>/<bucket>-<kind>/<asset>；留空按 <kind>-<id>-v<version>")
+	prev := fs.String("prev", "", "已有 index.json，用于合并未重建的插件")
 	out := fs.String("out", "index.json", "output index path")
 	fs.Parse(args)
 	if *baseURL == "" {
@@ -483,6 +485,9 @@ func cmdIndex(args []string) {
 			groups[key][meta.Version] = item
 		}
 		releaseTag := fmt.Sprintf("%s-%s-v%s", meta.Kind, meta.ID, meta.Version)
+		if *bucket != "" {
+			releaseTag = *bucket + "-" + meta.Kind
+		}
 		item.assets[meta.OS+"/"+meta.Arch] = indexAsset{
 			URL:    strings.TrimRight(*baseURL, "/") + "/" + releaseTag + "/" + meta.Asset,
 			SHA256: meta.SHA256,
@@ -490,7 +495,7 @@ func cmdIndex(args []string) {
 		}
 	}
 	plugins := make([]indexPlugin, 0, len(groups))
-	for key, versions := range groups {
+	for _, versions := range groups {
 		var latest *group
 		for _, item := range versions {
 			if latest == nil || compareVersion(item.meta.Version, latest.meta.Version) > 0 {
@@ -506,11 +511,77 @@ func cmdIndex(args []string) {
 			Kind: meta.Kind, ID: meta.ID, Name: def.name, Description: def.desc,
 			Version: meta.Version, Protocol: "v1", Single: true, Assets: latest.assets,
 		})
-		_ = key
 	}
 	index := indexFile{Schema: 1, Channel: "stable", Protocol: "v1", GeneratedAt: time.Now().UTC().Format(time.RFC3339), Plugins: plugins}
+	if *prev != "" {
+		plugins = mergeIndex(plugins, *prev)
+		index.Plugins = plugins
+	}
+	sort.Slice(index.Plugins, func(i, j int) bool {
+		a, b := index.Plugins[i], index.Plugins[j]
+		if a.Kind != b.Kind {
+			return a.Kind < b.Kind
+		}
+		return a.ID < b.ID
+	})
 	writeJSON(*out, index)
-	fmt.Printf("wrote %s with %d plugins\n", *out, len(plugins))
+	fmt.Printf("wrote %s with %d plugins\n", *out, len(index.Plugins))
+}
+
+// mergeIndex 把未参与本次构建的插件从旧索引沿用过来。
+// 已被重新构建的插件以新结果为准，但不会把版本降级；
+// plugins.json 中已删除的插件不再保留。
+func mergeIndex(fresh []indexPlugin, prevPath string) []indexPlugin {
+	raw, err := os.ReadFile(prevPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fail("读取旧索引失败: " + err.Error())
+		}
+		return fresh
+	}
+	var old indexFile
+	if err := json.Unmarshal(raw, &old); err != nil {
+		fail("解析旧索引失败: " + err.Error())
+	}
+	merged := map[string]indexPlugin{}
+	for _, p := range fresh {
+		merged[p.Kind+"|"+p.ID] = p
+	}
+	for _, p := range old.Plugins {
+		key := p.Kind + "|" + p.ID
+		if cur, ok := merged[key]; ok {
+			if compareVersion(cur.Version, p.Version) < 0 {
+				merged[key] = p
+			}
+			continue
+		}
+		if !inManifest(p.Kind, p.ID) {
+			continue
+		}
+		merged[key] = p
+	}
+	out := make([]indexPlugin, 0, len(merged))
+	for _, p := range merged {
+		out = append(out, p)
+	}
+	return out
+}
+
+func inManifest(kind, id string) bool {
+	raw, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return true
+	}
+	var m manifestFile
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return true
+	}
+	for _, e := range m.Plugins {
+		if e.Kind == kind && e.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 type metaInfo struct{ name, desc string }
