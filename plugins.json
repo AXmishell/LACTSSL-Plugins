@@ -1,1349 +1,273 @@
 {
-  "schema": 1,
+  "schema": 2,
   "plugins": [
     {
       "kind": "deploy",
-      "id": "1panel",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_1panel"
-    },
-    {
-      "kind": "deploy",
-      "id": "aliyun_cdn",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_aliyun_cdn"
-    },
-    {
-      "kind": "deploy",
-      "id": "baota",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_baota"
-    },
-    {
-      "kind": "deploy",
-      "id": "ftp",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_ftp"
-    },
-    {
-      "kind": "deploy",
-      "id": "qiniu",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_qiniu"
-    },
-    {
-      "kind": "deploy",
-      "id": "safeline",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_safeline"
-    },
-    {
-      "kind": "deploy",
-      "id": "webhook",
-      "version": "1.0.0",
-      "tag": "plugin_deploy_webhook"
-    },
-    {
-      "kind": "dns",
-      "id": "acmedns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_acmedns"
-    },
-    {
-      "kind": "dns",
-      "id": "active24",
-      "version": "1.0.0",
-      "tag": "plugin_dns_active24"
-    },
-    {
-      "kind": "dns",
-      "id": "alidns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_alidns"
-    },
-    {
-      "kind": "dns",
-      "id": "aliesa",
-      "version": "1.0.0",
-      "tag": "plugin_dns_aliesa"
-    },
-    {
-      "kind": "dns",
-      "id": "allinkl",
-      "version": "1.0.0",
-      "tag": "plugin_dns_allinkl"
-    },
-    {
-      "kind": "dns",
-      "id": "alwaysdata",
-      "version": "1.0.0",
-      "tag": "plugin_dns_alwaysdata"
-    },
-    {
-      "kind": "dns",
-      "id": "anexia",
-      "version": "1.0.0",
-      "tag": "plugin_dns_anexia"
-    },
-    {
-      "kind": "dns",
-      "id": "artfiles",
-      "version": "1.0.0",
-      "tag": "plugin_dns_artfiles"
-    },
-    {
-      "kind": "dns",
-      "id": "arvancloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_arvancloud"
-    },
-    {
-      "kind": "dns",
-      "id": "auroradns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_auroradns"
-    },
-    {
-      "kind": "dns",
-      "id": "autodns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_autodns"
-    },
-    {
-      "kind": "dns",
-      "id": "axelname",
-      "version": "1.0.0",
-      "tag": "plugin_dns_axelname"
-    },
-    {
-      "kind": "dns",
-      "id": "azion",
-      "version": "1.0.0",
-      "tag": "plugin_dns_azion"
-    },
-    {
-      "kind": "dns",
-      "id": "azure",
-      "version": "1.0.0",
-      "tag": "plugin_dns_azure"
-    },
-    {
-      "kind": "dns",
-      "id": "azuredns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_azuredns"
-    },
-    {
-      "kind": "dns",
-      "id": "baiducloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_baiducloud"
-    },
-    {
-      "kind": "dns",
-      "id": "beget",
-      "version": "1.0.0",
-      "tag": "plugin_dns_beget"
-    },
-    {
-      "kind": "dns",
-      "id": "binarylane",
-      "version": "1.0.0",
-      "tag": "plugin_dns_binarylane"
-    },
-    {
-      "kind": "dns",
-      "id": "bindman",
-      "version": "1.0.0",
-      "tag": "plugin_dns_bindman"
-    },
-    {
-      "kind": "dns",
-      "id": "bluecat",
-      "version": "1.0.0",
-      "tag": "plugin_dns_bluecat"
-    },
-    {
-      "kind": "dns",
-      "id": "bluecatv2",
-      "version": "1.0.0",
-      "tag": "plugin_dns_bluecatv2"
-    },
-    {
-      "kind": "dns",
-      "id": "bookmyname",
-      "version": "1.0.0",
-      "tag": "plugin_dns_bookmyname"
-    },
-    {
-      "kind": "dns",
-      "id": "brandit",
-      "version": "1.0.0",
-      "tag": "plugin_dns_brandit"
-    },
-    {
-      "kind": "dns",
-      "id": "bunny",
-      "version": "1.0.0",
-      "tag": "plugin_dns_bunny"
-    },
-    {
-      "kind": "dns",
-      "id": "checkdomain",
-      "version": "1.0.0",
-      "tag": "plugin_dns_checkdomain"
-    },
-    {
-      "kind": "dns",
-      "id": "civo",
-      "version": "1.0.0",
-      "tag": "plugin_dns_civo"
-    },
-    {
-      "kind": "dns",
-      "id": "clouddns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_clouddns"
-    },
-    {
-      "kind": "dns",
-      "id": "cloudflare",
-      "version": "1.0.0",
-      "tag": "plugin_dns_cloudflare"
-    },
-    {
-      "kind": "dns",
-      "id": "cloudns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_cloudns"
-    },
-    {
-      "kind": "dns",
-      "id": "cloudru",
-      "version": "1.0.0",
-      "tag": "plugin_dns_cloudru"
-    },
-    {
-      "kind": "dns",
-      "id": "cloudxns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_cloudxns"
-    },
-    {
-      "kind": "dns",
-      "id": "com35",
-      "version": "1.0.0",
-      "tag": "plugin_dns_com35"
-    },
-    {
-      "kind": "dns",
-      "id": "conoha",
-      "version": "1.0.0",
-      "tag": "plugin_dns_conoha"
-    },
-    {
-      "kind": "dns",
-      "id": "conohav3",
-      "version": "1.0.0",
-      "tag": "plugin_dns_conohav3"
-    },
-    {
-      "kind": "dns",
-      "id": "constellix",
-      "version": "1.0.0",
-      "tag": "plugin_dns_constellix"
-    },
-    {
-      "kind": "dns",
-      "id": "corenetworks",
-      "version": "1.0.0",
-      "tag": "plugin_dns_corenetworks"
-    },
-    {
-      "kind": "dns",
-      "id": "cpanel",
-      "version": "1.0.0",
-      "tag": "plugin_dns_cpanel"
-    },
-    {
-      "kind": "dns",
-      "id": "czechia",
-      "version": "1.0.0",
-      "tag": "plugin_dns_czechia"
-    },
-    {
-      "kind": "dns",
-      "id": "ddnss",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ddnss"
-    },
-    {
-      "kind": "dns",
-      "id": "derak",
-      "version": "1.0.0",
-      "tag": "plugin_dns_derak"
-    },
-    {
-      "kind": "dns",
-      "id": "desec",
-      "version": "1.0.0",
-      "tag": "plugin_dns_desec"
-    },
-    {
-      "kind": "dns",
-      "id": "designate",
-      "version": "1.0.0",
-      "tag": "plugin_dns_designate"
-    },
-    {
-      "kind": "dns",
-      "id": "digitalocean",
-      "version": "1.0.0",
-      "tag": "plugin_dns_digitalocean"
-    },
-    {
-      "kind": "dns",
-      "id": "directadmin",
-      "version": "1.0.0",
-      "tag": "plugin_dns_directadmin"
-    },
-    {
-      "kind": "dns",
-      "id": "dnsexit",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dnsexit"
-    },
-    {
-      "kind": "dns",
-      "id": "dnshomede",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dnshomede"
-    },
-    {
-      "kind": "dns",
-      "id": "dnsimple",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dnsimple"
-    },
-    {
-      "kind": "dns",
-      "id": "dnsmadeeasy",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dnsmadeeasy"
-    },
-    {
-      "kind": "dns",
-      "id": "dnspod",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dnspod"
-    },
-    {
-      "kind": "dns",
-      "id": "dode",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dode"
-    },
-    {
-      "kind": "dns",
-      "id": "domeneshop",
-      "version": "1.0.0",
-      "tag": "plugin_dns_domeneshop"
-    },
-    {
-      "kind": "dns",
-      "id": "dreamhost",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dreamhost"
-    },
-    {
-      "kind": "dns",
-      "id": "duckdns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_duckdns"
-    },
-    {
-      "kind": "dns",
-      "id": "dyn",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dyn"
-    },
-    {
-      "kind": "dns",
-      "id": "dyndnsfree",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dyndnsfree"
-    },
-    {
-      "kind": "dns",
-      "id": "dynu",
-      "version": "1.0.0",
-      "tag": "plugin_dns_dynu"
-    },
-    {
-      "kind": "dns",
-      "id": "easydns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_easydns"
-    },
-    {
-      "kind": "dns",
-      "id": "edgecenter",
-      "version": "1.0.0",
-      "tag": "plugin_dns_edgecenter"
-    },
-    {
-      "kind": "dns",
-      "id": "edgedns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_edgedns"
-    },
-    {
-      "kind": "dns",
-      "id": "edgeone",
-      "version": "1.0.0",
-      "tag": "plugin_dns_edgeone"
-    },
-    {
-      "kind": "dns",
-      "id": "efficientip",
-      "version": "1.0.0",
-      "tag": "plugin_dns_efficientip"
-    },
-    {
-      "kind": "dns",
-      "id": "epik",
-      "version": "1.0.0",
-      "tag": "plugin_dns_epik"
-    },
-    {
-      "kind": "dns",
-      "id": "eurodns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_eurodns"
-    },
-    {
-      "kind": "dns",
-      "id": "excedo",
-      "version": "1.0.0",
-      "tag": "plugin_dns_excedo"
-    },
-    {
-      "kind": "dns",
-      "id": "exec",
-      "version": "1.0.0",
-      "tag": "plugin_dns_exec"
-    },
-    {
-      "kind": "dns",
-      "id": "exoscale",
-      "version": "1.0.0",
-      "tag": "plugin_dns_exoscale"
-    },
-    {
-      "kind": "dns",
-      "id": "f5xc",
-      "version": "1.0.0",
-      "tag": "plugin_dns_f5xc"
-    },
-    {
-      "kind": "dns",
-      "id": "freemyip",
-      "version": "1.0.0",
-      "tag": "plugin_dns_freemyip"
-    },
-    {
-      "kind": "dns",
-      "id": "gandi",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gandi"
-    },
-    {
-      "kind": "dns",
-      "id": "gandiv5",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gandiv5"
-    },
-    {
-      "kind": "dns",
-      "id": "gcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "gcore",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gcore"
-    },
-    {
-      "kind": "dns",
-      "id": "gigahostno",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gigahostno"
-    },
-    {
-      "kind": "dns",
-      "id": "glesys",
-      "version": "1.0.0",
-      "tag": "plugin_dns_glesys"
-    },
-    {
-      "kind": "dns",
-      "id": "godaddy",
-      "version": "1.0.0",
-      "tag": "plugin_dns_godaddy"
-    },
-    {
-      "kind": "dns",
-      "id": "googledomains",
-      "version": "1.0.0",
-      "tag": "plugin_dns_googledomains"
-    },
-    {
-      "kind": "dns",
-      "id": "gravity",
-      "version": "1.0.0",
-      "tag": "plugin_dns_gravity"
-    },
-    {
-      "kind": "dns",
-      "id": "hetzner",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hetzner"
-    },
-    {
-      "kind": "dns",
-      "id": "hostingde",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hostingde"
-    },
-    {
-      "kind": "dns",
-      "id": "hostinger",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hostinger"
-    },
-    {
-      "kind": "dns",
-      "id": "hostingnl",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hostingnl"
-    },
-    {
-      "kind": "dns",
-      "id": "hosttech",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hosttech"
-    },
-    {
-      "kind": "dns",
-      "id": "httpnet",
-      "version": "1.0.0",
-      "tag": "plugin_dns_httpnet"
-    },
-    {
-      "kind": "dns",
-      "id": "httpreq",
-      "version": "1.0.0",
-      "tag": "plugin_dns_httpreq"
-    },
-    {
-      "kind": "dns",
-      "id": "huaweicloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_huaweicloud"
-    },
-    {
-      "kind": "dns",
-      "id": "hurricane",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hurricane"
-    },
-    {
-      "kind": "dns",
-      "id": "hyperone",
-      "version": "1.0.0",
-      "tag": "plugin_dns_hyperone"
-    },
-    {
-      "kind": "dns",
-      "id": "ibmcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ibmcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "iij",
-      "version": "1.0.0",
-      "tag": "plugin_dns_iij"
-    },
-    {
-      "kind": "dns",
-      "id": "iijdpf",
-      "version": "1.0.0",
-      "tag": "plugin_dns_iijdpf"
-    },
-    {
-      "kind": "dns",
-      "id": "infoblox",
-      "version": "1.0.0",
-      "tag": "plugin_dns_infoblox"
-    },
-    {
-      "kind": "dns",
-      "id": "infomaniak",
-      "version": "1.0.0",
-      "tag": "plugin_dns_infomaniak"
-    },
-    {
-      "kind": "dns",
-      "id": "internetbs",
-      "version": "1.0.0",
-      "tag": "plugin_dns_internetbs"
-    },
-    {
-      "kind": "dns",
-      "id": "inwx",
-      "version": "1.0.0",
-      "tag": "plugin_dns_inwx"
-    },
-    {
-      "kind": "dns",
-      "id": "ionos",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ionos"
-    },
-    {
-      "kind": "dns",
-      "id": "ionoscloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ionoscloud"
-    },
-    {
-      "kind": "dns",
-      "id": "ipv64",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ipv64"
-    },
-    {
-      "kind": "dns",
-      "id": "ispconfig",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ispconfig"
-    },
-    {
-      "kind": "dns",
-      "id": "ispconfigddns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ispconfigddns"
-    },
-    {
-      "kind": "dns",
-      "id": "iwantmyname",
-      "version": "1.0.0",
-      "tag": "plugin_dns_iwantmyname"
-    },
-    {
-      "kind": "dns",
-      "id": "jdcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_jdcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "joker",
-      "version": "1.0.0",
-      "tag": "plugin_dns_joker"
-    },
-    {
-      "kind": "dns",
-      "id": "keyhelp",
-      "version": "1.0.0",
-      "tag": "plugin_dns_keyhelp"
-    },
-    {
-      "kind": "dns",
-      "id": "leaseweb",
-      "version": "1.0.0",
-      "tag": "plugin_dns_leaseweb"
-    },
-    {
-      "kind": "dns",
-      "id": "liara",
-      "version": "1.0.0",
-      "tag": "plugin_dns_liara"
-    },
-    {
-      "kind": "dns",
-      "id": "lightsail",
-      "version": "1.0.0",
-      "tag": "plugin_dns_lightsail"
-    },
-    {
-      "kind": "dns",
-      "id": "limacity",
-      "version": "1.0.0",
-      "tag": "plugin_dns_limacity"
-    },
-    {
-      "kind": "dns",
-      "id": "linode",
-      "version": "1.0.0",
-      "tag": "plugin_dns_linode"
-    },
-    {
-      "kind": "dns",
-      "id": "liquidweb",
-      "version": "1.0.0",
-      "tag": "plugin_dns_liquidweb"
-    },
-    {
-      "kind": "dns",
-      "id": "loopia",
-      "version": "1.0.0",
-      "tag": "plugin_dns_loopia"
-    },
-    {
-      "kind": "dns",
-      "id": "luadns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_luadns"
-    },
-    {
-      "kind": "dns",
-      "id": "mailinabox",
-      "version": "1.0.0",
-      "tag": "plugin_dns_mailinabox"
-    },
-    {
-      "kind": "dns",
-      "id": "manageengine",
-      "version": "1.0.0",
-      "tag": "plugin_dns_manageengine"
-    },
-    {
-      "kind": "dns",
-      "id": "metaname",
-      "version": "1.0.0",
-      "tag": "plugin_dns_metaname"
-    },
-    {
-      "kind": "dns",
-      "id": "metaregistrar",
-      "version": "1.0.0",
-      "tag": "plugin_dns_metaregistrar"
-    },
-    {
-      "kind": "dns",
-      "id": "mijnhost",
-      "version": "1.0.0",
-      "tag": "plugin_dns_mijnhost"
-    },
-    {
-      "kind": "dns",
-      "id": "mittwald",
-      "version": "1.0.0",
-      "tag": "plugin_dns_mittwald"
-    },
-    {
-      "kind": "dns",
-      "id": "myaddr",
-      "version": "1.0.0",
-      "tag": "plugin_dns_myaddr"
-    },
-    {
-      "kind": "dns",
-      "id": "mydnsjp",
-      "version": "1.0.0",
-      "tag": "plugin_dns_mydnsjp"
-    },
-    {
-      "kind": "dns",
-      "id": "mythicbeasts",
-      "version": "1.0.0",
-      "tag": "plugin_dns_mythicbeasts"
-    },
-    {
-      "kind": "dns",
-      "id": "namecheap",
-      "version": "1.0.0",
-      "tag": "plugin_dns_namecheap"
-    },
-    {
-      "kind": "dns",
-      "id": "namedotcom",
-      "version": "1.0.0",
-      "tag": "plugin_dns_namedotcom"
-    },
-    {
-      "kind": "dns",
-      "id": "namesilo",
-      "version": "1.0.0",
-      "tag": "plugin_dns_namesilo"
-    },
-    {
-      "kind": "dns",
-      "id": "namesurfer",
-      "version": "1.0.0",
-      "tag": "plugin_dns_namesurfer"
-    },
-    {
-      "kind": "dns",
-      "id": "nearlyfreespeech",
-      "version": "1.0.0",
-      "tag": "plugin_dns_nearlyfreespeech"
-    },
-    {
-      "kind": "dns",
-      "id": "neodigit",
-      "version": "1.0.0",
-      "tag": "plugin_dns_neodigit"
-    },
-    {
-      "kind": "dns",
-      "id": "netcup",
-      "version": "1.0.0",
-      "tag": "plugin_dns_netcup"
-    },
-    {
-      "kind": "dns",
-      "id": "netlify",
-      "version": "1.0.0",
-      "tag": "plugin_dns_netlify"
-    },
-    {
-      "kind": "dns",
-      "id": "netnod",
-      "version": "1.0.0",
-      "tag": "plugin_dns_netnod"
-    },
-    {
-      "kind": "dns",
-      "id": "nicmanager",
-      "version": "1.0.0",
-      "tag": "plugin_dns_nicmanager"
-    },
-    {
-      "kind": "dns",
-      "id": "nicru",
-      "version": "1.0.0",
-      "tag": "plugin_dns_nicru"
-    },
-    {
-      "kind": "dns",
-      "id": "nifcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_nifcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "njalla",
-      "version": "1.0.0",
-      "tag": "plugin_dns_njalla"
-    },
-    {
-      "kind": "dns",
-      "id": "nodion",
-      "version": "1.0.0",
-      "tag": "plugin_dns_nodion"
-    },
-    {
-      "kind": "dns",
-      "id": "ns1",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ns1"
-    },
-    {
-      "kind": "dns",
-      "id": "octenium",
-      "version": "1.0.0",
-      "tag": "plugin_dns_octenium"
-    },
-    {
-      "kind": "dns",
-      "id": "onecloudru",
-      "version": "1.0.0",
-      "tag": "plugin_dns_onecloudru"
-    },
-    {
-      "kind": "dns",
-      "id": "onlinenet",
-      "version": "1.0.0",
-      "tag": "plugin_dns_onlinenet"
-    },
-    {
-      "kind": "dns",
-      "id": "oraclecloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_oraclecloud"
-    },
-    {
-      "kind": "dns",
-      "id": "otc",
-      "version": "1.0.0",
-      "tag": "plugin_dns_otc"
-    },
-    {
-      "kind": "dns",
-      "id": "ovh",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ovh"
-    },
-    {
-      "kind": "dns",
-      "id": "pdns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_pdns"
-    },
-    {
-      "kind": "dns",
-      "id": "plesk",
-      "version": "1.0.0",
-      "tag": "plugin_dns_plesk"
-    },
-    {
-      "kind": "dns",
-      "id": "porkbun",
-      "version": "1.0.0",
-      "tag": "plugin_dns_porkbun"
-    },
-    {
-      "kind": "dns",
-      "id": "rackspace",
-      "version": "1.0.0",
-      "tag": "plugin_dns_rackspace"
-    },
-    {
-      "kind": "dns",
-      "id": "rainyun",
-      "version": "1.0.0",
-      "tag": "plugin_dns_rainyun"
-    },
-    {
-      "kind": "dns",
-      "id": "rcodezero",
-      "version": "1.0.0",
-      "tag": "plugin_dns_rcodezero"
-    },
-    {
-      "kind": "dns",
-      "id": "regfish",
-      "version": "1.0.0",
-      "tag": "plugin_dns_regfish"
-    },
-    {
-      "kind": "dns",
-      "id": "regru",
-      "version": "1.0.0",
-      "tag": "plugin_dns_regru"
-    },
-    {
-      "kind": "dns",
-      "id": "rfc2136",
-      "version": "1.0.0",
-      "tag": "plugin_dns_rfc2136"
-    },
-    {
-      "kind": "dns",
-      "id": "rimuhosting",
-      "version": "1.0.0",
-      "tag": "plugin_dns_rimuhosting"
-    },
-    {
-      "kind": "dns",
-      "id": "route53",
-      "version": "1.0.0",
-      "tag": "plugin_dns_route53"
-    },
-    {
-      "kind": "dns",
-      "id": "safedns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_safedns"
-    },
-    {
-      "kind": "dns",
-      "id": "sakuracloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_sakuracloud"
-    },
-    {
-      "kind": "dns",
-      "id": "scaleway",
-      "version": "1.0.0",
-      "tag": "plugin_dns_scaleway"
-    },
-    {
-      "kind": "dns",
-      "id": "selectel",
-      "version": "1.0.0",
-      "tag": "plugin_dns_selectel"
-    },
-    {
-      "kind": "dns",
-      "id": "selectelv2",
-      "version": "1.0.0",
-      "tag": "plugin_dns_selectelv2"
-    },
-    {
-      "kind": "dns",
-      "id": "selfhostde",
-      "version": "1.0.0",
-      "tag": "plugin_dns_selfhostde"
-    },
-    {
-      "kind": "dns",
-      "id": "servercow",
-      "version": "1.0.0",
-      "tag": "plugin_dns_servercow"
-    },
-    {
-      "kind": "dns",
-      "id": "shellrent",
-      "version": "1.0.0",
-      "tag": "plugin_dns_shellrent"
-    },
-    {
-      "kind": "dns",
-      "id": "simply",
-      "version": "1.0.0",
-      "tag": "plugin_dns_simply"
-    },
-    {
-      "kind": "dns",
-      "id": "sonic",
-      "version": "1.0.0",
-      "tag": "plugin_dns_sonic"
-    },
-    {
-      "kind": "dns",
-      "id": "spaceship",
-      "version": "1.0.0",
-      "tag": "plugin_dns_spaceship"
-    },
-    {
-      "kind": "dns",
-      "id": "stackpath",
-      "version": "1.0.0",
-      "tag": "plugin_dns_stackpath"
-    },
-    {
-      "kind": "dns",
-      "id": "syse",
-      "version": "1.0.0",
-      "tag": "plugin_dns_syse"
-    },
-    {
-      "kind": "dns",
-      "id": "technitium",
-      "version": "1.0.0",
-      "tag": "plugin_dns_technitium"
-    },
-    {
-      "kind": "dns",
-      "id": "tencentcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_tencentcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "timewebcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_timewebcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "todaynic",
-      "version": "1.0.0",
-      "tag": "plugin_dns_todaynic"
-    },
-    {
-      "kind": "dns",
-      "id": "transip",
-      "version": "1.0.0",
-      "tag": "plugin_dns_transip"
-    },
-    {
-      "kind": "dns",
-      "id": "ucloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ucloud"
-    },
-    {
-      "kind": "dns",
-      "id": "ultradns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_ultradns"
-    },
-    {
-      "kind": "dns",
-      "id": "uniteddomains",
-      "version": "1.0.0",
-      "tag": "plugin_dns_uniteddomains"
-    },
-    {
-      "kind": "dns",
-      "id": "variomedia",
-      "version": "1.0.0",
-      "tag": "plugin_dns_variomedia"
-    },
-    {
-      "kind": "dns",
-      "id": "vegadns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vegadns"
-    },
-    {
-      "kind": "dns",
-      "id": "vercel",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vercel"
-    },
-    {
-      "kind": "dns",
-      "id": "versio",
-      "version": "1.0.0",
-      "tag": "plugin_dns_versio"
-    },
-    {
-      "kind": "dns",
-      "id": "vinyldns",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vinyldns"
-    },
-    {
-      "kind": "dns",
-      "id": "virtualname",
-      "version": "1.0.0",
-      "tag": "plugin_dns_virtualname"
-    },
-    {
-      "kind": "dns",
-      "id": "vkcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vkcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "volcengine",
-      "version": "1.0.0",
-      "tag": "plugin_dns_volcengine"
-    },
-    {
-      "kind": "dns",
-      "id": "vscale",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vscale"
-    },
-    {
-      "kind": "dns",
-      "id": "vultr",
-      "version": "1.0.0",
-      "tag": "plugin_dns_vultr"
-    },
-    {
-      "kind": "dns",
-      "id": "webnames",
-      "version": "1.0.0",
-      "tag": "plugin_dns_webnames"
-    },
-    {
-      "kind": "dns",
-      "id": "webnamesca",
-      "version": "1.0.0",
-      "tag": "plugin_dns_webnamesca"
-    },
-    {
-      "kind": "dns",
-      "id": "websupport",
-      "version": "1.0.0",
-      "tag": "plugin_dns_websupport"
-    },
-    {
-      "kind": "dns",
-      "id": "wedos",
-      "version": "1.0.0",
-      "tag": "plugin_dns_wedos"
-    },
-    {
-      "kind": "dns",
-      "id": "westcn",
-      "version": "1.0.0",
-      "tag": "plugin_dns_westcn"
-    },
-    {
-      "kind": "dns",
-      "id": "yandex",
-      "version": "1.0.0",
-      "tag": "plugin_dns_yandex"
-    },
-    {
-      "kind": "dns",
-      "id": "yandex360",
-      "version": "1.0.0",
-      "tag": "plugin_dns_yandex360"
-    },
-    {
-      "kind": "dns",
-      "id": "yandexcloud",
-      "version": "1.0.0",
-      "tag": "plugin_dns_yandexcloud"
-    },
-    {
-      "kind": "dns",
-      "id": "zoneedit",
-      "version": "1.0.0",
-      "tag": "plugin_dns_zoneedit"
-    },
-    {
-      "kind": "dns",
-      "id": "zoneee",
-      "version": "1.0.0",
-      "tag": "plugin_dns_zoneee"
-    },
-    {
-      "kind": "dns",
-      "id": "zonomi",
-      "version": "1.0.0",
-      "tag": "plugin_dns_zonomi"
+      "id": "all",
+      "version": "1.0.0",
+      "tag": "bundle_deploy_all",
+      "name": "部署插件包",
+      "description": "包含全部官方证书部署目标实现。",
+      "bundle": true,
+      "providers": [
+        "ftp",
+        "webhook",
+        "aliyun_cdn",
+        "qiniu",
+        "baota",
+        "1panel",
+        "safeline"
+      ]
+    },
+    {
+      "kind": "dns",
+      "id": "core",
+      "version": "1.0.0",
+      "tag": "bundle_dns_core",
+      "name": "DNS 插件包（常用）",
+      "description": "包含 184 个常用 DNS 服务商；体积小、启动内存低。",
+      "bundle": true,
+      "providers": [
+        "alidns",
+        "aliesa",
+        "cloudflare",
+        "dnspod",
+        "tencentcloud",
+        "volcengine",
+        "baiducloud",
+        "jdcloud",
+        "digitalocean",
+        "godaddy",
+        "namecheap",
+        "namesilo",
+        "porkbun",
+        "spaceship",
+        "cloudns",
+        "bunny",
+        "rainyun",
+        "westcn",
+        "pdns",
+        "dnsimple",
+        "dnsmadeeasy",
+        "netlify",
+        "vercel",
+        "duckdns",
+        "freemyip",
+        "vultr",
+        "linode",
+        "hetzner",
+        "gandi",
+        "gandiv5",
+        "acmedns",
+        "active24",
+        "allinkl",
+        "alwaysdata",
+        "anexia",
+        "artfiles",
+        "arvancloud",
+        "auroradns",
+        "autodns",
+        "axelname",
+        "azion",
+        "azure",
+        "beget",
+        "binarylane",
+        "bindman",
+        "bluecat",
+        "bluecatv2",
+        "bookmyname",
+        "brandit",
+        "checkdomain",
+        "civo",
+        "clouddns",
+        "cloudru",
+        "cloudxns",
+        "com35",
+        "conoha",
+        "conohav3",
+        "constellix",
+        "corenetworks",
+        "cpanel",
+        "czechia",
+        "ddnss",
+        "derak",
+        "desec",
+        "designate",
+        "directadmin",
+        "dnsexit",
+        "dnshomede",
+        "dode",
+        "domeneshop",
+        "dreamhost",
+        "dyn",
+        "dyndnsfree",
+        "dynu",
+        "easydns",
+        "edgecenter",
+        "edgeone",
+        "efficientip",
+        "epik",
+        "eurodns",
+        "excedo",
+        "exec",
+        "exoscale",
+        "f5xc",
+        "gcore",
+        "gigahostno",
+        "glesys",
+        "googledomains",
+        "gravity",
+        "hostingde",
+        "hostinger",
+        "hostingnl",
+        "hosttech",
+        "httpnet",
+        "httpreq",
+        "hurricane",
+        "hyperone",
+        "ibmcloud",
+        "iijdpf",
+        "infoblox",
+        "infomaniak",
+        "internetbs",
+        "inwx",
+        "ionos",
+        "ionoscloud",
+        "ipv64",
+        "ispconfig",
+        "ispconfigddns",
+        "iwantmyname",
+        "joker",
+        "keyhelp",
+        "leaseweb",
+        "liara",
+        "limacity",
+        "liquidweb",
+        "loopia",
+        "luadns",
+        "mailinabox",
+        "manageengine",
+        "metaname",
+        "metaregistrar",
+        "mijnhost",
+        "mittwald",
+        "myaddr",
+        "mydnsjp",
+        "mythicbeasts",
+        "namedotcom",
+        "namesurfer",
+        "nearlyfreespeech",
+        "neodigit",
+        "netcup",
+        "netnod",
+        "nicmanager",
+        "nicru",
+        "nifcloud",
+        "njalla",
+        "nodion",
+        "ns1",
+        "octenium",
+        "onecloudru",
+        "onlinenet",
+        "oraclecloud",
+        "otc",
+        "ovh",
+        "plesk",
+        "rackspace",
+        "rcodezero",
+        "regfish",
+        "regru",
+        "rimuhosting",
+        "safedns",
+        "scaleway",
+        "selectel",
+        "selectelv2",
+        "selfhostde",
+        "servercow",
+        "shellrent",
+        "simply",
+        "sonic",
+        "stackpath",
+        "syse",
+        "technitium",
+        "timewebcloud",
+        "todaynic",
+        "transip",
+        "ucloud",
+        "ultradns",
+        "uniteddomains",
+        "variomedia",
+        "vegadns",
+        "versio",
+        "vinyldns",
+        "virtualname",
+        "vkcloud",
+        "vscale",
+        "webnames",
+        "webnamesca",
+        "websupport",
+        "wedos",
+        "yandex",
+        "yandex360",
+        "zoneedit",
+        "zoneee",
+        "zonomi"
+      ]
+    },
+    {
+      "kind": "dns",
+      "id": "heavy",
+      "version": "1.0.0",
+      "tag": "bundle_dns_heavy",
+      "name": "DNS 插件包（大型云厂商）",
+      "description": "包含 Google Cloud、Yandex、Sakura、Route53、Azure DNS 等 10 个依赖大型 SDK 的服务商。",
+      "bundle": true,
+      "providers": [
+        "huaweicloud",
+        "route53",
+        "gcloud",
+        "azuredns",
+        "rfc2136",
+        "edgedns",
+        "iij",
+        "lightsail",
+        "sakuracloud",
+        "yandexcloud"
+      ]
     },
     {
       "kind": "notify",
-      "id": "bark",
+      "id": "all",
       "version": "1.0.0",
-      "tag": "plugin_notify_bark"
-    },
-    {
-      "kind": "notify",
-      "id": "chronocat",
-      "version": "1.0.0",
-      "tag": "plugin_notify_chronocat"
-    },
-    {
-      "kind": "notify",
-      "id": "custom",
-      "version": "1.0.0",
-      "tag": "plugin_notify_custom"
-    },
-    {
-      "kind": "notify",
-      "id": "dingtalk",
-      "version": "1.0.0",
-      "tag": "plugin_notify_dingtalk"
-    },
-    {
-      "kind": "notify",
-      "id": "feishu",
-      "version": "1.0.0",
-      "tag": "plugin_notify_feishu"
-    },
-    {
-      "kind": "notify",
-      "id": "gocqhttp",
-      "version": "1.0.0",
-      "tag": "plugin_notify_gocqhttp"
-    },
-    {
-      "kind": "notify",
-      "id": "gotify",
-      "version": "1.0.0",
-      "tag": "plugin_notify_gotify"
-    },
-    {
-      "kind": "notify",
-      "id": "igot",
-      "version": "1.0.0",
-      "tag": "plugin_notify_igot"
-    },
-    {
-      "kind": "notify",
-      "id": "ntfy",
-      "version": "1.0.0",
-      "tag": "plugin_notify_ntfy"
-    },
-    {
-      "kind": "notify",
-      "id": "openilink",
-      "version": "1.0.0",
-      "tag": "plugin_notify_openilink"
-    },
-    {
-      "kind": "notify",
-      "id": "pushdeer",
-      "version": "1.0.0",
-      "tag": "plugin_notify_pushdeer"
-    },
-    {
-      "kind": "notify",
-      "id": "pushme",
-      "version": "1.0.0",
-      "tag": "plugin_notify_pushme"
-    },
-    {
-      "kind": "notify",
-      "id": "pushplus",
-      "version": "1.0.0",
-      "tag": "plugin_notify_pushplus"
-    },
-    {
-      "kind": "notify",
-      "id": "serverchan",
-      "version": "1.0.0",
-      "tag": "plugin_notify_serverchan"
-    },
-    {
-      "kind": "notify",
-      "id": "synology_chat",
-      "version": "1.0.0",
-      "tag": "plugin_notify_synology_chat"
-    },
-    {
-      "kind": "notify",
-      "id": "telegram",
-      "version": "1.0.0",
-      "tag": "plugin_notify_telegram"
-    },
-    {
-      "kind": "notify",
-      "id": "wecom_app",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wecom_app"
-    },
-    {
-      "kind": "notify",
-      "id": "wecom_bot",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wecom_bot"
-    },
-    {
-      "kind": "notify",
-      "id": "wecom_smart",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wecom_smart"
-    },
-    {
-      "kind": "notify",
-      "id": "weplus",
-      "version": "1.0.0",
-      "tag": "plugin_notify_weplus"
-    },
-    {
-      "kind": "notify",
-      "id": "wpush",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wpush"
-    },
-    {
-      "kind": "notify",
-      "id": "wxpusher",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wxpusher"
-    },
-    {
-      "kind": "notify",
-      "id": "wxpusher_spt",
-      "version": "1.0.0",
-      "tag": "plugin_notify_wxpusher_spt"
+      "tag": "bundle_notify_all",
+      "name": "通知插件包",
+      "description": "包含全部官方通知渠道实现。",
+      "bundle": true,
+      "providers": [
+        "gotify",
+        "ntfy",
+        "gocqhttp",
+        "serverchan",
+        "pushdeer",
+        "bark",
+        "telegram",
+        "dingtalk",
+        "wecom_bot",
+        "wecom_app",
+        "wecom_smart",
+        "igot",
+        "pushplus",
+        "weplus",
+        "wxpusher",
+        "wxpusher_spt",
+        "openilink",
+        "wpush",
+        "synology_chat",
+        "feishu",
+        "pushme",
+        "chronocat",
+        "custom"
+      ]
     }
   ]
 }

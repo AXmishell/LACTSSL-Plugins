@@ -5,7 +5,7 @@
 // 用法：
 //
 //	go run scripts/pluginctl manifest   # 生成 plugins.json
-//	go run scripts/pluginctl gen        # 生成 select_*.go
+//	go run scripts/pluginctl gen        # 校验合并包清单
 //	go run scripts/pluginctl matrix     # 输出 CI 矩阵 JSON
 //	go run scripts/pluginctl build -kind dns -id cloudflare -version 1.0.0 -goos linux -goarch amd64
 //	go run scripts/pluginctl index -assets dist -base-url https://.../releases/download -out index.json
@@ -43,11 +43,15 @@ const (
 )
 
 type pluginEntry struct {
-	Kind    string `json:"kind"`
-	ID      string `json:"id"`
-	Version string `json:"version"`
-	Tag     string `json:"tag"`
-	MinHost string `json:"min_host,omitempty"`
+	Kind        string   `json:"kind"`
+	ID          string   `json:"id"`
+	Version     string   `json:"version"`
+	Tag         string   `json:"tag"`
+	MinHost     string   `json:"min_host,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Bundle      bool     `json:"bundle,omitempty"`
+	Providers   []string `json:"providers,omitempty"`
 }
 
 type manifestFile struct {
@@ -56,15 +60,20 @@ type manifestFile struct {
 }
 
 type assetMeta struct {
-	Kind    string `json:"kind"`
-	ID      string `json:"id"`
-	Version string `json:"version"`
-	Tag     string `json:"tag"`
-	OS      string `json:"os"`
-	Arch    string `json:"arch"`
-	Asset   string `json:"asset"`
-	SHA256  string `json:"sha256"`
-	Size    int64  `json:"size"`
+	Kind             string   `json:"kind"`
+	ID               string   `json:"id"`
+	Version          string   `json:"version"`
+	Tag              string   `json:"tag"`
+	Name             string   `json:"name,omitempty"`
+	Description      string   `json:"description,omitempty"`
+	Bundle           bool     `json:"bundle,omitempty"`
+	Providers        []string `json:"providers,omitempty"`
+	OS               string   `json:"os"`
+	Arch             string   `json:"arch"`
+	Asset            string   `json:"asset"`
+	SHA256           string   `json:"sha256"`
+	Size             int64    `json:"size"`
+	UncompressedSize int64    `json:"uncompressed_size,omitempty"`
 }
 
 type indexFile struct {
@@ -76,22 +85,26 @@ type indexFile struct {
 }
 
 type indexPlugin struct {
-	Kind        string                `json:"kind"`
-	ID          string                `json:"id"`
-	Name        string                `json:"name,omitempty"`
-	Description string                `json:"description,omitempty"`
-	Version     string                `json:"version"`
-	Protocol    string                `json:"protocol"`
-	MinHost     string                `json:"min_host,omitempty"`
-	Single      bool                  `json:"single"`
-	Deprecated  bool                  `json:"deprecated,omitempty"`
-	Assets      map[string]indexAsset `json:"assets"`
+	Kind             string                `json:"kind"`
+	ID               string                `json:"id"`
+	Name             string                `json:"name,omitempty"`
+	Description      string                `json:"description,omitempty"`
+	Version          string                `json:"version"`
+	Protocol         string                `json:"protocol"`
+	MinHost          string                `json:"min_host,omitempty"`
+	Bundle           bool                  `json:"bundle,omitempty"`
+	Providers        []string              `json:"providers,omitempty"`
+	UncompressedSize int64                 `json:"uncompressed_size,omitempty"`
+	Single           bool                  `json:"single,omitempty"`
+	Deprecated       bool                  `json:"deprecated,omitempty"`
+	Assets           map[string]indexAsset `json:"assets"`
 }
 
 type indexAsset struct {
-	URL    string `json:"url"`
-	SHA256 string `json:"sha256"`
-	Size   int64  `json:"size"`
+	URL              string `json:"url"`
+	SHA256           string `json:"sha256"`
+	Size             int64  `json:"size"`
+	UncompressedSize int64  `json:"uncompressed_size,omitempty"`
 }
 
 func main() {
@@ -119,26 +132,73 @@ func main() {
 func cmdManifest() {
 	entries := buildEntries()
 	sortEntries(entries)
-	out := manifestFile{Schema: 1, Plugins: entries}
+	out := manifestFile{Schema: 2, Plugins: entries}
 	writeJSON(manifestPath, out)
-	fmt.Printf("wrote %s with %d plugins\n", manifestPath, len(entries))
+	fmt.Printf("wrote %s with %d bundles\n", manifestPath, len(entries))
 }
 
+// buildEntries 生成三类合并插件包：DNS 全量、部署全量、通知全量。
+// 不再按服务商拆分，减少仓库资产数量、安装文件数量与运行期进程数。
 func buildEntries() []pluginEntry {
-	entries := make([]pluginEntry, 0, 224)
-	for _, p := range catalog.DNSProviders() {
-		entries = append(entries, pluginEntry{Kind: "dns", ID: p.Value, Version: defaultVer, Tag: "plugin_dns_" + p.Value})
+	dnsProviders := catalog.DNSProviders()
+	heavy := make(map[string]bool, len(dnsHeavyProviders))
+	for _, id := range dnsHeavyProviders {
+		heavy[id] = true
 	}
+	coreIDs := make([]string, 0, len(dnsProviders))
+	heavyIDs := make([]string, 0, len(heavy))
+	found := make(map[string]bool, len(heavy))
+	for _, p := range dnsProviders {
+		if heavy[p.Value] {
+			heavyIDs = append(heavyIDs, p.Value)
+			found[p.Value] = true
+			continue
+		}
+		coreIDs = append(coreIDs, p.Value)
+	}
+	for _, id := range dnsHeavyProviders {
+		if !found[id] {
+			fail("dnsHeavyProviders 中存在未知服务商: " + id)
+		}
+	}
+	deployIDs := make([]string, 0, 8)
 	for _, p := range catalog.Deployers() {
 		if p.Deprecated {
 			continue
 		}
-		entries = append(entries, pluginEntry{Kind: "deploy", ID: p.Value, Version: defaultVer, Tag: "plugin_deploy_" + p.Value})
+		deployIDs = append(deployIDs, p.Value)
 	}
-	for _, id := range channels.IDs() {
-		entries = append(entries, pluginEntry{Kind: "notify", ID: id, Version: defaultVer, Tag: "plugin_notify_" + id})
+	notifyIDs := channels.IDs()
+	return []pluginEntry{
+		{
+			Kind: "dns", ID: "core", Version: defaultVer, Tag: "bundle_dns_core",
+			Name: "DNS 插件包（常用）", Description: "包含 184 个常用 DNS 服务商；体积小、启动内存低。",
+			Bundle: true, Providers: coreIDs,
+		},
+		{
+			Kind: "dns", ID: "heavy", Version: defaultVer, Tag: "bundle_dns_heavy",
+			Name: "DNS 插件包（大型云厂商）", Description: "包含 Google Cloud、Yandex、Sakura、Route53、Azure DNS 等 10 个依赖大型 SDK 的服务商。",
+			Bundle: true, Providers: heavyIDs,
+		},
+		{
+			Kind: "deploy", ID: "all", Version: defaultVer, Tag: "bundle_deploy_all",
+			Name: "部署插件包", Description: "包含全部官方证书部署目标实现。",
+			Bundle: true, Providers: deployIDs,
+		},
+		{
+			Kind: "notify", ID: "all", Version: defaultVer, Tag: "bundle_notify_all",
+			Name: "通知插件包", Description: "包含全部官方通知渠道实现。",
+			Bundle: true, Providers: notifyIDs,
+		},
 	}
-	return entries
+}
+
+// dnsHeavyProviders 是按单个二进制体积挑选出的重型 SDK 服务商。
+// 把它们拆成独立合并包，可让常用包保持约 21 MiB、运行内存约 17 MiB；
+// 两个包合计仍只有约 60 MiB，远低于逐服务商打包。
+var dnsHeavyProviders = []string{
+	"gcloud", "yandexcloud", "sakuracloud", "edgedns", "route53",
+	"azuredns", "lightsail", "huaweicloud", "iij", "rfc2136",
 }
 
 func sortEntries(entries []pluginEntry) {
@@ -168,114 +228,100 @@ func cmdMatrix() {
 	fmt.Println()
 }
 
-type selector struct {
-	imports []string
-	init    []string
-}
-
+// cmdGen 根据 plugins.json 生成 DNS 分组的 import 文件与构建标签选择器。
+// 部署/通知只有一个合并包，不需要分组。
 func cmdGen() {
 	entries := loadManifest()
-	files := map[string]selector{}
+	expected := map[string]bool{}
+	allTags := make([]string, 0, 4)
 	for _, e := range entries {
-		switch e.Kind {
-		case "dns":
-			files[filepath.Join("cmd", "dns-plugin", "select_"+e.ID+".go")] = selector{
-				imports: []string{"_ \"github.com/AXmishell/LACTSSL-Plugins/dns/providers/" + e.ID + "\""},
+		if e.Kind != "dns" || !e.Bundle {
+			continue
+		}
+		allTags = append(allTags, "bundle_dns_"+e.ID)
+		groupPath := filepath.Join("dns", "groups", e.ID, "all.go")
+		writeGenerated(groupPath, dnsGroupSource(e.ID, e.Providers))
+		expected[groupPath] = true
+
+		selectorPath := filepath.Join("cmd", "dns-helper", "group_"+e.ID+".go")
+		writeGenerated(selectorPath, dnsGroupSelectorSource(e.ID, e.Tag))
+		expected[selectorPath] = true
+	}
+	if len(allTags) == 0 {
+		fail("plugins.json 中没有 DNS 合并包")
+	}
+	allPath := filepath.Join("cmd", "dns-helper", "group_all.go")
+	writeGenerated(allPath, dnsGroupAllSource(allTags))
+	expected[allPath] = true
+
+	// 清理已删除分组留下的文件。
+	if matches, _ := filepath.Glob(filepath.Join("cmd", "dns-helper", "group_*.go")); len(matches) > 0 {
+		for _, match := range matches {
+			if !expected[match] {
+				_ = os.Remove(match)
 			}
-		case "deploy":
-			prov, register := deployProvider(e.ID)
-			if prov == "" {
-				fail("未知部署目标: " + e.ID)
-			}
-			sel := selector{imports: []string{"_ \"github.com/AXmishell/LACTSSL-Plugins/deploy/providers/" + prov + "\""}}
-			if register != "" {
-				sel.imports = []string{"\"github.com/AXmishell/LACTSSL-Plugins/deploy/providers/panels\""}
-				sel.init = []string{register}
-			}
-			files[filepath.Join("cmd", "deploy-plugin", "select_"+e.ID+".go")] = sel
-		case "notify":
-			files[filepath.Join("cmd", "notify-plugin", "select_"+e.ID+".go")] = selector{
-				imports: []string{"\"github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels\""},
-				init:    []string{fmt.Sprintf("channels.RegisterByID(%q)", e.ID)},
-			}
-		default:
-			fail("未知插件类型: " + e.Kind)
 		}
 	}
-	for _, dir := range []string{"cmd/dns-plugin", "cmd/deploy-plugin", "cmd/notify-plugin"} {
-		matches, _ := filepath.Glob(filepath.Join(dir, "select_*.go"))
-		for _, match := range matches {
-			if _, keep := files[match]; !keep {
-				if err := os.Remove(match); err != nil {
-					fail(err.Error())
+	if dirs, _ := filepath.Glob(filepath.Join("dns", "groups", "*")); len(dirs) > 0 {
+		for _, dir := range dirs {
+			found := false
+			for path := range expected {
+				if strings.HasPrefix(path, dir+string(os.PathSeparator)) {
+					found = true
+					break
 				}
 			}
+			if !found {
+				_ = os.RemoveAll(dir)
+			}
 		}
 	}
-	for path, sel := range files {
-		writeSelector(path, sel)
-	}
-	fmt.Printf("generated %d selector files\n", len(files))
+	fmt.Printf("generated %d DNS group files\n", len(expected))
 }
 
-func deployProvider(id string) (provider, register string) {
-	switch id {
-	case "ftp":
-		return "ftp", ""
-	case "webhook":
-		return "webhook", ""
-	case "aliyun_cdn":
-		return "aliyuncdn", ""
-	case "qiniu":
-		return "qiniu", ""
-	case "baota":
-		return "panels", "panels.RegisterBaota()"
-	case "1panel":
-		return "panels", "panels.RegisterOnePanel()"
-	case "safeline":
-		return "panels", "panels.RegisterSafeline()"
-	default:
-		return "", ""
-	}
-}
-
-func writeSelector(path string, sel selector) {
-	entry, ok := findEntry(path)
-	_ = ok
-	var buf strings.Builder
-	buf.WriteString("// Code generated by scripts/pluginctl; DO NOT EDIT.\n\n")
-	buf.WriteString("//go:build " + entry.Tag + "\n\n")
-	buf.WriteString("package main\n\n")
-	if len(sel.imports) == 1 {
-		fmt.Fprintf(&buf, "import %s\n", sel.imports[0])
-	} else if len(sel.imports) > 1 {
-		buf.WriteString("import (\n")
-		for _, imp := range sel.imports {
-			buf.WriteString("\t" + imp + "\n")
-		}
-		buf.WriteString(")\n")
-	}
-	for _, line := range sel.init {
-		buf.WriteString("\nfunc init() { " + line + " }\n")
-	}
+func writeGenerated(path, content string) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		fail(err.Error())
 	}
-	if err := os.WriteFile(path, []byte(buf.String()), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		fail(err.Error())
 	}
 }
 
-func findEntry(path string) (pluginEntry, bool) {
-	entries := loadManifest()
-	base := strings.TrimSuffix(filepath.Base(path), ".go")
-	id := strings.TrimPrefix(base, "select_")
-	for _, entry := range entries {
-		if entry.ID == id && strings.Contains(path, entry.Kind+"-plugin") {
-			return entry, true
-		}
+func dnsGroupSource(id string, providers []string) string {
+	providers = append([]string(nil), providers...)
+	sort.Strings(providers)
+	var b strings.Builder
+	b.WriteString("// Code generated by scripts/pluginctl; DO NOT EDIT.\n\n")
+	b.WriteString("// Package " + id + " 空导入该分组的全部 DNS 服务商包装包。\n")
+	b.WriteString("package " + id + "\n\nimport (\n")
+	for _, provider := range providers {
+		b.WriteString("\t_ \"github.com/AXmishell/LACTSSL-Plugins/dns/providers/" + provider + "\"\n")
 	}
-	return pluginEntry{}, false
+	b.WriteString(")\n")
+	return b.String()
+}
+
+func dnsGroupSelectorSource(id, tag string) string {
+	return "// Code generated by scripts/pluginctl; DO NOT EDIT.\n\n" +
+		"//go:build " + tag + "\n\n" +
+		"package main\n\n" +
+		"import _ \"github.com/AXmishell/LACTSSL-Plugins/dns/groups/" + id + "\"\n"
+}
+
+func dnsGroupAllSource(tags []string) string {
+	var b strings.Builder
+	b.WriteString("// Code generated by scripts/pluginctl; DO NOT EDIT.\n\n")
+	b.WriteString("//go:build ")
+	for i, tag := range tags {
+		if i > 0 {
+			b.WriteString(" && ")
+		}
+		b.WriteString("!" + tag)
+	}
+	b.WriteString("\n\npackage main\n\n")
+	b.WriteString("import _ \"github.com/AXmishell/LACTSSL-Plugins/dns/all\"\n")
+	return b.String()
 }
 
 func cmdBuild(args []string) {
@@ -301,7 +347,7 @@ func cmdBuild(args []string) {
 	if err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("built %s (%d bytes, sha256=%s)\n", asset, meta.Size, meta.SHA256)
+	fmt.Printf("built %s (compressed=%d bytes, uncompressed=%d bytes, sha256=%s)\n", asset, meta.Size, meta.UncompressedSize, meta.SHA256)
 }
 
 func findEntryByID(entries []pluginEntry, kind, id string) (pluginEntry, bool) {
@@ -329,13 +375,22 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 	defer os.RemoveAll(tmp)
 	bin := filepath.Join(tmp, name+ext)
 	ldflags := "-s -w -X main.buildVersion=" + version
-	cmd := exec.Command("go", "build", "-trimpath", "-tags", entry.Tag, "-ldflags", ldflags, "-o", bin, "./cmd/"+entry.Kind+"-plugin")
+	tags := entry.Tag
+	if tags == "" {
+		tags = "bundle_" + entry.Kind + "_all"
+	}
+	if !strings.Contains(tags, "nethttpomithttp2") {
+		tags += ",nethttpomithttp2"
+	}
+	cmd := exec.Command("go", "build", "-trimpath", "-tags", tags, "-ldflags", ldflags, "-o", bin, "./cmd/"+entry.Kind+"-helper")
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+goos, "GOARCH="+goarch)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return "", assetMeta{}, fmt.Errorf("构建 %s/%s 失败: %v\n%s", entry.Kind, entry.ID, err, out)
 	}
 	if runtime.GOOS == goos && runtime.GOARCH == goarch {
-		out, err := exec.Command(bin, "manifest").Output()
+		probeCmd := exec.Command(bin, "manifest")
+		probeCmd.Env = append(os.Environ(), "LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1")
+		out, err := probeCmd.Output()
 		if err != nil {
 			return "", assetMeta{}, fmt.Errorf("%s manifest 校验失败: %v", name, err)
 		}
@@ -349,8 +404,26 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 			return "", assetMeta{}, fmt.Errorf("%s manifest 不是合法 JSON: %v", name, err)
 		}
 		items := len(probe.Providers) + len(probe.Deployers) + len(probe.Channels)
-		if items != 1 {
-			return "", assetMeta{}, fmt.Errorf("%s manifest 应恰好包含一个条目，实际 %d", name, items)
+		if items == 0 {
+			return "", assetMeta{}, fmt.Errorf("%s manifest 没有包含任何条目", name)
+		}
+		if entry.Bundle && len(entry.Providers) > 0 {
+			got := make([]string, 0, items)
+			for _, item := range probe.Providers {
+				got = append(got, item.ID)
+			}
+			for _, item := range probe.Deployers {
+				got = append(got, item.ID)
+			}
+			for _, item := range probe.Channels {
+				got = append(got, item.ID)
+			}
+			sort.Strings(got)
+			want := append([]string(nil), entry.Providers...)
+			sort.Strings(want)
+			if strings.Join(got, ",") != strings.Join(want, ",") {
+				return "", assetMeta{}, fmt.Errorf("%s manifest 条目与索引不一致: 期望 %d 个，实际 %d 个", name, len(want), len(got))
+			}
 		}
 		if probe.Version != version {
 			return "", assetMeta{}, fmt.Errorf("%s manifest 版本 %q 与索引版本 %q 不一致", name, probe.Version, version)
@@ -366,6 +439,8 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 		"os":         goos,
 		"arch":       goarch,
 		"entrypoint": name + ext,
+		"bundle":     entry.Bundle,
+		"providers":  entry.Providers,
 	}
 	pluginRaw, _ := json.MarshalIndent(pluginJSON, "", "  ")
 	assetName := fmt.Sprintf("%s_%s_%s_%s.tar.gz", name, version, goos, goarch)
@@ -381,9 +456,15 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 	if err != nil {
 		return "", assetMeta{}, err
 	}
+	info, err := os.Stat(bin)
+	if err != nil {
+		return "", assetMeta{}, err
+	}
 	meta := assetMeta{
 		Kind: entry.Kind, ID: entry.ID, Version: version, Tag: entry.Tag,
+		Name: entry.Name, Description: entry.Description, Bundle: entry.Bundle, Providers: entry.Providers,
 		OS: goos, Arch: goarch, Asset: assetName, SHA256: digest, Size: size,
+		UncompressedSize: info.Size(),
 	}
 	metaPath := strings.TrimSuffix(assetPath, ".tar.gz") + ".meta.json"
 	writeJSON(metaPath, meta)
@@ -402,7 +483,10 @@ func writeTarGz(dest string, files map[string]fileEntry) error {
 		return err
 	}
 	defer out.Close()
-	gz := gzip.NewWriter(out)
+	gz, err := gzip.NewWriterLevel(out, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
 	tw := tar.NewWriter(gz)
 	names := make([]string, 0, len(files))
 	for name := range files {
@@ -489,9 +573,10 @@ func cmdIndex(args []string) {
 			releaseTag = *bucket + "-" + meta.Kind
 		}
 		item.assets[meta.OS+"/"+meta.Arch] = indexAsset{
-			URL:    strings.TrimRight(*baseURL, "/") + "/" + releaseTag + "/" + meta.Asset,
-			SHA256: meta.SHA256,
-			Size:   meta.Size,
+			URL:              strings.TrimRight(*baseURL, "/") + "/" + releaseTag + "/" + meta.Asset,
+			SHA256:           meta.SHA256,
+			Size:             meta.Size,
+			UncompressedSize: meta.UncompressedSize,
 		}
 	}
 	plugins := make([]indexPlugin, 0, len(groups))
@@ -506,10 +591,22 @@ func cmdIndex(args []string) {
 			continue
 		}
 		meta := latest.meta
-		def, _ := lookupMeta(meta.Kind, meta.ID)
+		name, desc := meta.Name, meta.Description
+		if name == "" || desc == "" {
+			if def, ok := lookupMeta(meta.Kind, meta.ID); ok {
+				if name == "" {
+					name = def.name
+				}
+				if desc == "" {
+					desc = def.desc
+				}
+			}
+		}
 		plugins = append(plugins, indexPlugin{
-			Kind: meta.Kind, ID: meta.ID, Name: def.name, Description: def.desc,
-			Version: meta.Version, Protocol: "v1", Single: true, Assets: latest.assets,
+			Kind: meta.Kind, ID: meta.ID, Name: name, Description: desc,
+			Version: meta.Version, Protocol: "v1", Bundle: meta.Bundle,
+			Providers: meta.Providers, UncompressedSize: meta.UncompressedSize,
+			Single: !meta.Bundle, Assets: latest.assets,
 		})
 	}
 	index := indexFile{Schema: 1, Channel: "stable", Protocol: "v1", GeneratedAt: time.Now().UTC().Format(time.RFC3339), Plugins: plugins}

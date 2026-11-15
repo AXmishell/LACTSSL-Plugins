@@ -27,10 +27,11 @@ jobs:
         run: |
           test -z "$(gofmt -l .)" || (gofmt -l .; exit 1)
 
-      - name: Verify generated selectors
+      - name: Verify bundle manifest
         run: |
+          go run scripts/pluginctl/main.go manifest
           go run scripts/pluginctl/main.go gen
-          git diff --exit-code -- cmd/dns-plugin cmd/deploy-plugin cmd/notify-plugin plugins.json
+          test -z "$(git status --porcelain -- plugins.json cmd/dns-helper dns/groups)"
 
       - name: Vet
         run: go vet ./...
@@ -44,21 +45,25 @@ jobs:
           CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/deploy-helper
           CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/notify-helper
 
-      - name: Build single plugins
+      - name: Build merged plugins
         run: |
-          go build -trimpath -tags plugin_dns_cloudflare -o /tmp/dns-plugin ./cmd/dns-plugin
-          go build -trimpath -tags plugin_deploy_baota -o /tmp/deploy-plugin ./cmd/deploy-plugin
-          go build -trimpath -tags plugin_notify_telegram -o /tmp/notify-plugin ./cmd/notify-plugin
-          test "$(/tmp/dns-plugin manifest | jq '.providers | length')" = "1"
-          test "$(/tmp/deploy-plugin manifest | jq '.deployers | length')" = "1"
-          test "$(/tmp/notify-plugin manifest | jq '.channels | length')" = "1"
-          test "$(/tmp/dns-plugin manifest | jq -r '.providers[0].id')" = "cloudflare"
-          test "$(/tmp/deploy-plugin manifest | jq -r '.deployers[0].id')" = "baota"
-          test "$(/tmp/notify-plugin manifest | jq -r '.channels[0].id')" = "telegram"
+          go build -trimpath -tags "bundle_dns_core,nethttpomithttp2" -o /tmp/dns-core ./cmd/dns-helper
+          go build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -o /tmp/dns-heavy ./cmd/dns-helper
+          go build -trimpath -tags nethttpomithttp2 -o /tmp/dns-all ./cmd/dns-helper
+          go build -trimpath -tags nethttpomithttp2 -o /tmp/deploy-all ./cmd/deploy-helper
+          go build -trimpath -tags nethttpomithttp2 -o /tmp/notify-all ./cmd/notify-helper
+          test "$(/tmp/dns-core manifest | jq '.providers | length')" = "184"
+          test "$(/tmp/dns-heavy manifest | jq '.providers | length')" = "10"
+          test "$(/tmp/dns-all manifest | jq '.providers | length')" = "194"
+          test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "7"
+          test "$(/tmp/notify-all manifest | jq '.channels | length')" = "23"
+          test "$(/tmp/dns-core manifest | jq -r '.providers[] | select(.id=="cloudflare") | .id')" = "cloudflare"
 
       - name: Package smoke
         run: |
-          go run scripts/pluginctl/main.go build -kind dns -id cloudflare -goos linux -goarch amd64 -out /tmp/dist
-          tar -tzf /tmp/dist/lactssl-dns-cloudflare_1.0.0_linux_amd64.tar.gz | grep -qx plugin.json
+          go run scripts/pluginctl/main.go build -kind dns -id core -goos linux -goarch amd64 -out /tmp/dist
+          tar -tzf /tmp/dist/lactssl-dns-core_1.0.0_linux_amd64.tar.gz | grep -qx plugin.json
           go run scripts/pluginctl/main.go index -assets /tmp/dist -base-url https://example.invalid/releases/download -out /tmp/index.json
           jq -e '.plugins[0].assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
+          jq -e '.plugins[0].bundle == true' /tmp/index.json >/dev/null
+          jq -e '.plugins[0].uncompressed_size > 0' /tmp/index.json >/dev/null

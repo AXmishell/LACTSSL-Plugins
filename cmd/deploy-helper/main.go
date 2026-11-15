@@ -145,7 +145,13 @@ func handle() {
 	}
 }
 
+// buildVersion 由 pluginctl 通过 -ldflags 注入，必须与仓库索引中的版本一致。
+var buildVersion = ""
+
 func serviceVersion() string {
+	if buildVersion != "" {
+		return buildVersion
+	}
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
 		return strings.TrimSpace(info.Main.Version)
 	}

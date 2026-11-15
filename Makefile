@@ -10,14 +10,16 @@ all: build
 
 build: bundle
 
-# 兼容旧版主程序的 bundle helper；新主程序不再使用。
+# 合并插件包：DNS 拆为常用/重型两个包，部署与通知各一个包，共享各自进程内的 Go 运行时。
 bundle:
 	mkdir -p $(BIN)
-	$(BUILD_ENV) $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-helper ./cmd/dns-helper
-	$(BUILD_ENV) $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-helper ./cmd/deploy-helper
-	$(BUILD_ENV) $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-helper ./cmd/notify-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_core,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-core ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-heavy ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
 
-# 生成 plugins.json 与 select_*.go。
+# 生成 plugins.json；bundle 模式不再生成单服务商 selector。
 gen:
 	$(GO) run scripts/pluginctl/main.go manifest
 	$(GO) run scripts/pluginctl/main.go gen
@@ -25,7 +27,9 @@ gen:
 manifest:
 	$(GO) run scripts/pluginctl/main.go manifest
 
-# 构建单个插件：make plugin KIND=dns ID=cloudflare GOOS=linux GOARCH=amd64
+# 构建单个合并包：make plugin KIND=dns ID=core GOOS=linux GOARCH=amd64
+# DNS 的 ID 为 core/heavy；部署和通知的 ID 为 all。
+ID ?= core
 plugin:
 	$(GO) run scripts/pluginctl/main.go build -kind "$(KIND)" -id "$(ID)" -goos "$(GOOS)" -goarch "$(GOARCH)" -out dist
 

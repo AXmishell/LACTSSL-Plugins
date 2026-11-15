@@ -16,7 +16,6 @@ import (
 
 	"github.com/AXmishell/LACTSSL-Plugins/catalog"
 	"github.com/AXmishell/LACTSSL-Plugins/dns"
-	_ "github.com/AXmishell/LACTSSL-Plugins/dns/all"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/helper"
@@ -141,22 +140,15 @@ func run(provider challenge.Provider, action string, req protocol.DNSRequest) er
 	}
 }
 
-const legoModule = "github.com/go-acme/lego/v4"
+// buildVersion 由 pluginctl 通过 -ldflags 注入，必须与仓库索引中的版本一致。
+var buildVersion = ""
 
-// serviceVersion 返回服务商实现自身的版本（lego 上游版本），而不是本仓库版本。
 func serviceVersion() string {
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, dep := range info.Deps {
-			if dep.Path != legoModule {
-				continue
-			}
-			if dep.Replace != nil && dep.Replace.Version != "" {
-				return dep.Replace.Version
-			}
-			if dep.Version != "" {
-				return dep.Version
-			}
-		}
+	if buildVersion != "" {
+		return buildVersion
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
 	}
 	return "dev"
 }

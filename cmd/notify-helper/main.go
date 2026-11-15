@@ -85,7 +85,13 @@ func writeResult(ok bool, message string) {
 	_ = helper.WriteJSON(map[string]any{"ok": ok, "message": message})
 }
 
+// buildVersion 由 pluginctl 通过 -ldflags 注入，必须与仓库索引中的版本一致。
+var buildVersion = ""
+
 func serviceVersion() string {
+	if buildVersion != "" {
+		return buildVersion
+	}
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
 		return info.Main.Version
 	}
