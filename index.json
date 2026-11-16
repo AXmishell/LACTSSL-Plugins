@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "channel": "stable",
+  "protocol": "v1",
+  "generated_at": "2026-11-16T09:13:44Z",
+  "plugins": [
+    {
+      "kind": "deploy",
+      "id": "baota",
+      "name": "宝塔面板",
+      "description": "上传证书到宝塔面板，可部署到指定网站或替换面板自身的 SSL 证书",
+      "version": "1.0.0",
+      "protocol": "v1",
+      "single": true,
+      "assets": {
+        "linux/amd64": {
+          "url": "https://github.com/AXmishell/LACTSSL-Plugins/releases/download/deploy-baota-v1.0.0/lactssl-deploy-baota_1.0.0_linux_amd64.tar.gz",
+          "sha256": "c84b1974089fb5bf8a194e8f578d6c26f116e30b993714e2c5a9b215226997c2",
+          "size": 3149541
+        }
+      }
+    },
+    {
+      "kind": "dns",
+      "id": "cloudflare",
+      "name": "Cloudflare",
+      "description": "推荐使用仅具备 DNS 编辑权限的 API Token",
+      "version": "1.0.0",
+      "protocol": "v1",
+      "single": true,
+      "assets": {
+        "linux/amd64": {
+          "url": "https://github.com/AXmishell/LACTSSL-Plugins/releases/download/dns-cloudflare-v1.0.0/lactssl-dns-cloudflare_1.0.0_linux_amd64.tar.gz",
+          "sha256": "1dc44b1ac5f7c1279b9651b9714a80e3b06ab65d2379d16555c47514694a6977",
+          "size": 3406005
+        }
+      }
+    },
+    {
+      "kind": "notify",
+      "id": "telegram",
+      "name": "telegram",
+      "version": "1.0.0",
+      "protocol": "v1",
+      "single": true,
+      "assets": {
+        "linux/amd64": {
+          "url": "https://github.com/AXmishell/LACTSSL-Plugins/releases/download/notify-telegram-v1.0.0/lactssl-notify-telegram_1.0.0_linux_amd64.tar.gz",
+          "sha256": "846f3ac85eff06e4d3569100f66b1d504717acf723f3be1272b94347e486847f",
+          "size": 3161153
+        }
+      }
+    }
+  ]
+}
+
