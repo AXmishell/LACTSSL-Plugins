@@ -5,6 +5,7 @@ go 1.27.4
 require (
 	github.com/go-acme/lego/v4 v4.35.2
 	github.com/jlaffaye/ftp v0.2.4
+	github.com/miekg/dns v1.1.72
 )
 
 require (
@@ -126,7 +127,6 @@ require (
 	github.com/liquidweb/liquidweb-go v1.6.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
-	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mimuret/golang-iij-dpf v0.9.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

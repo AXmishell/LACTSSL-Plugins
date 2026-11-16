@@ -4,7 +4,7 @@ BUILD_ENV := CGO_ENABLED=0
 LDFLAGS := -s -w
 BIN := bin
 
-.PHONY: all build bundle gen manifest plugins test fmt vet check clean index
+.PHONY: all build bundle bundle-native gen manifest plugins test fmt vet check check-native clean index
 
 all: build
 
@@ -18,6 +18,12 @@ bundle:
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all ./cmd/dns-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
+
+# 自研包：heavy 完全不依赖 lego；core 为增量变体。
+bundle-native:
+	mkdir -p $(BIN)
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_heavy_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-heavy-native ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_core_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-core-native ./cmd/dns-helper
 
 # 生成 plugins.json；bundle 模式不再生成单服务商 selector。
 gen:
@@ -51,6 +57,10 @@ check:
 	test -z "$$(gofmt -l .)" || (echo "gofmt required" >&2; exit 1)
 	$(GO) vet ./...
 	$(GO) test ./...
+	./scripts/check_native.sh
+
+check-native:
+	./scripts/check_native.sh
 
 clean:
 	rm -rf $(BIN) dist out index.json index.json.sig

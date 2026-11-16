@@ -8,19 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
-
-	"github.com/go-acme/lego/v4/challenge"
 )
-
-// Provider 是 DNS 服务商插件的统一接口。
-type Provider interface {
-	// ID 是插件的规范标识，必须与主程序数据库中的 provider 值一致。
-	ID() string
-	// Aliases 是兼容别名。
-	Aliases() []string
-	// New 构造 lego challenge.Provider。配置通过环境变量传递。
-	New(cfg map[string]string) (challenge.Provider, error)
-}
 
 var registry = struct {
 	sync.RWMutex

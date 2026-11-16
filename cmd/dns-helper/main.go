@@ -19,7 +19,6 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/helper"
-	"github.com/go-acme/lego/v4/challenge"
 )
 
 func main() {
@@ -129,7 +128,7 @@ func handle(action string) {
 	}
 }
 
-func run(provider challenge.Provider, action string, req protocol.DNSRequest) error {
+func run(provider dns.ChallengeProvider, action string, req protocol.DNSRequest) error {
 	switch action {
 	case "present":
 		return provider.Present(req.Domain, req.Token, req.KeyAuth)

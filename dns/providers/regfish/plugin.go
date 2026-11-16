@@ -5,7 +5,6 @@ package regfish
 
 import (
 	"github.com/AXmishell/LACTSSL-Plugins/dns"
-	"github.com/go-acme/lego/v4/challenge"
 	lego "github.com/go-acme/lego/v4/providers/dns/regfish"
 )
 
@@ -15,7 +14,7 @@ func (plugin) ID() string { return "regfish" }
 
 func (plugin) Aliases() []string { return nil }
 
-func (plugin) New(map[string]string) (challenge.Provider, error) {
+func (plugin) New(map[string]string) (dns.ChallengeProvider, error) {
 	return lego.NewDNSProvider()
 }
 
