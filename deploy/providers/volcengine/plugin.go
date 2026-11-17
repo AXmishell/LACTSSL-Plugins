@@ -21,8 +21,24 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/volcengine"
 )
 
+type volcenginePlugin struct{}
 type plugin struct{}
 type dcdnPlugin struct{}
+
+func (volcenginePlugin) ID() string        { return "volcengine" }
+func (volcenginePlugin) Aliases() []string { return nil }
+func (volcenginePlugin) Deploy(_ context.Context, req deploy.Request) error {
+	cert := util.Certificate(req.Certificate)
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "cdn":
+		return deployVolcengineCDN(cert, cfg)
+	case "dcdn":
+		return deployVolcengineDCDN(cert, cfg)
+	default:
+		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
+	}
+}
 
 func (plugin) ID() string        { return "volcengine_cdn" }
 func (plugin) Aliases() []string { return nil }
@@ -37,6 +53,7 @@ func (dcdnPlugin) Deploy(_ context.Context, req deploy.Request) error {
 }
 
 func init() {
+	deploy.Register(volcenginePlugin{})
 	deploy.Register(plugin{})
 	deploy.Register(dcdnPlugin{})
 }

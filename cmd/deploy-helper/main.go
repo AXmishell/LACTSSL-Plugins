@@ -15,6 +15,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/catalog"
 	"github.com/AXmishell/LACTSSL-Plugins/deploy"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/acepanel"
+	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/aliyun"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/aliyuncdn"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/aliyuncloud"
 	_ "github.com/AXmishell/LACTSSL-Plugins/deploy/providers/aliyunoss"
@@ -96,7 +97,9 @@ func buildManifest() protocol.DeployManifest {
 		if merged && def.Deprecated {
 			continue
 		}
-		if !merged && mergedCanonical[plugin.ID()] {
+		// 旧宿主不认识合并后的 target 字段。对 safeline、acepanel 这类
+		// 规范 ID 在合并前就存在的目标，继续输出规范 ID，避免旧宿主失去原功能。
+		if !merged && mergedCanonical[plugin.ID()] && !def.LegacyKeep {
 			continue
 		}
 		manifest.Deployers = append(manifest.Deployers, protocol.Deployer{

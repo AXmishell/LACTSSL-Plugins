@@ -30,7 +30,16 @@ type panelPlugin struct{}
 func (sitePlugin) ID() string        { return "acepanel" }
 func (sitePlugin) Aliases() []string { return nil }
 func (sitePlugin) Deploy(_ context.Context, req deploy.Request) error {
-	return deploySite(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+	cert := util.Certificate(req.Certificate)
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "site":
+		return deploySite(cert, cfg)
+	case "panel":
+		return deployPanel(cert, cfg)
+	default:
+		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
+	}
 }
 
 func (panelPlugin) ID() string        { return "acepanel_panel" }

@@ -242,13 +242,15 @@ func TestDeploySafelineCreatesCertWhenNoMatch(t *testing.T) {
 }
 
 func TestBaotaPluginDispatch(t *testing.T) {
-	var sites, panels int
+	var sites, panels, dockers int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.URL.Path == "/site" && r.URL.Query().Get("action") == "SetSSL":
 			sites++
 		case r.URL.Path == "/config" && r.URL.Query().Get("action") == "SavePanelSSL":
 			panels++
+		case r.URL.Path == "/mod/docker/com/set_ssl":
+			dockers++
 		default:
 			t.Errorf("unexpected request: %s %s", r.Method, r.URL.String())
 			w.WriteHeader(http.StatusNotFound)
@@ -278,6 +280,18 @@ func TestBaotaPluginDispatch(t *testing.T) {
 	}
 	if sites != 1 || panels != 1 {
 		t.Fatalf("panel target should deploy to panel: sites=%d panels=%d", sites, panels)
+	}
+
+	if err := (baotaPlugin{}).Deploy(context.Background(), deploy.Request{Auth: auth, Config: map[string]string{
+		"target": "docker",
+		"sites":  "example.com",
+	}, Certificate: deploy.Certificate{
+		Domain: "example.com", FullchainPEM: "FULLCHAIN", KeyPEM: "PRIVATE-KEY",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	if sites != 1 || panels != 1 || dockers != 1 {
+		t.Fatalf("docker target should deploy to docker: sites=%d panels=%d dockers=%d", sites, panels, dockers)
 	}
 }
 

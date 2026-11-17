@@ -18,13 +18,13 @@ dns/             194 个 lego 服务商包装 + 注册表
   providers/<id>/   原有 lego 包装（保留）
   native/providers/<id>/  重构实现（heavy 10 家已迁移）
   groups/           合并包的 provider 分组
-deploy/          37 个部署目标
+deploy/          部署目标实现（含历史兼容 ID）
   providers/{ftp,webhook,qiniu,aliyuncdn,aliyunoss,aliyuncloud,tencent,huawei,volcengine,ucloud,upyun,doge,baidu,btwaf,lecdn,rainyun,smtp,npm,acepanel,cdnfly,lucky,proxmox,synology,plesk,panels}
 notify/          23 个通知渠道
   providers/channels
 cmd/
   dns-helper/    DNS 合并包入口（194 个服务商）
-  deploy-helper/ 部署合并包入口（37 个目标）
+  deploy-helper/ 部署合并包入口（合并后的规范目标）
   notify-helper/ 通知合并包入口（23 个渠道）
 plugins.json     合并包清单（kind/id/version/tag/providers，6 个包）
 assets/icons/    服务商图标（按 kind 存放，icons.json 声明别名）
@@ -86,7 +86,7 @@ tar.gz
 | DNS 常用（184 个服务商） | 约 21 MiB | 约 22 MiB |
 | DNS 大型云厂商（10 个服务商） | 约 39 MiB | 约 26 MiB |
 | DNS 全量·重构（194 个服务商） | **约 18.1 MiB** | 约 20 MiB |
-| 部署（37 个目标） | 约 7.8 MiB | 约 11 MiB |
+| 部署（25 个规范目标） | 约 7.8 MiB | 约 11 MiB |
 | 通知（23 个渠道） | 约 7 MiB | 约 10 MiB |
 | 旧布局合计 | 约 73 MiB | — |
 | 仅安装 DNS 全量·重构 | **约 18.1 MiB** | — |

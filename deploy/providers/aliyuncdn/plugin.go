@@ -43,6 +43,11 @@ func aliyunPercentEncode(s string) string {
 	return buf.String()
 }
 
+// DeployCDN 供合并后的 aliyun 规范目标复用 CDN 部署实现。
+func DeployCDN(cert *deploy.Certificate, cfg map[string]string) error {
+	return deployAliyunCDN(cert, cfg)
+}
+
 func deployAliyunCDN(cert *deploy.Certificate, cfg map[string]string) error {
 	accessKey := strings.TrimSpace(cfg["access_key_id"])
 	secretKey := strings.TrimSpace(cfg["access_key_secret"])

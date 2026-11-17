@@ -68,6 +68,7 @@ func assertLegacyEntries(t *testing.T, got, want protocol.DeployManifest) {
 		byID[item.ID] = stripLocalizedFields(item)
 	}
 	for _, item := range want.Deployers {
+		item = stripLocalizedFields(item)
 		actual, ok := byID[item.ID]
 		if !ok {
 			t.Fatalf("legacy deployer %s is missing", item.ID)
@@ -105,8 +106,8 @@ func TestManifestMergedDeployers(t *testing.T) {
 	want.Name = ""
 
 	assertLegacyEntries(t, got, want)
-	if len(got.Deployers) != 37 {
-		t.Fatalf("deployers = %d, want 37", len(got.Deployers))
+	if len(got.Deployers) != 25 {
+		t.Fatalf("deployers = %d, want 25", len(got.Deployers))
 	}
 }
 

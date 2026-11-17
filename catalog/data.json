@@ -4757,6 +4757,115 @@
       ]
     },
     {
+      "value": "aliyun",
+      "label_key": "meta.deploy.aliyun.label",
+      "desc_key": "meta.deploy.aliyun.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.aliyun_region.label",
+          "type": "text",
+          "help_key": "meta.field.aliyun_region.help"
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "cdn",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.cdn",
+              "value": "cdn"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.dcdn",
+              "value": "dcdn"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.esa",
+              "value": "esa"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.oss",
+              "value": "oss"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.waf",
+              "value": "waf"
+            }
+          ]
+        },
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        },
+        {
+          "key": "bucket",
+          "label_key": "meta.field.bucket.label",
+          "type": "text",
+          "required": true,
+          "show_if": {
+            "key": "target",
+            "value": "oss"
+          }
+        },
+        {
+          "key": "site_id",
+          "label_key": "meta.field.site_id.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.site_id.help",
+          "show_if": {
+            "key": "target",
+            "value": "esa"
+          }
+        },
+        {
+          "key": "tls_version",
+          "label_key": "meta.field.tls_version.label",
+          "type": "text",
+          "default": "tlsv1.2",
+          "show_if": {
+            "key": "target",
+            "value": "waf"
+          }
+        },
+        {
+          "key": "enable_tlsv3",
+          "label_key": "meta.field.enable_tlsv3.label",
+          "type": "switch",
+          "default": "true",
+          "show_if": {
+            "key": "target",
+            "value": "waf"
+          }
+        }
+      ]
+    },
+    {
       "value": "aliyun_cdn",
       "label_key": "meta.deploy.aliyun_cdn.label",
       "desc_key": "meta.deploy.aliyun_cdn.desc",
@@ -4787,7 +4896,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "qiniu",
@@ -4959,6 +5069,10 @@
             {
               "label_key": "meta.field.deploy_target.option.panel",
               "value": "panel"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.docker",
+              "value": "docker"
             }
           ]
         },
@@ -4966,11 +5080,7 @@
           "key": "sites",
           "label_key": "meta.field.sites.label",
           "type": "text",
-          "help_key": "meta.field.sites.help",
-          "show_if": {
-            "key": "target",
-            "value": "site"
-          }
+          "help_key": "meta.field.sites.help"
         }
       ]
     },
@@ -5340,12 +5450,38 @@
       ],
       "deploy_fields": [
         {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "waf",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.waf",
+              "value": "waf"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.panel",
+              "value": "panel"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.portal",
+              "value": "portal"
+            }
+          ]
+        },
+        {
           "key": "cert_ids",
           "label_key": "meta.field.cert_ids.label",
           "type": "text",
-          "help_key": "meta.field.cert_ids.help"
+          "help_key": "meta.field.cert_ids.help",
+          "show_if": {
+            "key": "target",
+            "value": "waf"
+          }
         }
-      ]
+      ],
+      "legacy_keep": true
     },
     {
       "value": "smtp",
@@ -5544,18 +5680,44 @@
       ],
       "deploy_fields": [
         {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "site",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.site",
+              "value": "site"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.panel",
+              "value": "panel"
+            }
+          ]
+        },
+        {
           "key": "websites",
           "label_key": "meta.field.acepanel_websites.label",
           "type": "text",
-          "help_key": "meta.field.acepanel_websites.help"
+          "help_key": "meta.field.acepanel_websites.help",
+          "show_if": {
+            "key": "target",
+            "value": "site"
+          }
         },
         {
           "key": "enable_https",
           "label_key": "meta.field.enable_https.label",
           "type": "switch",
-          "default": "true"
+          "default": "true",
+          "show_if": {
+            "key": "target",
+            "value": "site"
+          }
         }
-      ]
+      ],
+      "legacy_keep": true
     },
     {
       "value": "acepanel_panel",
@@ -5600,7 +5762,8 @@
             }
           ]
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "cdnfly",
@@ -5799,6 +5962,92 @@
       ]
     },
     {
+      "value": "tencent",
+      "label_key": "meta.deploy.tencent.label",
+      "desc_key": "meta.deploy.tencent.desc",
+      "fields": [
+        {
+          "key": "secret_id",
+          "label_key": "meta.field.secret_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "intl",
+          "label_key": "meta.field.tencent_intl.label",
+          "type": "switch",
+          "default": "false",
+          "help_key": "meta.field.tencent_intl.help"
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "cdn",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.cdn",
+              "value": "cdn"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.cos",
+              "value": "cos"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.teo",
+              "value": "teo"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.waf",
+              "value": "waf"
+            }
+          ]
+        },
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        },
+        {
+          "key": "bucket",
+          "label_key": "meta.field.bucket.label",
+          "type": "text",
+          "required": true,
+          "show_if": {
+            "key": "target",
+            "value": "cos"
+          }
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.region.placeholder",
+          "show_if": {
+            "key": "target",
+            "value": "cos"
+          }
+        }
+      ]
+    },
+    {
       "value": "tencent_cdn",
       "label_key": "meta.deploy.tencent_cdn.label",
       "desc_key": "meta.deploy.tencent_cdn.desc",
@@ -5836,7 +6085,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "tencent_cos",
@@ -5889,7 +6139,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "huawei_cdn",
@@ -5916,6 +6167,63 @@
         }
       ],
       "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        }
+      ]
+    },
+    {
+      "value": "volcengine",
+      "label_key": "meta.deploy.volcengine.label",
+      "desc_key": "meta.deploy.volcengine.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "default": "cn-north-1",
+          "placeholder_key": "meta.field.region.placeholder.volcengine"
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "cdn",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.cdn",
+              "value": "cdn"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.dcdn",
+              "value": "dcdn"
+            }
+          ]
+        },
         {
           "key": "domains",
           "label_key": "meta.field.domains.label",
@@ -5968,7 +6276,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "aliyun_oss",
@@ -6008,7 +6317,8 @@
           "type": "text",
           "help_key": "meta.field.domains.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "ucloud_cdn",
@@ -6351,7 +6661,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "tencent_teo",
@@ -6391,7 +6702,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "aliyun_dcdn",
@@ -6418,7 +6730,8 @@
           "type": "text",
           "help_key": "meta.field.domains.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "aliyun_esa",
@@ -6446,7 +6759,8 @@
           "required": true,
           "help_key": "meta.field.site_id.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "aliyun_waf",
@@ -6499,7 +6813,8 @@
           "type": "switch",
           "default": "true"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "baidu_cdn",
@@ -6572,7 +6887,8 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "lecdn",
@@ -6735,7 +7051,8 @@
             }
           ]
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "safeline_portal",
@@ -6773,7 +7090,8 @@
             }
           ]
         }
-      ]
+      ],
+      "deprecated": true
     },
     {
       "value": "baota_docker",
@@ -6820,7 +7138,8 @@
           "required": true,
           "help_key": "meta.field.baota_sites.help"
         }
-      ]
+      ],
+      "deprecated": true
     }
   ],
   "deprecated_deploy_types": {
@@ -6829,6 +7148,21 @@
     "baota_panel": "baota",
     "baota_site": "baota",
     "qiniu_cdn": "qiniu",
-    "qiniu_kodo": "qiniu"
+    "qiniu_kodo": "qiniu",
+    "safeline_panel": "safeline",
+    "safeline_portal": "safeline",
+    "baota_docker": "baota",
+    "acepanel_panel": "acepanel",
+    "tencent_cdn": "tencent",
+    "tencent_cos": "tencent",
+    "tencent_teo": "tencent",
+    "tencent_waf": "tencent",
+    "aliyun_cdn": "aliyun",
+    "aliyun_dcdn": "aliyun",
+    "aliyun_esa": "aliyun",
+    "aliyun_oss": "aliyun",
+    "aliyun_waf": "aliyun",
+    "volcengine_cdn": "volcengine",
+    "volcengine_dcdn": "volcengine"
   }
 }

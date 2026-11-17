@@ -61,6 +61,21 @@ func credentials(cfg map[string]string) (string, string, error) {
 	return accessKey, secretKey, nil
 }
 
+// DeployDCDN 供合并后的 aliyun 规范目标复用 DCDN 部署实现。
+func DeployDCDN(cert *deploy.Certificate, cfg map[string]string) error {
+	return deployDCDN(cert, cfg)
+}
+
+// DeployESA 供合并后的 aliyun 规范目标复用 ESA 部署实现。
+func DeployESA(cert *deploy.Certificate, cfg map[string]string) error {
+	return deployESA(cert, cfg)
+}
+
+// DeployWAF 供合并后的 aliyun 规范目标复用 WAF 部署实现。
+func DeployWAF(cert *deploy.Certificate, cfg map[string]string) error {
+	return deployWAF(cert, cfg)
+}
+
 func deployDCDN(cert *deploy.Certificate, cfg map[string]string) error {
 	accessKey, secretKey, err := credentials(cfg)
 	if err != nil {

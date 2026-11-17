@@ -12,11 +12,67 @@ func TestCounts(t *testing.T) {
 	if got := len(DNSProviders()); got != 194 {
 		t.Fatalf("dns providers = %d, want 194", got)
 	}
-	if got := len(Deployers()); got != 43 {
-		t.Fatalf("deployers = %d, want 43", got)
+	if got := len(Deployers()); got != 46 {
+		t.Fatalf("deployers = %d, want 46", got)
 	}
-	if got := len(DeprecatedDeployTypes()); got != 6 {
-		t.Fatalf("deprecated deploy types = %d, want 6", got)
+	if got := len(DeprecatedDeployTypes()); got != 21 {
+		t.Fatalf("deprecated deploy types = %d, want 21", got)
+	}
+}
+
+func TestDeployMergeGroups(t *testing.T) {
+	groups := map[string][]string{
+		"safeline":   {"waf", "panel", "portal"},
+		"baota":      {"site", "panel", "docker"},
+		"acepanel":   {"site", "panel"},
+		"tencent":    {"cdn", "cos", "teo", "waf"},
+		"aliyun":     {"cdn", "dcdn", "esa", "oss", "waf"},
+		"volcengine": {"cdn", "dcdn"},
+	}
+	legacy := map[string]string{
+		"safeline_panel": "safeline", "safeline_portal": "safeline",
+		"baota_site": "baota", "baota_panel": "baota", "baota_docker": "baota",
+		"acepanel_panel": "acepanel",
+		"tencent_cdn":    "tencent", "tencent_cos": "tencent", "tencent_teo": "tencent", "tencent_waf": "tencent",
+		"aliyun_cdn": "aliyun", "aliyun_dcdn": "aliyun", "aliyun_esa": "aliyun", "aliyun_oss": "aliyun", "aliyun_waf": "aliyun",
+		"volcengine_cdn": "volcengine", "volcengine_dcdn": "volcengine",
+	}
+	deprecated := DeprecatedDeployTypes()
+	for old, canonical := range legacy {
+		if deprecated[old] != canonical {
+			t.Errorf("deprecated %s = %q, want %q", old, deprecated[old], canonical)
+		}
+	}
+	for id, values := range groups {
+		def, ok := LookupDeployer(id)
+		if !ok {
+			t.Errorf("canonical deployer %s missing", id)
+			continue
+		}
+		if def.Deprecated {
+			t.Errorf("canonical deployer %s should not be deprecated", id)
+		}
+		var target *Field
+		for index := range def.DeployFields {
+			if def.DeployFields[index].Key == "target" {
+				target = &def.DeployFields[index]
+				break
+			}
+		}
+		if target == nil {
+			t.Errorf("canonical deployer %s has no target field", id)
+			continue
+		}
+		got := make([]string, 0, len(target.Options))
+		for _, option := range target.Options {
+			got = append(got, option.Value)
+		}
+		if strings.Join(got, ",") != strings.Join(values, ",") {
+			t.Errorf("%s target options = %v, want %v", id, got, values)
+		}
+	}
+	if _, ok := deprecated["btwaf"]; ok {
+		t.Fatal("btwaf must stay independent from baota")
 	}
 }
 

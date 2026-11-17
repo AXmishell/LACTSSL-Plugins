@@ -14,10 +14,27 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/tencentcloud"
 )
 
+type tencentPlugin struct{}
 type cdnPlugin struct{}
 type cosPlugin struct{}
 type wafPlugin struct{}
 type teoPlugin struct{}
+
+func (tencentPlugin) ID() string        { return "tencent" }
+func (tencentPlugin) Aliases() []string { return nil }
+func (tencentPlugin) Deploy(_ context.Context, req deploy.Request) error {
+	cfg := util.Merge(req.Auth, req.Config)
+	target := strings.TrimSpace(cfg["target"])
+	switch target {
+	case "", "cdn", "cos", "teo", "waf":
+		if target == "" {
+			target = "cdn"
+		}
+		return deployTencent(target, util.Certificate(req.Certificate), cfg)
+	default:
+		return i18n.E("service.deploy.deploy_target_invalid", "type", target)
+	}
+}
 
 func (cdnPlugin) ID() string        { return "tencent_cdn" }
 func (cdnPlugin) Aliases() []string { return nil }
@@ -44,6 +61,7 @@ func (teoPlugin) Deploy(_ context.Context, req deploy.Request) error {
 }
 
 func init() {
+	deploy.Register(tencentPlugin{})
 	deploy.Register(cdnPlugin{})
 	deploy.Register(cosPlugin{})
 	deploy.Register(wafPlugin{})

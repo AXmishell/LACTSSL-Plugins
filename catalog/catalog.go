@@ -53,6 +53,7 @@ type Provider struct {
 	Desc         string  `json:"desc,omitempty"`
 	DescKey      string  `json:"desc_key,omitempty"`
 	Deprecated   bool    `json:"deprecated,omitempty"`
+	LegacyKeep   bool    `json:"legacy_keep,omitempty"`
 	Fields       []Field `json:"fields,omitempty"`
 	DeployFields []Field `json:"deploy_fields,omitempty"`
 }

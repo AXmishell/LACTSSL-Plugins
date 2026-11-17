@@ -58,6 +58,11 @@ type ossError struct {
 	Message string `xml:"Message"`
 }
 
+// DeployOSS 供合并后的 aliyun 规范目标复用 OSS 自定义域名部署实现。
+func DeployOSS(cert *deploy.Certificate, cfg map[string]string) error {
+	return deployAliyunOSS(cert, cfg)
+}
+
 func deployAliyunOSS(cert *deploy.Certificate, cfg map[string]string) error {
 	accessKey := strings.TrimSpace(cfg["access_key_id"])
 	secretKey := cfg["access_key_secret"]

@@ -43,6 +43,8 @@ func (baotaPlugin) Deploy(_ context.Context, req deploy.Request) error {
 		return deployBaotaSite(cert, cfg)
 	case "panel":
 		return deployBaotaPanel(cert, cfg)
+	case "docker":
+		return deployBaotaDockerSite(cert, cfg)
 	default:
 		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
 	}
@@ -96,7 +98,18 @@ func (onePanelPanelPlugin) Deploy(_ context.Context, req deploy.Request) error {
 func (safelinePlugin) ID() string        { return "safeline" }
 func (safelinePlugin) Aliases() []string { return nil }
 func (safelinePlugin) Deploy(_ context.Context, req deploy.Request) error {
-	return deploySafeline(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+	cert := util.Certificate(req.Certificate)
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "waf":
+		return deploySafeline(cert, cfg)
+	case "panel":
+		return deploySafelinePanel(cert, cfg)
+	case "portal":
+		return deploySafelinePortal(cert, cfg)
+	default:
+		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
+	}
 }
 
 func (safelinePanelPlugin) ID() string        { return "safeline_panel" }

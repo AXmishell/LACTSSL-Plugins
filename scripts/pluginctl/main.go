@@ -42,7 +42,7 @@ const (
 	manifestPath = "plugins.json"
 	defaultVer   = "1.0.0"
 	// deployVer 单独维护：新增 certd / ALLinSSL 移植目标时递增，发布流程据此重建部署包。
-	deployVer = "1.2.0"
+	deployVer = "1.3.0"
 )
 
 type pluginEntry struct {

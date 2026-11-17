@@ -7,7 +7,8 @@
       "baota_panel": "baota",
       "baota_site": "baota",
       "qiniu_cdn": "qiniu",
-      "qiniu_kodo": "qiniu"
+      "qiniu_kodo": "qiniu",
+      "baota_docker": "baota"
     }
   }
 }
