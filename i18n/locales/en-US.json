@@ -645,6 +645,7 @@
   "meta.field.host.label": "Host",
   "meta.field.host.placeholder": "192.168.1.10",
   "meta.field.port.label": "SSH port",
+  "meta.field.service_port.label": "Port",
   "meta.field.ftp_port.label": "FTP port",
   "meta.field.ftp_tls.label": "Encryption",
   "meta.field.ftp_tls.help": "None uses plain FTP; explicit or implicit TLS enables FTPS. Implicit TLS usually uses port 990",

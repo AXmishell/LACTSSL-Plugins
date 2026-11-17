@@ -5361,7 +5361,7 @@
         },
         {
           "key": "port",
-          "label_key": "meta.field.port.label",
+          "label_key": "meta.field.service_port.label",
           "type": "number",
           "default": "465"
         },
@@ -6137,7 +6137,7 @@
         },
         {
           "key": "port",
-          "label_key": "meta.field.port.label",
+          "label_key": "meta.field.service_port.label",
           "type": "number",
           "default": "8006"
         },

@@ -48,7 +48,7 @@ go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-hel
 
 `all-native` 与 `core` 在清单中声明 `hide_icon: true`；宿主对合并包本身也不会借用第一个 provider 的图标，市场只显示包 ID 对应的包级图标（目前未提供），因此这些条目名称前不再出现 `alidns` 等单家服务商 logo。
 
-`manifest` 输出该类全部条目；`pluginctl` 会校验 manifest 与 `plugins.json` 的 `providers` 集合完全一致。
+`manifest` 输出该类全部条目；`pluginctl` 会校验 manifest 与 `plugins.json` 的 `providers` 集合完全一致。部署 helper 的 manifest 还会为部署目标名称、描述以及字段/选项文案输出 `name_i18n` / `description_i18n` / `label_i18n` 等可选映射，宿主按当前界面语言直接选择；旧版宿主会忽略这些字段。
 
 ## 打包与索引
 

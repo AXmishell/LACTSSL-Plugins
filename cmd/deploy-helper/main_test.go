@@ -31,11 +31,41 @@ func loadLegacy(t *testing.T, name string) protocol.DeployManifest {
 	return manifest
 }
 
+func stripLocalizedFields(item protocol.Deployer) protocol.Deployer {
+	item.NameI18n = nil
+	item.DescriptionI18n = nil
+	item.Fields = stripLocalizedManifestFields(item.Fields)
+	item.DeployFields = stripLocalizedManifestFields(item.DeployFields)
+	return item
+}
+
+func stripLocalizedManifestFields(fields []protocol.DeployField) []protocol.DeployField {
+	if fields == nil {
+		return nil
+	}
+	out := make([]protocol.DeployField, len(fields))
+	for index, field := range fields {
+		field.LabelI18n = nil
+		field.PlaceholderI18n = nil
+		field.HelpI18n = nil
+		if field.Options != nil {
+			options := make([]protocol.DeployOption, len(field.Options))
+			for optionIndex, option := range field.Options {
+				option.LabelI18n = nil
+				options[optionIndex] = option
+			}
+			field.Options = options
+		}
+		out[index] = field
+	}
+	return out
+}
+
 func assertLegacyEntries(t *testing.T, got, want protocol.DeployManifest) {
 	t.Helper()
 	byID := make(map[string]protocol.Deployer, len(got.Deployers))
 	for _, item := range got.Deployers {
-		byID[item.ID] = item
+		byID[item.ID] = stripLocalizedFields(item)
 	}
 	for _, item := range want.Deployers {
 		actual, ok := byID[item.ID]
@@ -77,5 +107,36 @@ func TestManifestMergedDeployers(t *testing.T) {
 	assertLegacyEntries(t, got, want)
 	if len(got.Deployers) != 37 {
 		t.Fatalf("deployers = %d, want 37", len(got.Deployers))
+	}
+}
+
+func TestManifestContainsLocalizedMetadata(t *testing.T) {
+	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers)
+	got := buildManifest()
+	var smtp *protocol.Deployer
+	for index := range got.Deployers {
+		if got.Deployers[index].ID == "smtp" {
+			smtp = &got.Deployers[index]
+			break
+		}
+	}
+	if smtp == nil {
+		t.Fatal("smtp deployer is missing")
+	}
+	if smtp.NameI18n["zh-CN"] != "邮件发送证书" || smtp.NameI18n["en-US"] != "Email Certificate" {
+		t.Fatalf("unexpected smtp name translations: %#v", smtp.NameI18n)
+	}
+	if smtp.DescriptionI18n["en-US"] == "" {
+		t.Fatalf("missing smtp description translations: %#v", smtp.DescriptionI18n)
+	}
+	for _, field := range append(append([]protocol.DeployField{}, smtp.Fields...), smtp.DeployFields...) {
+		if field.LabelI18n["zh-CN"] == "" || field.LabelI18n["en-US"] == "" {
+			t.Fatalf("field %s missing label translations: %#v", field.Key, field.LabelI18n)
+		}
+		for _, option := range field.Options {
+			if option.LabelI18n["zh-CN"] == "" || option.LabelI18n["en-US"] == "" {
+				t.Fatalf("option %s missing label translations: %#v", option.Value, option.LabelI18n)
+			}
+		}
 	}
 }

@@ -645,6 +645,7 @@
   "meta.field.host.label": "主机地址",
   "meta.field.host.placeholder": "192.168.1.10",
   "meta.field.port.label": "SSH 端口",
+  "meta.field.service_port.label": "端口",
   "meta.field.ftp_port.label": "FTP 端口",
   "meta.field.ftp_tls.label": "加密方式",
   "meta.field.ftp_tls.help": "不加密为普通 FTP；显式/隐式 TLS 对应 FTPS，隐式通常使用 990 端口",
