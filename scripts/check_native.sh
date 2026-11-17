@@ -27,9 +27,9 @@ check_limit() {
 }
 
 # all-native：覆盖全部 194 个 provider，已迁移 provider 使用仓库实现。
-NATIVE_TAGS="bundle_dns_all_native,nethttpomithttp2"
+NATIVE_TAGS="bundle_dns_all_native,nethttpomithttp2,http2legacy"
 build "$NATIVE_TAGS" "$TMP/all-native"
-build "nethttpomithttp2" "$TMP/all-original"
+build "nethttpomithttp2,http2legacy" "$TMP/all-original"
 check_limit "all-native" "$(size_of "$TMP/all-native")" $((20 * 1024 * 1024))
 
 deps="$(go list -deps -tags "$NATIVE_TAGS" -f '{{with .Module}}{{if not .Main}}{{.Path}}{{end}}{{end}}' ./cmd/dns-helper | sort -u)"

@@ -563,6 +563,11 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 	if !strings.Contains(tags, "nethttpomithttp2") {
 		tags += ",nethttpomithttp2"
 	}
+	// Go 1.27 的 net/http 与新版 x/net/http2 的包装层存在兼容问题，
+	// 使用 x/net 提供的 legacy HTTP/2 实现，避免 Azure SDK 初始化时 panic。
+	if !strings.Contains(tags, "http2legacy") {
+		tags += ",http2legacy"
+	}
 	cmd := exec.Command("go", "build", "-trimpath", "-tags", tags, "-ldflags", ldflags, "-o", bin, "./cmd/"+entry.Kind+"-helper")
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+goos, "GOARCH="+goarch)
 	if out, err := cmd.CombinedOutput(); err != nil {

@@ -13,15 +13,15 @@ build: bundle
 # 合并插件包：DNS 只发布 all-native 一个包，部署与通知各一个包，共享各自进程内的 Go 运行时。
 bundle:
 	mkdir -p $(BIN)
-	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
-	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all ./cmd/dns-helper
-	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
-	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
 
 # all-native 单独构建（用于体积/依赖检查）。
 bundle-native:
 	mkdir -p $(BIN)
-	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
 
 # 生成 plugins.json；bundle 模式不再生成单服务商 selector。
 gen:
