@@ -52,15 +52,13 @@ jobs:
         run: |
           go build -trimpath -tags "bundle_dns_core,nethttpomithttp2" -o /tmp/dns-core ./cmd/dns-helper
           go build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -o /tmp/dns-heavy ./cmd/dns-helper
-          go build -trimpath -tags "bundle_dns_heavy_native,nethttpomithttp2" -o /tmp/dns-heavy-native ./cmd/dns-helper
-          go build -trimpath -tags "bundle_dns_core_native,nethttpomithttp2" -o /tmp/dns-core-native ./cmd/dns-helper
+          go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -o /tmp/dns-all-native ./cmd/dns-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/dns-all ./cmd/dns-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/deploy-all ./cmd/deploy-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/notify-all ./cmd/notify-helper
           test "$(/tmp/dns-core manifest | jq '.providers | length')" = "184"
           test "$(/tmp/dns-heavy manifest | jq '.providers | length')" = "10"
-          test "$(/tmp/dns-heavy-native manifest | jq '.providers | length')" = "10"
-          test "$(/tmp/dns-core-native manifest | jq '.providers | length')" = "184"
+          test "$(/tmp/dns-all-native manifest | jq '.providers | length')" = "194"
           test "$(/tmp/dns-all manifest | jq '.providers | length')" = "194"
           test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "37"
           test "$(/tmp/notify-all manifest | jq '.channels | length')" = "23"

@@ -34,27 +34,26 @@ scripts/pluginctl 生成、构建、打包、索引、签名工具
 
 ## 合并包构建
 
-DNS 常用/重型两个包共用一个入口、通过构建标签选择服务商；部署与通知各一个入口：
+DNS 常用/重型两个包共用一个入口、通过构建标签选择服务商；重构实现把两者合并为一个 `all-native` 包；部署与通知各一个入口：
 
 ```bash
 go build -trimpath -tags "bundle_dns_core,nethttpomithttp2"  -o lactssl-dns-core  ./cmd/dns-helper
 go build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -o lactssl-dns-heavy ./cmd/dns-helper
-go build -trimpath -tags "bundle_dns_heavy_native,nethttpomithttp2" -o lactssl-dns-heavy-native ./cmd/dns-helper
-go build -trimpath -tags "bundle_dns_core_native,nethttpomithttp2" -o lactssl-dns-core-native ./cmd/dns-helper
+go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -o lactssl-dns-all-native ./cmd/dns-helper
 go build -trimpath -tags nethttpomithttp2 -o lactssl-deploy-all ./cmd/deploy-helper
 go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-helper
 ```
 
-`heavy-native` 是 10 个大型云厂商的重构实现，不链接 lego / AWS / Azure / GCP / 华为云等 SDK；它与 `heavy` 使用相同的 provider ID，因此二者只能安装一个（索引中以 `variant_of` / `conflicts_with` 标注）。
+`all-native` 覆盖原 `core` 与 `heavy` 的全部 194 个 provider，把原来两个重构包合并为一次构建：已迁移 provider 使用 `dns/native`，其余暂时继续使用原 lego 包装；每迁移一家，包体积继续下降。它与 `core`、`heavy` 使用相同的 provider ID，因此与二者互斥（索引中以 `conflicts_with` 标注）。
 
-`core-native` 是与 `core` 相同的 184 个 provider 的增量变体：已迁移 provider 使用 `dns/native`，其余暂时继续使用原 lego 包装；每迁移一家，包体积继续下降。
+`all-native` 在清单中声明 `hide_icon: true`：插件市场不展示服务商 logo，避免把某一家的图标当作整个全量包的门面；`heavy` 仍使用首个 provider 的图标。
 
 `manifest` 输出该类全部条目；`pluginctl` 会校验 manifest 与 `plugins.json` 的 `providers` 集合完全一致。
 
 ## 打包与索引
 
 ```bash
-# 生成 plugins.json（六个合并包）
+# 生成 plugins.json（五个合并包）
 make gen
 
 # 构建 DNS 常用包的单个平台包
@@ -85,17 +84,16 @@ tar.gz
 | 包 | 解压后 | manifest 峰值内存 |
 |---|---:|---:|
 | DNS 常用（184 个服务商） | 约 21 MiB | 约 22 MiB |
-| DNS 常用·重构增量（184 个服务商） | **约 17.8 MiB** | 约 20 MiB |
 | DNS 大型云厂商（10 个服务商） | 约 39 MiB | 约 26 MiB |
-| DNS 大型云厂商·重构（10 个服务商） | **约 7.8 MiB** | 约 10 MiB |
+| DNS 全量·重构（194 个服务商） | **约 18.1 MiB** | 约 20 MiB |
 | 部署（37 个目标） | 约 7.8 MiB | 约 11 MiB |
 | 通知（23 个渠道） | 约 7 MiB | 约 10 MiB |
 | 旧布局合计 | 约 73 MiB | — |
-| 使用 core-native + heavy-native 的合计 | 约 40 MiB | — |
+| 仅安装 DNS 全量·重构 | **约 18.1 MiB** | — |
 
-旧的单服务商打包约为 1.7 GiB（224 个包），合并后降到约 4%。DNS 拆成常用/重型两个包，是为了让绝大多数用户只安装约 21 MiB、运行内存约 22 MiB；两个包合计仍只比单个全量包多约 2 MiB。
+旧的单服务商打包约为 1.7 GiB（224 个包），合并后降到约 4%。DNS 拆成常用/重型两个包，是为了让绝大多数用户只安装约 21 MiB、运行内存约 22 MiB；选择重构实现时只需安装一个 `all-native` 包，不再需要同时安装常用和大型云厂商两个变体。
 
-`heavy-native` 的 10 家 provider 全部为仓库重构实现，链接图只剩 `miekg/dns`（RFC 2136 协议库）与 Go 标准库。`core-native` 目前已有 11 家迁移到重构实现（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 SDK 不回归、manifest 兼容性。
+`all-native` 的 10 家大型云厂商全部为仓库重构实现，常用包中目前也已有 11 家迁移到重构实现（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 provider 不再链接 lego 包装或上游 SDK、以及 194 个 provider 的 manifest 兼容性。
 
 ## 从 certd 移植的部署目标
 
@@ -169,14 +167,14 @@ tar.gz
 - 协议保持 v1；旧版单服务商包与旧全量 helper 会由新合并包在安装时自动替换。
 - `testdata/` 中的 manifest 基线用于验证合并包与旧 bundle 的字段一致。
 - `plugins.json` 中每个合并包独立 SemVer；升级插件时修改对应版本号并重新构建。
-- `heavy` 与 `heavy-native` 是同一 provider 集合的两个实现变体，provider ID、字段、别名完全一致；同一宿主只能启用一个，切换时账户与任务无需迁移。
-- `heavy-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时继续使用原 `heavy` 包。
+- `all-native` 覆盖 `core` 与 `heavy` 的全部 provider，provider ID、字段、别名与原包完全一致；同一宿主只能启用一个 DNS 变体，切换时账户与任务无需迁移。
+- `all-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时继续使用原 `core` / `heavy` 包。
 
 ## SDK 重构
 
 方案与后续增量计划见 `docs/native-sdk-plan.md`，10 家 provider 的实现细节与限制见 `docs/native-providers.md`。当前已落地 P0 + P1：
 
 ```bash
-make bundle-native     # 构建 lactssl-dns-heavy-native
+make bundle-native     # 构建 lactssl-dns-all-native
 make check-native      # 体积、依赖白名单、manifest 对齐检查
 ```

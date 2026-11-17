@@ -19,11 +19,10 @@ bundle:
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
 
-# 重构包：heavy 完全不依赖 lego；core 为增量变体。
+# 重构包：常用 + 大型云厂商合并为一个 all-native 包。
 bundle-native:
 	mkdir -p $(BIN)
-	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_heavy_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-heavy-native ./cmd/dns-helper
-	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_core_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-core-native ./cmd/dns-helper
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
 
 # 生成 plugins.json；bundle 模式不再生成单服务商 selector。
 gen:

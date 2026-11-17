@@ -57,6 +57,7 @@ type pluginEntry struct {
 	Providers     []string `json:"providers,omitempty"`
 	VariantOf     string   `json:"variant_of,omitempty"`
 	ConflictsWith []string `json:"conflicts_with,omitempty"`
+	HideIcon      bool     `json:"hide_icon,omitempty"`
 	SDK           string   `json:"sdk,omitempty"`
 }
 
@@ -76,6 +77,7 @@ type assetMeta struct {
 	Providers        []string `json:"providers,omitempty"`
 	VariantOf        string   `json:"variant_of,omitempty"`
 	ConflictsWith    []string `json:"conflicts_with,omitempty"`
+	HideIcon         bool     `json:"hide_icon,omitempty"`
 	SDK              string   `json:"sdk,omitempty"`
 	OS               string   `json:"os"`
 	Arch             string   `json:"arch"`
@@ -153,6 +155,7 @@ type indexPlugin struct {
 	Providers        []string              `json:"providers,omitempty"`
 	VariantOf        string                `json:"variant_of,omitempty"`
 	ConflictsWith    []string              `json:"conflicts_with,omitempty"`
+	HideIcon         bool                  `json:"hide_icon,omitempty"`
 	SDK              string                `json:"sdk,omitempty"`
 	UncompressedSize int64                 `json:"uncompressed_size,omitempty"`
 	Single           bool                  `json:"single,omitempty"`
@@ -207,8 +210,10 @@ func buildEntries() []pluginEntry {
 	}
 	coreIDs := make([]string, 0, len(dnsProviders))
 	heavyIDs := make([]string, 0, len(heavy))
+	allIDs := make([]string, 0, len(dnsProviders))
 	found := make(map[string]bool, len(heavy))
 	for _, p := range dnsProviders {
+		allIDs = append(allIDs, p.Value)
 		if heavy[p.Value] {
 			heavyIDs = append(heavyIDs, p.Value)
 			found[p.Value] = true
@@ -233,7 +238,7 @@ func buildEntries() []pluginEntry {
 		{
 			Kind: "dns", ID: "core", Version: defaultVer, Tag: "bundle_dns_core",
 			Name: "DNS 插件包（常用）", Description: "包含 184 个常用 DNS 服务商；体积小、启动内存低。",
-			Bundle: true, Providers: coreIDs, SDK: "lego",
+			Bundle: true, Providers: coreIDs, HideIcon: true, SDK: "lego",
 		},
 		{
 			Kind: "dns", ID: "heavy", Version: defaultVer, Tag: "bundle_dns_heavy",
@@ -241,16 +246,10 @@ func buildEntries() []pluginEntry {
 			Bundle: true, Providers: heavyIDs, SDK: "lego",
 		},
 		{
-			Kind: "dns", ID: "core-native", Version: "0.1.0", Tag: "bundle_dns_core_native",
-			Name: "DNS 插件包（常用·重构增量）", Description: "184 个常用服务商的增量重构变体；已迁移 provider 不再链接其 SDK。",
-			Bundle: true, Providers: coreIDs, VariantOf: "core",
-			ConflictsWith: []string{"core"}, SDK: "native",
-		},
-		{
-			Kind: "dns", ID: "heavy-native", Version: "0.1.0", Tag: "bundle_dns_heavy_native",
-			Name: "DNS 插件包（大型云厂商·重构）", Description: "10 个大型云厂商的重构实现，不依赖 lego 与上游云 SDK。",
-			Bundle: true, Providers: heavyIDs, VariantOf: "heavy",
-			ConflictsWith: []string{"heavy"}, SDK: "native",
+			Kind: "dns", ID: "all-native", Version: "0.1.0", Tag: "bundle_dns_all_native",
+			Name: "DNS 插件包（全量·重构）", Description: "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
+			Bundle: true, Providers: allIDs, ConflictsWith: []string{"core", "heavy"},
+			HideIcon: true, SDK: "native",
 		},
 		{
 			Kind: "deploy", ID: "all", Version: deployVer, Tag: "bundle_deploy_all",
@@ -662,6 +661,7 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 		"providers":      entry.Providers,
 		"variant_of":     entry.VariantOf,
 		"conflicts_with": entry.ConflictsWith,
+		"hide_icon":      entry.HideIcon,
 		"sdk":            entry.SDK,
 	}
 	pluginRaw, _ := json.MarshalIndent(pluginJSON, "", "  ")
@@ -703,7 +703,8 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 		Kind: entry.Kind, ID: entry.ID, Version: version, Tag: entry.Tag,
 		Name: entry.Name, Description: entry.Description, Bundle: entry.Bundle, Providers: entry.Providers,
 		VariantOf: entry.VariantOf, ConflictsWith: entry.ConflictsWith, SDK: entry.SDK,
-		OS: goos, Arch: goarch, Asset: assetName, SHA256: digest, Size: size,
+		HideIcon: entry.HideIcon,
+		OS:       goos, Arch: goarch, Asset: assetName, SHA256: digest, Size: size,
 		UncompressedSize: info.Size(),
 	}
 	metaPath := strings.TrimSuffix(assetPath, ".tar.gz") + ".meta.json"
@@ -842,11 +843,17 @@ func cmdIndex(args []string) {
 				}
 			}
 		}
+		hideIcon := meta.HideIcon
+		if !hideIcon {
+			if entry, ok := findEntryByID(loadManifest(), meta.Kind, meta.ID); ok {
+				hideIcon = entry.HideIcon
+			}
+		}
 		plugins = append(plugins, indexPlugin{
 			Kind: meta.Kind, ID: meta.ID, Name: name, Description: desc,
 			Version: meta.Version, Protocol: "v1", Bundle: meta.Bundle,
 			Providers: meta.Providers, VariantOf: meta.VariantOf, ConflictsWith: meta.ConflictsWith,
-			SDK: meta.SDK, UncompressedSize: meta.UncompressedSize,
+			HideIcon: hideIcon, SDK: meta.SDK, UncompressedSize: meta.UncompressedSize,
 			Single: !meta.Bundle, Assets: latest.assets,
 		})
 	}

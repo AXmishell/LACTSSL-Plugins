@@ -1,6 +1,6 @@
-# Heavy Native Provider 实现说明
+# Native Provider 实现说明
 
-`lactssl-dns-heavy-native` 是 `lactssl-dns-heavy` 的并行变体，provider ID、字段、别名与 manifest 完全一致，但实现全部位于本仓库，不链接 lego 与上游云 SDK。
+`lactssl-dns-all-native` 把原 `heavy-native` 与 `core-native` 合并为一个全量重构包：覆盖 `core` + `heavy` 的 194 个 provider，provider ID、字段、别名与 manifest 完全一致。已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK。
 
 ## 1. 已实现 provider
 
@@ -17,9 +17,9 @@
 | `iij` | IIJ HmacSHA256 | IIJ DO API | 支持 zone/record/commit 流程 |
 | `rfc2136` | TSIG HMAC（MD5/SHA1/224/256/384/512） | DNS UPDATE | **不支持 GSS-TSIG**，见下 |
 
-## 2. Core Native 第一批
+## 2. Core 已迁移 provider
 
-`lactssl-dns-core-native` 与 `lactssl-dns-core` 使用相同的 184 个 provider ID，已迁移的实现位于 `dns/native/providers/`，其余继续引用原 lego 包装。
+`lactssl-dns-all-native` 中，常用部分的 184 个 provider ID 与 `lactssl-dns-core` 完全一致；已迁移的实现位于 `dns/native/providers/`，其余继续引用原 lego 包装。
 
 | Provider | 认证 | API |
 |---|---|---|
@@ -35,7 +35,7 @@
 | `volcengine` | HMAC-SHA256 | Volcano Engine DNS `2018-08-01` |
 | `vultr` | Bearer | Vultr API v2 |
 
-体积：20.55 MiB → 17.81 MiB。manifest 与原 `core` 逐字段一致。
+合并后的 `all-native` 实测约 18.1 MiB；常用部分在迁移这 11 家后从 20.55 MiB 降到 17.81 MiB。194 个 provider 的 manifest 与原 `core` / `heavy` 逐字段一致。
 
 ## 3. 共享包
 
@@ -63,7 +63,7 @@
 
 ## 5. 已知限制
 
-- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时使用原 `heavy` 包。
+- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时使用原 `core` / `heavy` 包。
 - `route53` / `lightsail` 目前支持静态 AK/SK 或环境变量，未实现 shared credentials 文件、STS AssumeRole、EC2 IMDS；原 `heavy` 包保留这些能力。
 - `gcloud` 未实现 metadata server 默认凭据；需要显式 service account JSON 或 `GOOGLE_APPLICATION_CREDENTIALS`。
 - `azuredns` 未实现 managed identity / workload identity，仅 client secret。
@@ -83,6 +83,6 @@ go test ./dns/native/... ./sdk/...
 ```
 
 `check_native.sh` 会：
-1. 构建 `heavy-native` 并检查 ≤ 10 MiB；
-2. 检查依赖闭包中不出现 lego / AWS / Azure / GCP / 华为云 / Sakura / Akamai / IIJ 等 SDK；
-3. 对比 `heavy` 与 `heavy-native` 的 manifest（忽略 version/name）。
+1. 构建 `all-native` 并检查 ≤ 20 MiB；
+2. 检查已迁移 provider 不再链接对应 lego 包装，且已迁移 SDK 未回归；
+3. 对比全量 194 个 provider 的 manifest（忽略 version/name）。

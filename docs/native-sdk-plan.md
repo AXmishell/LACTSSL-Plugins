@@ -11,6 +11,7 @@
 > - P1 已完成：`heavy-native` 的 10 家 provider 全部完成重构，实测 **7.80 MiB**（原 `heavy` 38.59 MiB），manifest 与原包逐字段一致，依赖闭包只剩 `miekg/dns` + Go 标准库（`golang.org/x/net`、`x/sys` 为其传递依赖）。
 > - CI 已加入 `scripts/check_native.sh`：heavy 体积预算 10 MiB、core 预算 19 MiB、已迁移 SDK 黑名单、manifest 对比。
 > - P2 第一批已完成：`core-native`（184 家）从 20.55 MiB 降到 **17.81 MiB**，已迁移 11 家：`alidns`、`aliesa`、`azion`、`dnsimple`、`exoscale`、`linode`、`ns1`、`ovh`、`scaleway`、`volcengine`、`vultr`。
+> - 2026-11-17 调整：构建阶段不再分别发布 `core-native` 与 `heavy-native`，二者合并为单个 `all-native` 包（194 个 provider，实测约 **18.1 MiB**，构建标签 `bundle_dns_all_native`）。下文中关于两个 native 变体的命名与体积预算属于方案阶段记录，当前以 README 与 `docs/native-providers.md` 为准。
 > - 未完成：`core-native` 长尾 provider；`rfc2136` 的 GSS-TSIG（native 变体明确报错，原包保留）。
 
 ---
