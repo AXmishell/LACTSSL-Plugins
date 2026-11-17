@@ -37,10 +37,12 @@ scripts/pluginctl 生成、构建、打包、索引、签名工具
 DNS 只发布一个 `all-native` 包，部署与通知各一个入口：
 
 ```bash
-go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -o lactssl-dns-all-native ./cmd/dns-helper
-go build -trimpath -tags nethttpomithttp2 -o lactssl-deploy-all ./cmd/deploy-helper
-go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-helper
+go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -o lactssl-dns-all-native ./cmd/dns-helper
+go build -trimpath -tags "nethttpomithttp2,http2legacy" -o lactssl-deploy-all ./cmd/deploy-helper
+go build -trimpath -tags "nethttpomithttp2,http2legacy" -o lactssl-notify-all ./cmd/notify-helper
 ```
+
+`http2legacy` 用于规避 Go 1.27 `net/http` 与新版 `x/net/http2` 包装层的兼容问题（Azure SDK 初始化会触发 panic），发布构建同样需要带上。
 
 不带 `bundle_dns_all_native` 标签时会构建全量 lego 实现，仅用于本地兼容性校验（`scripts/check_native.sh` 会用它对比 manifest），不作为发布包。
 
@@ -167,7 +169,7 @@ tar.gz
 - `plugins.json` 中每个合并包独立 SemVer；升级插件时修改对应版本号并重新构建。
 - DNS 只保留 `all-native` 一个发布包，provider ID、字段、别名与旧 `core` + `heavy` 完全一致；账户与任务无需迁移。
 - `catalog.DeployMigrations()` 提供旧部署 ID 到规范部署器及配置覆盖的映射。宿主迁移旧账号时应把 `Config` 合并进部署配置（例如 `tencent_cos → tencent + target=cos`、`qiniu_kodo → qiniu + domain_type=kodo`），否则会落到规范部署器的默认目标。
-- `all-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时可本地构建不带 `bundle_dns_all_native` 标签的全量 lego helper，发布包不再提供旧 `core` / `heavy` 包。
+- `all-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时可本地构建不带 `bundle_dns_all_native` 标签的全量 lego helper（保留 `http2legacy`），发布包不再提供旧 `core` / `heavy` 包。
 
 ## SDK 重构
 
