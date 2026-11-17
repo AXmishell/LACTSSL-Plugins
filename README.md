@@ -46,7 +46,7 @@ go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-hel
 
 `all-native` 覆盖原 `core` 与 `heavy` 的全部 194 个 provider，把原来两个重构包合并为一次构建：已迁移 provider 使用 `dns/native`，其余暂时继续使用原 lego 包装；每迁移一家，包体积继续下降。它与 `core`、`heavy` 使用相同的 provider ID，因此与二者互斥（索引中以 `conflicts_with` 标注）。
 
-`all-native` 在清单中声明 `hide_icon: true`：插件市场不展示服务商 logo，避免把某一家的图标当作整个全量包的门面；`heavy` 仍使用首个 provider 的图标。
+`all-native` 与 `core` 在清单中声明 `hide_icon: true`；宿主对合并包本身也不会借用第一个 provider 的图标，市场只显示包 ID 对应的包级图标（目前未提供），因此这些条目名称前不再出现 `alidns` 等单家服务商 logo。
 
 `manifest` 输出该类全部条目；`pluginctl` 会校验 manifest 与 `plugins.json` 的 `providers` 集合完全一致。
 
