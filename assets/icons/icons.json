@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "aliases": {
+    "deploy": {
+      "1panel_panel": "1panel",
+      "1panel_site": "1panel",
+      "baota_panel": "baota",
+      "baota_site": "baota",
+      "qiniu_cdn": "qiniu",
+      "qiniu_kodo": "qiniu"
+    }
+  }
+}

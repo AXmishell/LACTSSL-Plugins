@@ -1,4 +1,4 @@
-// Package iij 是 IIJ DNS 的自研实现。
+// Package iij 是 IIJ DNS 的重构实现。
 //
 // 使用 IIJ DO API 的 HmacSHA256 签名与 JSON 接口。
 package iij

@@ -1,4 +1,4 @@
-// Package gcloud 是 Google Cloud DNS 的自研实现。
+// Package gcloud 是 Google Cloud DNS 的重构实现。
 //
 // 使用 service account JWT -> OAuth2 token + Cloud DNS REST API。
 package gcloud

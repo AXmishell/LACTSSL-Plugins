@@ -1,4 +1,4 @@
-// Package lightsail 是 AWS Lightsail DNS 的自研实现。
+// Package lightsail 是 AWS Lightsail DNS 的重构实现。
 //
 // 使用 SigV4 + Lightsail JSON 1.1 API，覆盖 TXT 记录增删。
 package lightsail

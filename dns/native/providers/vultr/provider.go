@@ -1,4 +1,4 @@
-// Package vultr 是 Vultr DNS 的自研实现。
+// Package vultr 是 Vultr DNS 的重构实现。
 package vultr
 
 import (

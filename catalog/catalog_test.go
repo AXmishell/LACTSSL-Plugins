@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	legodns "github.com/go-acme/lego/v4/providers/dns"
 )
 
@@ -11,8 +12,8 @@ func TestCounts(t *testing.T) {
 	if got := len(DNSProviders()); got != 194 {
 		t.Fatalf("dns providers = %d, want 194", got)
 	}
-	if got := len(Deployers()); got != 13 {
-		t.Fatalf("deployers = %d, want 13", got)
+	if got := len(Deployers()); got != 43 {
+		t.Fatalf("deployers = %d, want 43", got)
 	}
 	if got := len(DeprecatedDeployTypes()); got != 6 {
 		t.Fatalf("deprecated deploy types = %d, want 6", got)
@@ -42,6 +43,29 @@ func TestEnvForCloudflareTokenWins(t *testing.T) {
 	}
 	if _, ok := envs["CLOUDFLARE_API_KEY"]; ok {
 		t.Fatal("api key should be removed when token is set")
+	}
+}
+
+func TestDeployCatalogI18n(t *testing.T) {
+	for _, locale := range []i18n.Locale{i18n.ZhCN, i18n.EnUS} {
+		for _, provider := range Deployers() {
+			keys := []string{provider.LabelKey, provider.DescKey}
+			fields := append(append([]Field{}, provider.Fields...), provider.DeployFields...)
+			for _, field := range fields {
+				keys = append(keys, field.LabelKey, field.HelpKey, field.PlaceholderKey)
+				for _, option := range field.Options {
+					keys = append(keys, option.LabelKey)
+				}
+			}
+			for _, key := range keys {
+				if key == "" {
+					continue
+				}
+				if text := i18n.T(locale, key, nil); text == key {
+					t.Errorf("%s: missing translation %q", locale, key)
+				}
+			}
+		}
 	}
 }
 

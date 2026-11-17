@@ -1,4 +1,4 @@
-// Package exoscale 是 Exoscale DNS 的自研实现。
+// Package exoscale 是 Exoscale DNS 的重构实现。
 package exoscale
 
 import (

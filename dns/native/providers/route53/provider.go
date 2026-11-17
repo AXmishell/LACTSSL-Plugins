@@ -1,4 +1,4 @@
-// Package route53 是 AWS Route 53 的自研实现。
+// Package route53 是 AWS Route 53 的重构实现。
 //
 // 使用 SigV4 + Route 53 REST XML API，覆盖 hosted zone 查找与 TXT 记录增删。
 package route53

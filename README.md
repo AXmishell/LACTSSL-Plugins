@@ -9,24 +9,25 @@ LACTSSL 官方插件仓库：DNS、证书部署与通知插件的源码、合并
 ```text
 protocol/        插件协议 v1 的线格式（零第三方依赖）
 sdk/helper/      helper 启动框架：内存预算、JSON、错误退出
-sdk/httpapi/     自研 provider 共用的最小 HTTP 客户端
-sdk/{sigv4,huawei,gcp,azure,edgegrid,dnsutil}/  自研签名/认证/域名工具
+sdk/httpapi/     重构 provider 共用的最小 HTTP 客户端
+sdk/{sigv4,huawei,gcp,azure,edgegrid,dnsutil}/  重构签名/认证/域名工具
 catalog/         官方服务商 / 部署目标元数据（data.json）
 i18n/            插件侧精简文案
 outbound/        SSRF 防护出站 HTTP 客户端
 dns/             194 个 lego 服务商包装 + 注册表
   providers/<id>/   原有 lego 包装（保留）
-  native/providers/<id>/  自研实现（heavy 10 家已迁移）
+  native/providers/<id>/  重构实现（heavy 10 家已迁移）
   groups/           合并包的 provider 分组
-deploy/          7 个部署目标
-  providers/{ftp,webhook,aliyuncdn,qiniu,panels}
+deploy/          37 个部署目标
+  providers/{ftp,webhook,qiniu,aliyuncdn,aliyunoss,aliyuncloud,tencent,huawei,volcengine,ucloud,upyun,doge,baidu,btwaf,lecdn,rainyun,smtp,npm,acepanel,cdnfly,lucky,proxmox,synology,plesk,panels}
 notify/          23 个通知渠道
   providers/channels
 cmd/
   dns-helper/    DNS 合并包入口（194 个服务商）
-  deploy-helper/ 部署合并包入口（7 个目标）
+  deploy-helper/ 部署合并包入口（37 个目标）
   notify-helper/ 通知合并包入口（23 个渠道）
 plugins.json     合并包清单（kind/id/version/tag/providers，6 个包）
+assets/icons/    服务商图标（按 kind 存放，icons.json 声明别名）
 testdata/        迁移前 bundle manifest 基线
 scripts/pluginctl 生成、构建、打包、索引、签名工具
 ```
@@ -44,7 +45,7 @@ go build -trimpath -tags nethttpomithttp2 -o lactssl-deploy-all ./cmd/deploy-hel
 go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-helper
 ```
 
-`heavy-native` 是 10 个大型云厂商的自研实现，不链接 lego / AWS / Azure / GCP / 华为云等 SDK；它与 `heavy` 使用相同的 provider ID，因此二者只能安装一个（索引中以 `variant_of` / `conflicts_with` 标注）。
+`heavy-native` 是 10 个大型云厂商的重构实现，不链接 lego / AWS / Azure / GCP / 华为云等 SDK；它与 `heavy` 使用相同的 provider ID，因此二者只能安装一个（索引中以 `variant_of` / `conflicts_with` 标注）。
 
 `core-native` 是与 `core` 相同的 184 个 provider 的增量变体：已迁移 provider 使用 `dns/native`，其余暂时继续使用原 lego 包装；每迁移一家，包体积继续下降。
 
@@ -70,8 +71,12 @@ make index BASE_URL=https://github.com/AXmishell/LACTSSL-Plugins/releases/downlo
 tar.gz
 ├── plugin.json
 ├── lactssl-<kind>-<id>[.exe]
+├── icons/                      # 可选：该包覆盖的 provider 图标
+│   └── <provider>.svg|png|webp
 └── LICENSE
 ```
+
+图标源文件在 `assets/icons/<kind>/`，`assets/icons/icons.json` 声明历史 ID 的复用关系（如 `baota_site → baota`）。`pluginctl build` 会按包的 `providers` 收集图标，写入 `plugin.json.icons` 与 `icons/`；`pluginctl index` 把图标内联到索引根级 `icons`，供主程序在插件安装前展示市场条目。单张图标解码后不超过 64 KB，只允许 svg / png / webp。
 
 索引包含每个合并包的版本、协议、最低宿主版本、providers 列表、各平台资产 URL、sha256、压缩大小与 `uncompressed_size`（解压后实际磁盘占用）。官方索引可用 Ed25519 签名，签名文件为 `index.json.sig`。
 
@@ -80,17 +85,71 @@ tar.gz
 | 包 | 解压后 | manifest 峰值内存 |
 |---|---:|---:|
 | DNS 常用（184 个服务商） | 约 21 MiB | 约 22 MiB |
-| DNS 常用·自研增量（184 个服务商） | **约 17.8 MiB** | 约 20 MiB |
+| DNS 常用·重构增量（184 个服务商） | **约 17.8 MiB** | 约 20 MiB |
 | DNS 大型云厂商（10 个服务商） | 约 39 MiB | 约 26 MiB |
-| DNS 大型云厂商·自研（10 个服务商） | **约 7.8 MiB** | 约 10 MiB |
-| 部署（7 个目标） | 约 7 MiB | 约 10 MiB |
+| DNS 大型云厂商·重构（10 个服务商） | **约 7.8 MiB** | 约 10 MiB |
+| 部署（37 个目标） | 约 7.8 MiB | 约 11 MiB |
 | 通知（23 个渠道） | 约 7 MiB | 约 10 MiB |
 | 旧布局合计 | 约 73 MiB | — |
 | 使用 core-native + heavy-native 的合计 | 约 40 MiB | — |
 
 旧的单服务商打包约为 1.7 GiB（224 个包），合并后降到约 4%。DNS 拆成常用/重型两个包，是为了让绝大多数用户只安装约 21 MiB、运行内存约 22 MiB；两个包合计仍只比单个全量包多约 2 MiB。
 
-`heavy-native` 的 10 家 provider 全部为仓库自研实现，链接图只剩 `miekg/dns`（RFC 2136 协议库）与 Go 标准库。`core-native` 目前已有 11 家迁移到自研实现（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 SDK 不回归、manifest 兼容性。
+`heavy-native` 的 10 家 provider 全部为仓库重构实现，链接图只剩 `miekg/dns`（RFC 2136 协议库）与 Go 标准库。`core-native` 目前已有 11 家迁移到重构实现（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 SDK 不回归、manifest 兼容性。
+
+## 从 certd 移植的部署目标
+
+本仓库从 [certd](https://github.com/certd/certd) 的部署插件中移植并重构了 17 个目标，统一使用 LACTSSL 的 `deploy` 协议与 `fields` / `deploy_fields` 模型。
+
+| LACTSSL ID | certd 插件 | 说明 |
+|---|---|---|
+| `smtp` | 邮件发送证书 | 证书打包为 ZIP 附件，支持 TLS / STARTTLS |
+| `nginx_proxy_manager` | Nginx Proxy Manager-部署到主机 | 自定义证书上传与代理主机绑定，支持 TOTP |
+| `acepanel` | AcePanel-部署到网站 | 上传证书并批量部署网站 |
+| `acepanel_panel` | AcePanel-面板证书 | 替换面板 HTTPS 证书 |
+| `cdnfly` | cdnfly-部署证书到cdnfly | 支持 API Key 与账号密码登录 |
+| `lucky` | lucky-更新Lucky证书 | 通过 OpenToken 更新已有证书 |
+| `doge` | 多吉云-部署到多吉云CDN | 上传证书并绑定 CDN 域名 |
+| `tencent_cdn` | 腾讯云-部署到CDN-v2 | 通过 SSL 证书服务部署到 CDN |
+| `tencent_cos` | 腾讯云-部署证书到COS | 通过 SSL 证书服务部署到 COS 自定义域名 |
+| `huawei_cdn` | 华为云-部署证书至CDN | 更新 CDN 域名 HTTPS 配置 |
+| `volcengine_cdn` | 火山引擎-部署证书至CDN | 上传证书并更新加速域名 |
+| `aliyun_oss` | 阿里云-部署证书至OSS | 为 OSS 自定义域名绑定证书 |
+| `ucloud_cdn` | UCloud-部署到CDN | 上传 USSL 证书并更新 CDN HTTPS 配置 |
+| `upyun_cdn` | 又拍云-部署证书到CDN/USS | 上传证书并更新域名 HTTPS 策略 |
+| `proxmox` | Proxmox-上传证书到Proxmox | 为 PVE 节点上传自定义证书 |
+| `synology` | 群晖-部署证书到群晖面板 | 通过 DSM Web API 更新证书，支持 TOTP / 设备 ID |
+| `plesk` | Plesk-部署Plesk网站证书 | 通过 Plesk HTTP API 登录并上传一体化证书 |
+
+重构约定：
+
+- 认证与连接信息放在 `fields`，随凭据加密保存；域名、站点、节点等任务参数放在 `deploy_fields`。
+- 站点/主机/证书等选择项统一支持「ID 或域名，逗号分隔」，留空时按证书域名自动匹配，不依赖主程序的下拉组件。
+- 腾讯云 TC3、华为云 SDK-HMAC、火山引擎 HMAC、阿里云 OSS V1、UCloud SHA1 签名均为仓库内重构实现，不引入上游云 SDK。
+- certd 中基于 SSH 的目标（OpenWrt、QNAP、飞牛 NAS、IIS 等）与「复制到本机」没有重复移植：LACTSSL 内置的 `ssh` 与 `local` 目标已覆盖同类场景；IIS 需要 PFX 编码与 PowerShell 远程执行，暂不在插件侧提供。群晖、Plesk 等有稳定 HTTP API 的目标已改为 API 实现，不依赖 SSH。
+- Kubernetes、AWS CloudFront、Fastly 等依赖大型 SDK 或仅上传不绑定的目标暂未纳入部署包，后续可按同一模式增量补充。
+
+## 从 ALLinSSL 移植的部署目标
+
+同时从 [ALLinSSL](https://github.com/allinssl/allinssl) 的 `backend/internal/cert/deploy` 移植并重构了 13 个目标。ALLinSSL 使用 Go 实现，字段与接口逻辑与本仓库更接近；本次保留其 API 语义，但统一改为 LACTSSL 的 `fields` / `deploy_fields` 与错误处理：
+
+| LACTSSL ID | ALLinSSL 目标 | 说明 |
+|---|---|---|
+| `tencent_waf` | `tencentcloud-waf` | 腾讯云 SSL 证书服务部署到 WAF |
+| `tencent_teo` | `tencentcloud-teo` | 腾讯云 SSL 证书服务部署到 EdgeOne |
+| `aliyun_dcdn` | `aliyun-dcdn` | 阿里云 DCDN 域名证书 |
+| `aliyun_esa` | `aliyun-esa` | 阿里云 ESA 站点证书 |
+| `aliyun_waf` | `aliyun-waf` | 阿里云 WAF 域名证书，复用 CAS 上传与 WAF Listen/Redirect |
+| `baidu_cdn` | `baidu-cdn` | 百度智能云 CDN 证书上传与绑定 |
+| `volcengine_dcdn` | `volcengine-dcdn` | 火山引擎 DCDN 证书上传与绑定 |
+| `lecdn` | `lecdn` | LeCDN 登录、证书上传、站点域名绑定 |
+| `rainyun` | `rainyun-sslcenter` | 雨云 SSL 证书中心 |
+| `btwaf` | `btwaf-site` | 宝塔 WAF 站点证书 |
+| `safeline_panel` | `safeline-panel` | 雷池控制台证书 |
+| `safeline_portal` | `safeline-portal` | 雷池认证中心证书 |
+| `baota_docker` | `btpanel-dockersite` | 宝塔 Docker 网站证书 |
+
+`btpanel-singlesite` 由现有 `baota` 网站部署逻辑直接覆盖。ALLinSSL 的 `btpanel`、`1panel`、`aliyun-cdn`、`aliyun-oss`、`qiniu-*`、`huaweicloud-cdn`、`volcengine-cdn`、`doge-cdn`、`webhook`、`ssh`、`localhost` 与本仓库已有目标重复，未重复注册。
 
 ## 发布
 
@@ -113,7 +172,7 @@ tar.gz
 - `heavy` 与 `heavy-native` 是同一 provider 集合的两个实现变体，provider ID、字段、别名完全一致；同一宿主只能启用一个，切换时账户与任务无需迁移。
 - `heavy-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时继续使用原 `heavy` 包。
 
-## 自研 SDK 化
+## SDK 重构
 
 方案与后续增量计划见 `docs/native-sdk-plan.md`，10 家 provider 的实现细节与限制见 `docs/native-providers.md`。当前已落地 P0 + P1：
 

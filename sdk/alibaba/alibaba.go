@@ -28,6 +28,15 @@ type Signer struct {
 
 // Do 发送一个 GET RPC 请求，返回响应体。
 func (s Signer) Do(ctx context.Context, client *httpapi.Client, endpoint, action, version string, params map[string]string, out any) error {
+	return s.do(ctx, client, http.MethodGet, endpoint, action, version, params, out)
+}
+
+// DoPost 发送一个 POST 表单 RPC 请求，返回响应体。
+func (s Signer) DoPost(ctx context.Context, client *httpapi.Client, endpoint, action, version string, params map[string]string, out any) error {
+	return s.do(ctx, client, http.MethodPost, endpoint, action, version, params, out)
+}
+
+func (s Signer) do(ctx context.Context, client *httpapi.Client, method, endpoint, action, version string, params map[string]string, out any) error {
 	if s.AccessKeyID == "" || s.AccessKeySecret == "" {
 		return fmt.Errorf("alibaba: access key and secret are required")
 	}
@@ -54,14 +63,22 @@ func (s Signer) Do(ctx context.Context, client *httpapi.Client, endpoint, action
 	}
 
 	canonical := canonicalQuery(values)
-	stringToSign := "GET&%2F&" + percentEncode(canonical)
+	stringToSign := method + "&%2F&" + percentEncode(canonical)
 	mac := hmac.New(sha1.New, []byte(s.AccessKeySecret+"&"))
 	mac.Write([]byte(stringToSign))
 	values.Set("Signature", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 
-	query := canonicalQuery(values)
 	header := make(http.Header)
-	resp, err := client.Do(ctx, http.MethodGet, strings.TrimRight(endpoint, "/")+"/?"+query, nil, header, nil)
+	endpoint = strings.TrimRight(endpoint, "/")
+	var resp *httpapi.Response
+	var err error
+	if method == http.MethodPost {
+		form := canonicalQuery(values)
+		header.Set("Content-Type", "application/x-www-form-urlencoded")
+		resp, err = client.Do(ctx, http.MethodPost, endpoint+"/", nil, header, []byte(form))
+	} else {
+		resp, err = client.Do(ctx, method, endpoint+"/?"+canonicalQuery(values), nil, header, nil)
+	}
 	if err != nil {
 		return err
 	}

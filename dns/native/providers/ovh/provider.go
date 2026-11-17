@@ -1,4 +1,4 @@
-// Package ovh 是 OVH DNS 的自研实现。
+// Package ovh 是 OVH DNS 的重构实现。
 package ovh
 
 import (

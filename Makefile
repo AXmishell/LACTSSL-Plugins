@@ -19,7 +19,7 @@ bundle:
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2 -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
 
-# 自研包：heavy 完全不依赖 lego；core 为增量变体。
+# 重构包：heavy 完全不依赖 lego；core 为增量变体。
 bundle-native:
 	mkdir -p $(BIN)
 	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_heavy_native,nethttpomithttp2" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-heavy-native ./cmd/dns-helper

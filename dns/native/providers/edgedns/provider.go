@@ -1,4 +1,4 @@
-// Package edgedns 是 Akamai EdgeDNS 的自研实现。
+// Package edgedns 是 Akamai EdgeDNS 的重构实现。
 //
 // 使用 EdgeGrid EG1-HMAC-SHA256 签名 + Config DNS v2 REST API。
 package edgedns

@@ -1,4 +1,4 @@
-// Package alidns 是阿里云 DNS 的自研实现。
+// Package alidns 是阿里云 DNS 的重构实现。
 package alidns
 
 import (

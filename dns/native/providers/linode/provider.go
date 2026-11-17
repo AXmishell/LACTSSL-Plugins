@@ -1,4 +1,4 @@
-// Package linode 是 Linode DNS 的自研实现。
+// Package linode 是 Linode DNS 的重构实现。
 package linode
 
 import (

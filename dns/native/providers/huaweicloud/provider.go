@@ -1,4 +1,4 @@
-// Package huaweicloud 是华为云 DNS 的自研实现。
+// Package huaweicloud 是华为云 DNS 的重构实现。
 //
 // 使用 AK/SK SDK-HMAC-SHA256 签名 + DNS REST API。
 package huaweicloud

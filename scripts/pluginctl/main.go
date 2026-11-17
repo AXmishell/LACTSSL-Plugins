@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
@@ -40,6 +41,8 @@ import (
 const (
 	manifestPath = "plugins.json"
 	defaultVer   = "1.0.0"
+	// deployVer 单独维护：新增 certd / ALLinSSL 移植目标时递增，发布流程据此重建部署包。
+	deployVer = "1.2.0"
 )
 
 type pluginEntry struct {
@@ -88,6 +91,54 @@ type indexFile struct {
 	Protocol    string        `json:"protocol"`
 	GeneratedAt string        `json:"generated_at"`
 	Plugins     []indexPlugin `json:"plugins"`
+	Icons       []indexIcon   `json:"icons,omitempty"`
+}
+
+// iconFileRef 指向插件包内的图标文件。
+type iconFileRef struct {
+	File   string `json:"file"`
+	SHA256 string `json:"sha256"`
+}
+
+// iconAsset 是仓库 assets/icons 下的一张图标。
+type iconAsset struct {
+	Kind    string
+	ID      string
+	Ext     string
+	MIME    string
+	SHA256  string
+	Data    []byte
+	Source  string
+	Aliases []string
+}
+
+// iconManifest 是 assets/icons/icons.json，按 kind 声明复用关系。
+type iconManifest struct {
+	Schema  int                          `json:"schema"`
+	Aliases map[string]map[string]string `json:"aliases"`
+}
+
+// indexIcon 是索引中的内联图标，kind/id 为规范 ID，aliases 为历史 ID。
+type indexIcon struct {
+	Kind    string   `json:"kind"`
+	ID      string   `json:"id"`
+	MIME    string   `json:"mime"`
+	SHA256  string   `json:"sha256"`
+	Data    string   `json:"data"`
+	Aliases []string `json:"aliases,omitempty"`
+}
+
+const (
+	iconRoot     = "assets/icons"
+	maxIconBytes = 64 << 10
+)
+
+var iconIDPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
+
+var iconMIME = map[string]string{
+	".svg":  "image/svg+xml",
+	".png":  "image/png",
+	".webp": "image/webp",
 }
 
 type indexPlugin struct {
@@ -191,18 +242,18 @@ func buildEntries() []pluginEntry {
 		},
 		{
 			Kind: "dns", ID: "core-native", Version: "0.1.0", Tag: "bundle_dns_core_native",
-			Name: "DNS 插件包（常用·自研增量）", Description: "184 个常用服务商的增量自研变体；已迁移 provider 不再链接其 SDK。",
+			Name: "DNS 插件包（常用·重构增量）", Description: "184 个常用服务商的增量重构变体；已迁移 provider 不再链接其 SDK。",
 			Bundle: true, Providers: coreIDs, VariantOf: "core",
 			ConflictsWith: []string{"core"}, SDK: "native",
 		},
 		{
 			Kind: "dns", ID: "heavy-native", Version: "0.1.0", Tag: "bundle_dns_heavy_native",
-			Name: "DNS 插件包（大型云厂商·自研）", Description: "10 个大型云厂商的自研实现，不依赖 lego 与上游云 SDK。",
+			Name: "DNS 插件包（大型云厂商·重构）", Description: "10 个大型云厂商的重构实现，不依赖 lego 与上游云 SDK。",
 			Bundle: true, Providers: heavyIDs, VariantOf: "heavy",
 			ConflictsWith: []string{"heavy"}, SDK: "native",
 		},
 		{
-			Kind: "deploy", ID: "all", Version: defaultVer, Tag: "bundle_deploy_all",
+			Kind: "deploy", ID: "all", Version: deployVer, Tag: "bundle_deploy_all",
 			Name: "部署插件包", Description: "包含全部官方证书部署目标实现。",
 			Bundle: true, Providers: deployIDs,
 		},
@@ -363,6 +414,135 @@ func dnsGroupAllSource(tags []string) string {
 	return b.String()
 }
 
+// entryProviders 返回插件包覆盖的 provider 集合；单插件包没有 providers 时用自身 ID。
+func entryProviders(entry pluginEntry) []string {
+	if len(entry.Providers) > 0 {
+		return entry.Providers
+	}
+	return []string{entry.ID}
+}
+
+// loadIcons 读取 assets/icons 下的全部图标，并展开 icons.json 中的别名。
+func loadIcons() (map[string]map[string]*iconAsset, error) {
+	icons := map[string]map[string]*iconAsset{}
+	manifest := iconManifest{}
+	manifestPath := filepath.Join(iconRoot, "icons.json")
+	if raw, err := os.ReadFile(manifestPath); err == nil {
+		if err := json.Unmarshal(raw, &manifest); err != nil {
+			return nil, fmt.Errorf("解析 %s 失败: %w", manifestPath, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	for _, kind := range []string{"dns", "deploy", "notify"} {
+		dir := filepath.Join(iconRoot, kind)
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, err
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			name := entry.Name()
+			ext := strings.ToLower(filepath.Ext(name))
+			mime, ok := iconMIME[ext]
+			if !ok {
+				return nil, fmt.Errorf("图标 %s 的格式不受支持（仅支持 svg/png/webp）", name)
+			}
+			id := strings.TrimSuffix(name, filepath.Ext(name))
+			if !iconIDPattern.MatchString(id) {
+				return nil, fmt.Errorf("图标 ID 非法: %q", id)
+			}
+			info, err := entry.Info()
+			if err != nil {
+				return nil, err
+			}
+			if !info.Mode().IsRegular() {
+				return nil, fmt.Errorf("图标必须是普通文件: %s", name)
+			}
+			if info.Size() > maxIconBytes {
+				return nil, fmt.Errorf("图标 %s 超过 %d 字节", name, maxIconBytes)
+			}
+			data, err := os.ReadFile(filepath.Join(dir, name))
+			if err != nil {
+				return nil, err
+			}
+			if icons[kind] == nil {
+				icons[kind] = map[string]*iconAsset{}
+			}
+			if _, dup := icons[kind][id]; dup {
+				return nil, fmt.Errorf("图标重复: %s/%s", kind, id)
+			}
+			sum := sha256.Sum256(data)
+			icons[kind][id] = &iconAsset{
+				Kind: kind, ID: id, Ext: ext, MIME: mime,
+				SHA256: hex.EncodeToString(sum[:]), Data: data,
+				Source: filepath.Join(dir, name),
+			}
+		}
+	}
+	for kind, aliases := range manifest.Aliases {
+		for alias, target := range aliases {
+			if !iconIDPattern.MatchString(alias) {
+				return nil, fmt.Errorf("图标别名非法: %q", alias)
+			}
+			asset, ok := icons[kind][target]
+			if !ok {
+				return nil, fmt.Errorf("图标别名 %s/%s 指向不存在的图标 %q", kind, alias, target)
+			}
+			asset.Aliases = append(asset.Aliases, alias)
+		}
+	}
+	for _, byID := range icons {
+		for _, asset := range byID {
+			sort.Strings(asset.Aliases)
+		}
+	}
+	return icons, nil
+}
+
+func mustLoadIcons() map[string]map[string]*iconAsset {
+	icons, err := loadIcons()
+	if err != nil {
+		fail(err.Error())
+	}
+	return icons
+}
+
+// buildIndexIcons 只为 plugins.json 中仍存在的 provider 输出图标。
+func buildIndexIcons(icons map[string]map[string]*iconAsset, entries []pluginEntry) []indexIcon {
+	wanted := map[string]bool{}
+	for _, entry := range entries {
+		for _, provider := range entryProviders(entry) {
+			wanted[entry.Kind+"|"+provider] = true
+		}
+	}
+	out := make([]indexIcon, 0)
+	for kind, byID := range icons {
+		for id, asset := range byID {
+			if !wanted[kind+"|"+id] {
+				continue
+			}
+			out = append(out, indexIcon{
+				Kind: kind, ID: id, MIME: asset.MIME, SHA256: asset.SHA256,
+				Data:    "data:" + asset.MIME + ";base64," + base64.StdEncoding.EncodeToString(asset.Data),
+				Aliases: asset.Aliases,
+			})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Kind != out[j].Kind {
+			return out[i].Kind < out[j].Kind
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out
+}
+
 func cmdBuild(args []string) {
 	fs := flag.NewFlagSet("build", flag.ExitOnError)
 	kind := fs.String("kind", "", "dns|deploy|notify")
@@ -485,13 +665,30 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 		"sdk":            entry.SDK,
 	}
 	pluginRaw, _ := json.MarshalIndent(pluginJSON, "", "  ")
-	assetName := fmt.Sprintf("%s_%s_%s_%s.tar.gz", name, version, goos, goarch)
-	assetPath := filepath.Join(outdir, assetName)
-	if err := writeTarGz(assetPath, map[string]fileEntry{
+	icons := mustLoadIcons()
+	refs := map[string]iconFileRef{}
+	files := map[string]fileEntry{
 		"plugin.json": {data: append(pluginRaw, '\n'), mode: 0o644},
 		name + ext:    {path: bin, mode: 0o755},
 		"LICENSE":     {path: "LICENSE", mode: 0o644},
-	}); err != nil {
+	}
+	for _, provider := range entryProviders(entry) {
+		asset, found := icons[entry.Kind][provider]
+		if !found {
+			continue
+		}
+		iconPath := "icons/" + provider + asset.Ext
+		files[iconPath] = fileEntry{path: asset.Source, mode: 0o644}
+		refs[provider] = iconFileRef{File: iconPath, SHA256: asset.SHA256}
+	}
+	if len(refs) > 0 {
+		pluginJSON["icons"] = refs
+		pluginRaw, _ = json.MarshalIndent(pluginJSON, "", "  ")
+		files["plugin.json"] = fileEntry{data: append(pluginRaw, '\n'), mode: 0o644}
+	}
+	assetName := fmt.Sprintf("%s_%s_%s_%s.tar.gz", name, version, goos, goarch)
+	assetPath := filepath.Join(outdir, assetName)
+	if err := writeTarGz(assetPath, files); err != nil {
 		return "", assetMeta{}, err
 	}
 	digest, size, err := fileDigest(assetPath)
@@ -665,8 +862,9 @@ func cmdIndex(args []string) {
 		}
 		return a.ID < b.ID
 	})
+	index.Icons = buildIndexIcons(mustLoadIcons(), loadManifest())
 	writeJSON(*out, index)
-	fmt.Printf("wrote %s with %d plugins\n", *out, len(index.Plugins))
+	fmt.Printf("wrote %s with %d plugins and %d icons\n", *out, len(index.Plugins), len(index.Icons))
 }
 
 // mergeIndex 把未参与本次构建的插件从旧索引沿用过来。

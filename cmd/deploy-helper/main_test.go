@@ -31,6 +31,23 @@ func loadLegacy(t *testing.T, name string) protocol.DeployManifest {
 	return manifest
 }
 
+func assertLegacyEntries(t *testing.T, got, want protocol.DeployManifest) {
+	t.Helper()
+	byID := make(map[string]protocol.Deployer, len(got.Deployers))
+	for _, item := range got.Deployers {
+		byID[item.ID] = item
+	}
+	for _, item := range want.Deployers {
+		actual, ok := byID[item.ID]
+		if !ok {
+			t.Fatalf("legacy deployer %s is missing", item.ID)
+		}
+		if !reflect.DeepEqual(actual, item) {
+			t.Fatalf("legacy deployer %s changed:\n got %+v\nwant %+v", item.ID, actual, item)
+		}
+	}
+}
+
 func TestManifestMatchesLegacyHost(t *testing.T) {
 	t.Setenv(protocol.DeployFeaturesEnv, "")
 	got := buildManifest()
@@ -41,11 +58,9 @@ func TestManifestMatchesLegacyHost(t *testing.T) {
 	want.Version = ""
 	want.Name = ""
 
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("manifest differs: got %d deployers, want %d", len(got.Deployers), len(want.Deployers))
-	}
-	if len(got.Deployers) != 10 {
-		t.Fatalf("deployers = %d, want 10", len(got.Deployers))
+	assertLegacyEntries(t, got, want)
+	if len(got.Deployers) != 40 {
+		t.Fatalf("deployers = %d, want 40", len(got.Deployers))
 	}
 }
 
@@ -59,10 +74,8 @@ func TestManifestMergedDeployers(t *testing.T) {
 	want.Version = ""
 	want.Name = ""
 
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("manifest differs: got %d deployers, want %d", len(got.Deployers), len(want.Deployers))
-	}
-	if len(got.Deployers) != 7 {
-		t.Fatalf("deployers = %d, want 7", len(got.Deployers))
+	assertLegacyEntries(t, got, want)
+	if len(got.Deployers) != 37 {
+		t.Fatalf("deployers = %d, want 37", len(got.Deployers))
 	}
 }

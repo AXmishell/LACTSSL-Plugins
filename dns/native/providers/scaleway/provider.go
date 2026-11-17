@@ -1,4 +1,4 @@
-// Package scaleway 是 Scaleway Domains API 的自研实现。
+// Package scaleway 是 Scaleway Domains API 的重构实现。
 package scaleway
 
 import (

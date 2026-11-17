@@ -1,4 +1,4 @@
-// Package yandexcloud 是 Yandex Cloud DNS 的自研实现。
+// Package yandexcloud 是 Yandex Cloud DNS 的重构实现。
 //
 // 只使用标准库：IAM token + REST API，覆盖 _acme-challenge TXT 的增删。
 package yandexcloud

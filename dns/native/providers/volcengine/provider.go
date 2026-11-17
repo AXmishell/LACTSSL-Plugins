@@ -1,4 +1,4 @@
-// Package volcengine 是火山引擎 DNS 的自研实现。
+// Package volcengine 是火山引擎 DNS 的重构实现。
 package volcengine
 
 import (

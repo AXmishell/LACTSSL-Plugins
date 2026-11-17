@@ -1,4 +1,4 @@
-// Package aliesa 是阿里云 ESA DNS 的自研实现。
+// Package aliesa 是阿里云 ESA DNS 的重构实现。
 package aliesa
 
 import (

@@ -1,4 +1,4 @@
-// Package dnsimple 是 DNSimple DNS 的自研实现。
+// Package dnsimple 是 DNSimple DNS 的重构实现。
 package dnsimple
 
 import (

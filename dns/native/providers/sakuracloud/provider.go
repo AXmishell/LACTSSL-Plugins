@@ -1,4 +1,4 @@
-// Package sakuracloud 是 Sakura Cloud DNS 的自研实现。
+// Package sakuracloud 是 Sakura Cloud DNS 的重构实现。
 //
 // 使用 Basic Auth + CommonServiceItem API，覆盖 DNS 区域查找与 TXT 记录更新。
 package sakuracloud

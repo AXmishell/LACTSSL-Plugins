@@ -1,4 +1,4 @@
-// Package httpapi 提供自研 DNS provider 共用的最小 HTTP 客户端。
+// Package httpapi 提供重构 DNS provider 共用的最小 HTTP 客户端。
 //
 // 只依赖标准库：统一超时、错误体截断、JSON/XML 解码与请求构造。
 // 签名逻辑放在各自的 sdk/<vendor> 包中，通过 NewRequest/Send 组合。

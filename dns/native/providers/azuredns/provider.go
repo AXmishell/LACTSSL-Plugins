@@ -1,4 +1,4 @@
-// Package azuredns 是 Azure DNS / Private DNS 的自研实现。
+// Package azuredns 是 Azure DNS / Private DNS 的重构实现。
 //
 // 使用 Azure AD client credentials + ARM REST API。
 package azuredns

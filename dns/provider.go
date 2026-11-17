@@ -1,6 +1,6 @@
 // Package dns 定义插件侧的最小 DNS-01 接口。
 //
-// 该接口刻意不依赖 github.com/go-acme/lego/v4，这样自研 provider
+// 该接口刻意不依赖 github.com/go-acme/lego/v4，这样重构 provider
 // 可以只依赖标准库；原有 lego 包装仍然可以通过结构类型满足该接口。
 package dns
 

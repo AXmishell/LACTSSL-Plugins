@@ -1,4 +1,4 @@
-// Package rfc2136 是 RFC 2136 Dynamic DNS Update 的自研实现。
+// Package rfc2136 是 RFC 2136 Dynamic DNS Update 的重构实现。
 //
 // 使用 miekg/dns 处理 DNS UPDATE 报文与 TSIG；GSS-TSIG 仍由原 lego
 // 实现提供，native 变体会明确报错，避免静默失败。

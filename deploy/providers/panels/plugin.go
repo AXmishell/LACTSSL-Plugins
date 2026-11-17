@@ -23,12 +23,15 @@ import (
 // 以下部署目标都由部署插件提供：宝塔、1Panel 与雷池 WAF。
 
 type baotaPlugin struct{}
+type baotaDockerPlugin struct{}
 type onePanelPlugin struct{}
 type baotaSitePlugin struct{}
 type baotaPanelPlugin struct{}
 type onePanelSitePlugin struct{}
 type onePanelPanelPlugin struct{}
 type safelinePlugin struct{}
+type safelinePanelPlugin struct{}
+type safelinePortalPlugin struct{}
 
 func (baotaPlugin) ID() string        { return "baota" }
 func (baotaPlugin) Aliases() []string { return nil }
@@ -43,6 +46,12 @@ func (baotaPlugin) Deploy(_ context.Context, req deploy.Request) error {
 	default:
 		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
 	}
+}
+
+func (baotaDockerPlugin) ID() string        { return "baota_docker" }
+func (baotaDockerPlugin) Aliases() []string { return nil }
+func (baotaDockerPlugin) Deploy(_ context.Context, req deploy.Request) error {
+	return deployBaotaDockerSite(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
 func (onePanelPlugin) ID() string        { return "1panel" }
@@ -90,9 +99,22 @@ func (safelinePlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deploySafeline(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
+func (safelinePanelPlugin) ID() string        { return "safeline_panel" }
+func (safelinePanelPlugin) Aliases() []string { return nil }
+func (safelinePanelPlugin) Deploy(_ context.Context, req deploy.Request) error {
+	return deploySafelinePanel(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+}
+
+func (safelinePortalPlugin) ID() string        { return "safeline_portal" }
+func (safelinePortalPlugin) Aliases() []string { return nil }
+func (safelinePortalPlugin) Deploy(_ context.Context, req deploy.Request) error {
+	return deploySafelinePortal(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+}
+
 // RegisterBaota 注册宝塔规范目标及历史兼容 ID。
 func RegisterBaota() {
 	deploy.Register(baotaPlugin{})
+	deploy.Register(baotaDockerPlugin{})
 	deploy.Register(baotaSitePlugin{})
 	deploy.Register(baotaPanelPlugin{})
 }
@@ -107,6 +129,8 @@ func RegisterOnePanel() {
 // RegisterSafeline 注册雷池 WAF 目标。
 func RegisterSafeline() {
 	deploy.Register(safelinePlugin{})
+	deploy.Register(safelinePanelPlugin{})
+	deploy.Register(safelinePortalPlugin{})
 }
 
 func deployHTTPClient(skipVerify bool) *http.Client {
@@ -198,6 +222,40 @@ func deployBaotaSite(cert *deploy.Certificate, cfg map[string]string) error {
 			"csr":      {cert.FullchainPEM},
 		}
 		if err := baotaPost(client, base, secret, "/site", "SetSSL", data); err != nil {
+			errs = append(errs, site+": "+err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return i18n.E("service.deploy.partial_failed", "errors", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+func deployBaotaDockerSite(cert *deploy.Certificate, cfg map[string]string) error {
+	base := panelURL(cfg["panel_url"])
+	secret := strings.TrimSpace(cfg["api_secret"])
+	if base == "" {
+		return i18n.E("service.deploy.panel_url_required")
+	}
+	if err := outbound.ValidateURL(base); err != nil {
+		return err
+	}
+	if secret == "" {
+		return i18n.E("service.deploy.baota_secret_required")
+	}
+	sites := util.SplitList(cfg["sites"])
+	if len(sites) == 0 {
+		return i18n.E("service.deploy.baota_sites_empty")
+	}
+	client := deployHTTPClient(skipVerify(cfg))
+	var errs []string
+	for _, site := range sites {
+		data := url.Values{
+			"key":      {cert.KeyPEM},
+			"csr":      {cert.FullchainPEM},
+			"siteName": {site},
+		}
+		if err := baotaPost(client, base, secret, "/mod/docker/com/set_ssl", "", data); err != nil {
 			errs = append(errs, site+": "+err.Error())
 		}
 	}
@@ -545,4 +603,79 @@ func deploySafeline(cert *deploy.Certificate, cfg map[string]string) error {
 		return i18n.E("service.deploy.partial_failed", "errors", strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// deploySafelinePanel 上传证书并替换雷池控制台自身的证书。
+func deploySafelinePanel(cert *deploy.Certificate, cfg map[string]string) error {
+	base, token, client, err := safelineClient(cfg)
+	if err != nil {
+		return err
+	}
+	certID, err := uploadSafelineCert(client, base, token, 0, cert)
+	if err != nil {
+		return err
+	}
+	_, err = safelineRequest(client, base, token, http.MethodPut, "/api/open/system", map[string]any{
+		"cert_id": certID,
+	})
+	return err
+}
+
+// deploySafelinePortal 更新雷池认证中心已绑定的证书。
+// 认证中心尚未启用证书时只上传新证书，与 ALLinSSL 的行为一致。
+func deploySafelinePortal(cert *deploy.Certificate, cfg map[string]string) error {
+	base, token, client, err := safelineClient(cfg)
+	if err != nil {
+		return err
+	}
+	data, err := safelineRequest(client, base, token, http.MethodGet, "/api/open/portal", nil)
+	if err != nil {
+		return err
+	}
+	var portal map[string]any
+	if len(data) > 0 {
+		if err := json.Unmarshal(data, &portal); err != nil {
+			return i18n.E("service.deploy.safeline_status", "status", http.StatusOK, "body", util.Truncate(string(data), 300))
+		}
+	}
+	var certID float64
+	if value, ok := portal["cert_id"].(float64); ok {
+		certID = value
+	}
+	_, err = uploadSafelineCert(client, base, token, certID, cert)
+	return err
+}
+
+func safelineClient(cfg map[string]string) (string, string, *http.Client, error) {
+	base := panelURL(cfg["panel_url"])
+	token := strings.TrimSpace(cfg["api_token"])
+	if base == "" {
+		return "", "", nil, i18n.E("service.deploy.panel_url_required")
+	}
+	if err := outbound.ValidateURL(base); err != nil {
+		return "", "", nil, err
+	}
+	if token == "" {
+		return "", "", nil, i18n.E("service.deploy.safeline_token_required")
+	}
+	return base, token, deployHTTPClient(skipVerify(cfg)), nil
+}
+
+func uploadSafelineCert(client *http.Client, base, token string, certID float64, cert *deploy.Certificate) (float64, error) {
+	payload := map[string]any{
+		"manual": map[string]string{"crt": cert.FullchainPEM, "key": cert.KeyPEM},
+		"type":   2,
+	}
+	if certID > 0 {
+		payload["id"] = certID
+	}
+	data, err := safelineRequest(client, base, token, http.MethodPost, "/api/open/cert", payload)
+	if err != nil {
+		return 0, err
+	}
+	var id float64
+	if err := json.Unmarshal(data, &id); err != nil || id <= 0 {
+		return 0, i18n.E("service.deploy.safeline_cert_id_missing")
+	}
+	return id, nil
 }

@@ -1,4 +1,4 @@
-// Package ns1 是 NS1 DNS 的自研实现。
+// Package ns1 是 NS1 DNS 的重构实现。
 package ns1
 
 import (

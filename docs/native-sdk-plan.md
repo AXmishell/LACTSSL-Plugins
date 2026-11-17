@@ -1,14 +1,14 @@
-# 插件包自研 SDK 化（去上游 SDK）分析与实施方案
+# 插件包 SDK 重构（去上游 SDK）分析与实施方案
 
 - 日期：2026-11-16
 - 范围：`LACTSSL-Plugins` 的 DNS / 部署 / 通知插件包
-- 目标：把插件对上游 SDK（lego、AWS/Azure/GCP/阿里云/腾讯云等）的依赖，按服务商逐个替换为仓库内自研的最小 HTTP/协议实现；**保留原有插件包，不替换、不改名**；新增带标签的并行插件包，实现增量发布、可随时回退。
+- 目标：把插件对上游 SDK（lego、AWS/Azure/GCP/阿里云/腾讯云等）的依赖，按服务商逐个替换为仓库内重构的最小 HTTP/协议实现；**保留原有插件包，不替换、不改名**；新增带标签的并行插件包，实现增量发布、可随时回退。
 - 结论：方案可行，收益几乎全部在 DNS 包；部署/通知包已经接近纯 `net/http` 体积下限，不建议重写。
 
 > **实施进展（2026-11-16）**
 >
 > - P0 已完成：`dns.Provider` 已去掉 lego 硬依赖；生成器支持 `sdk: native` 变体；`plugins.json` / 索引支持 `variant_of`、`conflicts_with`、`sdk`。
-> - P1 已完成：`heavy-native` 的 10 家 provider 全部自研，实测 **7.80 MiB**（原 `heavy` 38.59 MiB），manifest 与原包逐字段一致，依赖闭包只剩 `miekg/dns` + Go 标准库（`golang.org/x/net`、`x/sys` 为其传递依赖）。
+> - P1 已完成：`heavy-native` 的 10 家 provider 全部完成重构，实测 **7.80 MiB**（原 `heavy` 38.59 MiB），manifest 与原包逐字段一致，依赖闭包只剩 `miekg/dns` + Go 标准库（`golang.org/x/net`、`x/sys` 为其传递依赖）。
 > - CI 已加入 `scripts/check_native.sh`：heavy 体积预算 10 MiB、core 预算 19 MiB、已迁移 SDK 黑名单、manifest 对比。
 > - P2 第一批已完成：`core-native`（184 家）从 20.55 MiB 降到 **17.81 MiB**，已迁移 11 家：`alidns`、`aliesa`、`azion`、`dnsimple`、`exoscale`、`linode`、`ns1`、`ovh`、`scaleway`、`volcengine`、`vultr`。
 > - 未完成：`core-native` 长尾 provider；`rfc2136` 的 GSS-TSIG（native 变体明确报错，原包保留）。
@@ -64,7 +64,7 @@
 - 协议保持 v1：`manifest` / `present` / `cleanup` 子命令、stdin JSON、退出码、env 变量不变。
 - `catalog` 元数据是唯一来源：provider ID、别名、字段、`Env` 名不得变化。
 - 原包构建路径、发布资产、索引条目保持不变。
-- 不引入新的第三方运行时依赖；签名、认证、HTTP 客户端全部自研。
+- 不引入新的第三方运行时依赖；签名、认证、HTTP 客户端全部重构。
 - 不复制上游 SDK 代码，除非保留许可证并明确标注；优先按公开 API 文档做干净实现。
 
 ---
@@ -93,7 +93,7 @@
 - 10 个空 DNS 服务商 + `net/http`：约 **6.00 MiB**；
 - 194 个空 DNS 服务商 + `net/http`：约 **6.00 MiB**（服务商注册本身几乎不占体积）。
 
-这说明：**自研 DNS 包的理论下限约 6 MiB，真正实现后预计 8–12 MiB**；当前 20–58 MiB 的差额几乎全是 SDK 与 lego 公共代码。
+这说明：**重构 DNS 包的理论下限约 6 MiB，真正实现后预计 8–12 MiB**；当前 20–58 MiB 的差额几乎全是 SDK 与 lego 公共代码。
 
 ### 2.3 单个服务商的增量体积
 
@@ -158,7 +158,7 @@
 |---|---|---|---|---|
 | A. 源码裁剪 | 把 lego/SDK 源码复制进仓库，只保留调用到的文件 | 很小（链接器已 DCE） | 许可证、升级、漏洞维护 | 不推荐 |
 | B. 最小 HTTP 重写 | 按服务商公开 API 重写 zone 查询 + TXT 增删 | 最大 | 认证/签名/边界条件要逐家验证 | **推荐** |
-| C. 共享认证层 + 轻量客户端 | 自研 SigV4/TC3/阿里云签名等，provider 只写端点映射 | 大 | 前期投入在共享层，后期 provider 很快 | **推荐，B 的落地方式** |
+| C. 共享认证层 + 轻量客户端 | 重构 SigV4/TC3/阿里云签名等，provider 只写端点映射 | 大 | 前期投入在共享层，后期 provider 很快 | **推荐，B 的落地方式** |
 
 推荐组合：**C + B**。先做共享的 HTTP/签名/协议层，再按 provider 写薄实现。
 
@@ -190,7 +190,7 @@ DNS-01 只需要三件事：
 
 ### 4.1 包名与标签
 
-| 项目 | 原包（保持不动） | 新包（自研实现） |
+| 项目 | 原包（保持不动） | 新包（重构实现） |
 |---|---|---|
 | 包文件名 | `lactssl-dns-heavy` | `lactssl-dns-heavy-native` |
 | 插件 ID | `heavy` | `heavy-native` |
@@ -201,7 +201,7 @@ DNS-01 只需要三件事：
 
 Core 同理：`lactssl-dns-core-native` / `core-native` / `bundle_dns_core_native`。
 
-标签建议统一用 `-native`，含义是“仓库自研、无上游 SDK”。如果团队更倾向 `-self`、`-nosdk`、`-std`，只需在生成器里改一个常量，不影响架构。
+标签建议统一用 `-native`，含义是“仓库重构、无上游 SDK”。如果团队更倾向 `-self`、`-nosdk`、`-std`，只需在生成器里改一个常量，不影响架构。
 
 ### 4.2 目录与构建标签
 
@@ -210,8 +210,8 @@ dns/
   providers/                 # 原有 lego 包装，完全保留
   native/
     providers/
-      cloudflare/            # 自研 cloudflare
-      route53/               # 自研 route53
+      cloudflare/            # 重构 cloudflare
+      route53/               # 重构 route53
       ...
   groups/
     core/                    # 原有
@@ -248,13 +248,13 @@ import (
 - 优点：功能始终完整，用户切换后不会缺 provider；manifest 可直接逐字段对比。
 - 缺点：在最后一个 provider 迁移完成前，新包仍会链接 lego；但各 SDK 的移除收益已经逐步体现。
 
-#### 策略 B：先做“纯自研子集”
+#### 策略 B：先做“纯重构子集”
 
 - `heavy-native` 包含全部 10 个；`core-lite-native` 只包含 30–35 个默认启用、使用频率最高的 provider。
 - 优点：第一个版本就完全不依赖 lego，体积最小、叙事最清晰。
 - 缺点：用户如果需要长尾 provider，仍需安装原 `core`；两个包不能同时启用（provider ID 重叠）。
 
-**建议**：`heavy` 用策略 A；`core` 先做一个 `core-native`（策略 A），如果希望尽早拿到“纯自研”包，再额外发布 `core-lite-native`（策略 B）。不要把 `core-lite-native` 当作最终形态。
+**建议**：`heavy` 用策略 A；`core` 先做一个 `core-native`（策略 A），如果希望尽早拿到“纯重构”包，再额外发布 `core-lite-native`（策略 B）。不要把 `core-lite-native` 当作最终形态。
 
 ### 4.4 新旧包共存与冲突
 
@@ -264,7 +264,7 @@ import (
 
 1. **短期（不改宿主）**：索引中新增 `variant_of` / `conflicts_with` 字段；文档明确“同一类别只能安装一个变体”；安装新包前先卸载旧包。宿主旧版本会忽略未知字段，不会因此崩溃。
 2. **中期（宿主小改）**：宿主安装插件时比较 `providers` 集合，检测重叠并提示“替换/停用旧包”；插件页把 `core` 与 `core-native` 显示为同一组变体。
-3. **备选（零宿主改动）**：单独发布 `index-native.json`，只包含自研变体（以及部署/通知原包）。用户通过切换仓库 URL 选择 native 通道。缺点是维护两份索引，但完全避免冲突。
+3. **备选（零宿主改动）**：单独发布 `index-native.json`，只包含重构变体（以及部署/通知原包）。用户通过切换仓库 URL 选择 native 通道。缺点是维护两份索引，但完全避免冲突。
 
 不建议用 provider ID 后缀来规避冲突，原因见 3.3。
 
@@ -276,8 +276,8 @@ import (
   "id": "heavy-native",
   "version": "0.1.0",
   "tag": "bundle_dns_heavy_native",
-  "name": "DNS 插件包（大型云厂商·自研）",
-  "description": "10 个大型云厂商的自研实现，不依赖上游 SDK。",
+  "name": "DNS 插件包（大型云厂商·重构）",
+  "description": "10 个大型云厂商的重构实现，不依赖上游 SDK。",
   "bundle": true,
   "variant_of": "heavy",
   "conflicts_with": ["heavy"],
@@ -344,7 +344,7 @@ sdk/
 - 统一超时：单请求 15–30s；整体 `present/cleanup` 由宿主 60s 超时兜底。
 - 统一重试：只对 429/5xx/网络错误做有限次退避；写操作要保证幂等或可安全重试。
 
-### 5.3 自研 provider 的目录结构
+### 5.3 重构 provider 的目录结构
 
 ```text
 dns/native/providers/cloudflare/
@@ -504,8 +504,8 @@ dns/native/providers/cloudflare/
 | GSS-TSIG（rfc2136） | Kerberos 环境无法工作 | 最后处理；先支持 TSIG；GSS 暂留 lego 或单独说明 |
 | 私有 Zone / zone 发现差异 | 找不到 zone 或写错 zone | 对 route53/azure/gcloud 做私有 zone 专项测试；保留 `hosted_zone_id` 等字段语义 |
 | 新旧包重复 provider ID | 宿主注册冲突 | 安装层互斥/变体分组；短期文档约束；备选独立索引 |
-| 长尾 provider 维护成本 | 184 家手写实现不可持续 | 表驱动 `restProvider`；只对高频 provider 自研，长尾继续用 lego |
-| 安全审计面 | 自研签名代码漏洞 | 复用经过审计的共享签名包；fuzz；限制错误输出 |
+| 长尾 provider 维护成本 | 184 家手写实现不可持续 | 表驱动 `restProvider`；只对高频 provider 重构，长尾继续用 lego |
+| 安全审计面 | 重构后签名代码漏洞 | 复用经过审计的共享签名包；fuzz；限制错误输出 |
 | 许可证 | 复制 SDK 代码引发合规问题 | 干净实现；如复制则保留 MIT/Apache 声明 |
 | 体积反弹 | 后续新增依赖 | CI 体积预算 + 依赖守卫 |
 

@@ -1,4 +1,4 @@
-// Package azion 是 Azion Edge DNS 的自研实现。
+// Package azion 是 Azion Edge DNS 的重构实现。
 package azion
 
 import (
