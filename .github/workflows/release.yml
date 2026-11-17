@@ -170,9 +170,10 @@ jobs:
           retention-days: 7
 
   index:
-    needs: build
-    # 部分插件构建失败时仍然发布索引（沿用上一次成功的条目）。
-    if: always() && !cancelled() && needs.build.result != 'skipped'
+    needs: [matrix, build]
+    # 即使本次没有需要构建的插件（例如仅从 plugins.json 删除插件），
+    # 也要重写索引，让 mergeIndex 丢弃已删除条目并触发后续资产清理。
+    if: always() && !cancelled() && needs.matrix.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -187,6 +188,7 @@ jobs:
           pattern: plugin-meta-*
           path: dist
           merge-multiple: true
+          if-no-files-found: ignore
 
       - name: Fetch previous index
         env:

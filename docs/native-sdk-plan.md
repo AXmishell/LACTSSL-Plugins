@@ -12,7 +12,8 @@
 > - CI 已加入 `scripts/check_native.sh`：heavy 体积预算 10 MiB、core 预算 19 MiB、已迁移 SDK 黑名单、manifest 对比。
 > - P2 第一批已完成：`core-native`（184 家）从 20.55 MiB 降到 **17.81 MiB**，已迁移 11 家：`alidns`、`aliesa`、`azion`、`dnsimple`、`exoscale`、`linode`、`ns1`、`ovh`、`scaleway`、`volcengine`、`vultr`。
 > - 2026-11-17 调整：构建阶段不再分别发布 `core-native` 与 `heavy-native`，二者合并为单个 `all-native` 包（194 个 provider，实测约 **18.1 MiB**，构建标签 `bundle_dns_all_native`）。下文中关于两个 native 变体的命名与体积预算属于方案阶段记录，当前以 README 与 `docs/native-providers.md` 为准。
-> - 未完成：`core-native` 长尾 provider；`rfc2136` 的 GSS-TSIG（native 变体明确报错，原包保留）。
+> - 2026-11-17 更新：`core` / `heavy` 及 `core-native` / `heavy-native` 构建已移除，DNS 只发布 `all-native`。本文中涉及这些旧包的构建命令仅作为历史记录。
+> - 未完成：`core-native` 长尾 provider；`rfc2136` 的 GSS-TSIG（native 变体明确报错；旧 `core` / `heavy` 包已停止发布，需要时可本地构建全 lego helper）。
 
 ---
 

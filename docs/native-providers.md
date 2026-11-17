@@ -1,6 +1,6 @@
 # Native Provider 实现说明
 
-`lactssl-dns-all-native` 把原 `heavy-native` 与 `core-native` 合并为一个全量重构包：覆盖 `core` + `heavy` 的 194 个 provider，provider ID、字段、别名与 manifest 完全一致。已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK。
+`lactssl-dns-all-native` 是当前唯一发布的 DNS 包，覆盖原 `core` + `heavy` 的 194 个 provider，provider ID、字段、别名与 manifest 完全一致。已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK。旧 `core` / `heavy` 及 `core-native` / `heavy-native` 包已停止发布。
 
 ## 1. 已实现 provider
 
@@ -19,7 +19,7 @@
 
 ## 2. Core 已迁移 provider
 
-`lactssl-dns-all-native` 中，常用部分的 184 个 provider ID 与 `lactssl-dns-core` 完全一致；已迁移的实现位于 `dns/native/providers/`，其余继续引用原 lego 包装。
+`lactssl-dns-all-native` 中，全部 194 个 provider ID 与旧 `core` + `heavy` 一致；已迁移的实现位于 `dns/native/providers/`，其余继续引用原 lego 包装。
 
 | Provider | 认证 | API |
 |---|---|---|
@@ -35,7 +35,7 @@
 | `volcengine` | HMAC-SHA256 | Volcano Engine DNS `2018-08-01` |
 | `vultr` | Bearer | Vultr API v2 |
 
-合并后的 `all-native` 实测约 18.1 MiB；常用部分在迁移这 11 家后从 20.55 MiB 降到 17.81 MiB。194 个 provider 的 manifest 与原 `core` / `heavy` 逐字段一致。
+合并后的 `all-native` 实测约 18.1 MiB；194 个 provider 的 manifest 与旧 `core` / `heavy` 逐字段一致。
 
 ## 3. 共享包
 
@@ -63,8 +63,8 @@
 
 ## 5. 已知限制
 
-- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时使用原 `core` / `heavy` 包。
-- `route53` / `lightsail` 目前支持静态 AK/SK 或环境变量，未实现 shared credentials 文件、STS AssumeRole、EC2 IMDS；原 `heavy` 包保留这些能力。
+- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时可本地构建不带 `bundle_dns_all_native` 标签的全量 lego helper。
+- `route53` / `lightsail` 目前支持静态 AK/SK 或环境变量，未实现 shared credentials 文件、STS AssumeRole、EC2 IMDS；旧 `heavy` 包曾保留这些能力，现已停止发布。
 - `gcloud` 未实现 metadata server 默认凭据；需要显式 service account JSON 或 `GOOGLE_APPLICATION_CREDENTIALS`。
 - `azuredns` 未实现 managed identity / workload identity，仅 client secret。
 - `edgedns` 未实现请求限速（Akamai 的 request limit）；如遇 429，宿主会按失败重试。
@@ -73,7 +73,7 @@
 - `volcengine` native 版未实现临时凭证/SessionToken。
 - `scaleway` 使用 `X-Auth-Token`（secret key），未使用 access key。
 
-这些限制都可以在后续增量中补齐，不影响原 `core` / `heavy` 包。
+这些限制都可以在后续增量中补齐；旧 `core` / `heavy` 包已停止发布。
 
 ## 6. 验证
 

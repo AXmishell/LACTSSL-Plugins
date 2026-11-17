@@ -204,27 +204,9 @@ func cmdManifest() {
 // 不再按服务商拆分，减少仓库资产数量、安装文件数量与运行期进程数。
 func buildEntries() []pluginEntry {
 	dnsProviders := catalog.DNSProviders()
-	heavy := make(map[string]bool, len(dnsHeavyProviders))
-	for _, id := range dnsHeavyProviders {
-		heavy[id] = true
-	}
-	coreIDs := make([]string, 0, len(dnsProviders))
-	heavyIDs := make([]string, 0, len(heavy))
 	allIDs := make([]string, 0, len(dnsProviders))
-	found := make(map[string]bool, len(heavy))
 	for _, p := range dnsProviders {
 		allIDs = append(allIDs, p.Value)
-		if heavy[p.Value] {
-			heavyIDs = append(heavyIDs, p.Value)
-			found[p.Value] = true
-			continue
-		}
-		coreIDs = append(coreIDs, p.Value)
-	}
-	for _, id := range dnsHeavyProviders {
-		if !found[id] {
-			fail("dnsHeavyProviders 中存在未知服务商: " + id)
-		}
 	}
 	deployIDs := make([]string, 0, 8)
 	for _, p := range catalog.Deployers() {
@@ -236,20 +218,9 @@ func buildEntries() []pluginEntry {
 	notifyIDs := channels.IDs()
 	return []pluginEntry{
 		{
-			Kind: "dns", ID: "core", Version: defaultVer, Tag: "bundle_dns_core",
-			Name: "DNS 插件包（常用）", Description: "包含 184 个常用 DNS 服务商；体积小、启动内存低。",
-			Bundle: true, Providers: coreIDs, HideIcon: true, SDK: "lego",
-		},
-		{
-			Kind: "dns", ID: "heavy", Version: defaultVer, Tag: "bundle_dns_heavy",
-			Name: "DNS 插件包（大型云厂商）", Description: "包含 Google Cloud、Yandex、Sakura、Route53、Azure DNS 等 10 个依赖大型 SDK 的服务商。",
-			Bundle: true, Providers: heavyIDs, SDK: "lego",
-		},
-		{
 			Kind: "dns", ID: "all-native", Version: "0.1.0", Tag: "bundle_dns_all_native",
 			Name: "DNS 插件包（全量·重构）", Description: "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
-			Bundle: true, Providers: allIDs, ConflictsWith: []string{"core", "heavy"},
-			HideIcon: true, SDK: "native",
+			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native",
 		},
 		{
 			Kind: "deploy", ID: "all", Version: deployVer, Tag: "bundle_deploy_all",
@@ -262,14 +233,6 @@ func buildEntries() []pluginEntry {
 			Bundle: true, Providers: notifyIDs,
 		},
 	}
-}
-
-// dnsHeavyProviders 是按单个二进制体积挑选出的重型 SDK 服务商。
-// 把它们拆成独立合并包，可让常用包保持约 21 MiB、运行内存约 17 MiB；
-// 两个包合计仍只有约 60 MiB，远低于逐服务商打包。
-var dnsHeavyProviders = []string{
-	"gcloud", "yandexcloud", "sakuracloud", "edgedns", "route53",
-	"azuredns", "lightsail", "huaweicloud", "iij", "rfc2136",
 }
 
 func sortEntries(entries []pluginEntry) {

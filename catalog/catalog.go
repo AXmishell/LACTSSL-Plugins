@@ -58,10 +58,19 @@ type Provider struct {
 	DeployFields []Field `json:"deploy_fields,omitempty"`
 }
 
+// DeployMigration 描述旧部署 ID 如何迁移到规范部署器。
+// Config 中的键值会覆盖旧账号的部署配置，例如 qiniu_kodo 需要写入
+// {"domain_type": "kodo"}，tencent_cos 需要写入 {"target": "cos"}。
+type DeployMigration struct {
+	Provider string            `json:"provider"`
+	Config   map[string]string `json:"config,omitempty"`
+}
+
 type data struct {
-	DNS                   []Provider        `json:"dns"`
-	Deploy                []Provider        `json:"deploy"`
-	DeprecatedDeployTypes map[string]string `json:"deprecated_deploy_types"`
+	DNS                   []Provider                 `json:"dns"`
+	Deploy                []Provider                 `json:"deploy"`
+	DeprecatedDeployTypes map[string]string          `json:"deprecated_deploy_types"`
+	DeployMigrations      map[string]DeployMigration `json:"deploy_migrations"`
 }
 
 var loaded data
@@ -91,6 +100,24 @@ func DeprecatedDeployTypes() map[string]string {
 	out := make(map[string]string, len(loaded.DeprecatedDeployTypes))
 	for key, value := range loaded.DeprecatedDeployTypes {
 		out[key] = value
+	}
+	return out
+}
+
+// DeployMigrations 返回旧部署目标 ID 到规范部署器及配置覆盖的映射。
+// 宿主把旧账号迁移到规范 ID 时，应同时写入 Config，否则 target 为空会
+// 落到规范部署器的默认目标（例如把 COS 账号部署到 CDN）。
+func DeployMigrations() map[string]DeployMigration {
+	out := make(map[string]DeployMigration, len(loaded.DeployMigrations))
+	for key, migration := range loaded.DeployMigrations {
+		if migration.Config != nil {
+			config := make(map[string]string, len(migration.Config))
+			for k, v := range migration.Config {
+				config[k] = v
+			}
+			migration.Config = config
+		}
+		out[key] = migration
 	}
 	return out
 }

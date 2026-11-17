@@ -532,7 +532,7 @@ notify-helper:
 | ID/别名唯一性 | 新仓库 | 复用现有校验逻辑，额外跑全量重复检测 |
 | 字段 Env 对比 | 主仓库 | 迁移前后 `DNSProviders[].Fields[].Env` 完全一致 |
 | 默认启用列表 | 主仓库 | 35 个 DNS ID、7 个部署目标、23 个通知渠道均可解析 |
-| 历史部署 ID | 主仓库 | `qiniu_cdn`/`qiniu_kodo`/`baota_*`/`1panel_*` 仍能映射到规范 ID |
+| 历史部署 ID | 主仓库 | `qiniu_cdn`/`qiniu_kodo`/`baota_*`/`1panel_*` 仍能映射到规范 ID；自动迁移时使用 `catalog.DeployMigrations()` 同步写入 `target` / `domain_type` |
 | 协议请求兼容 | 新仓库 | 用基线请求 JSON 调用 present/deploy/send（mock 下游） |
 | 上传 / 重扫 | 主仓库 | 用新 helper 走 `POST /api/plugins/upload` 与 `rescan` |
 | 内嵌安装 | 主仓库 | `embed_helper` 构建后首次启动能安装 helper |

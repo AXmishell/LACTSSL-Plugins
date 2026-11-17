@@ -50,25 +50,21 @@ jobs:
 
       - name: Build merged plugins
         run: |
-          go build -trimpath -tags "bundle_dns_core,nethttpomithttp2" -o /tmp/dns-core ./cmd/dns-helper
-          go build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -o /tmp/dns-heavy ./cmd/dns-helper
           go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -o /tmp/dns-all-native ./cmd/dns-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/dns-all ./cmd/dns-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/deploy-all ./cmd/deploy-helper
           go build -trimpath -tags nethttpomithttp2 -o /tmp/notify-all ./cmd/notify-helper
-          test "$(/tmp/dns-core manifest | jq '.providers | length')" = "184"
-          test "$(/tmp/dns-heavy manifest | jq '.providers | length')" = "10"
           test "$(/tmp/dns-all-native manifest | jq '.providers | length')" = "194"
           test "$(/tmp/dns-all manifest | jq '.providers | length')" = "194"
-          test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "37"
+          test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "25"
           test "$(/tmp/notify-all manifest | jq '.channels | length')" = "23"
-          test "$(/tmp/dns-core manifest | jq -r '.providers[] | select(.id=="cloudflare") | .id')" = "cloudflare"
+          test "$(/tmp/dns-all-native manifest | jq -r '.providers[] | select(.id=="cloudflare") | .id')" = "cloudflare"
 
       - name: Package smoke
         run: |
-          go run scripts/pluginctl/main.go build -kind dns -id core -goos linux -goarch amd64 -out /tmp/dist
-          tar -tzf /tmp/dist/lactssl-dns-core_1.0.0_linux_amd64.tar.gz | grep -qx plugin.json
-          tar -tzf /tmp/dist/lactssl-dns-core_1.0.0_linux_amd64.tar.gz | grep -qx icons/cloudflare.svg
+          go run scripts/pluginctl/main.go build -kind dns -id all-native -goos linux -goarch amd64 -out /tmp/dist
+          tar -tzf /tmp/dist/lactssl-dns-all-native_0.1.0_linux_amd64.tar.gz | grep -qx plugin.json
+          tar -tzf /tmp/dist/lactssl-dns-all-native_0.1.0_linux_amd64.tar.gz | grep -qx icons/cloudflare.svg
           go run scripts/pluginctl/main.go index -assets /tmp/dist -base-url https://example.invalid/releases/download -out /tmp/index.json
           jq -e '.plugins[0].assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
           jq -e '.plugins[0].bundle == true' /tmp/index.json >/dev/null

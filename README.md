@@ -16,17 +16,17 @@ i18n/            插件侧精简文案
 outbound/        SSRF 防护出站 HTTP 客户端
 dns/             194 个 lego 服务商包装 + 注册表
   providers/<id>/   原有 lego 包装（保留）
-  native/providers/<id>/  重构实现（heavy 10 家已迁移）
+  native/providers/<id>/  重构实现（21 家已迁移）
   groups/           合并包的 provider 分组
 deploy/          部署目标实现（含历史兼容 ID）
-  providers/{ftp,webhook,qiniu,aliyuncdn,aliyunoss,aliyuncloud,tencent,huawei,volcengine,ucloud,upyun,doge,baidu,btwaf,lecdn,rainyun,smtp,npm,acepanel,cdnfly,lucky,proxmox,synology,plesk,panels}
+  providers/{ftp,webhook,qiniu,aliyun,aliyuncdn,aliyunoss,aliyuncloud,tencent,huawei,volcengine,ucloud,upyun,doge,baidu,btwaf,lecdn,rainyun,smtp,npm,acepanel,cdnfly,lucky,proxmox,synology,plesk,panels}
 notify/          23 个通知渠道
   providers/channels
 cmd/
   dns-helper/    DNS 合并包入口（194 个服务商）
   deploy-helper/ 部署合并包入口（合并后的规范目标）
   notify-helper/ 通知合并包入口（23 个渠道）
-plugins.json     合并包清单（kind/id/version/tag/providers，6 个包）
+plugins.json     合并包清单（kind/id/version/tag/providers，3 个包）
 assets/icons/    服务商图标（按 kind 存放，icons.json 声明别名）
 testdata/        迁移前 bundle manifest 基线
 scripts/pluginctl 生成、构建、打包、索引、签名工具
@@ -34,31 +34,31 @@ scripts/pluginctl 生成、构建、打包、索引、签名工具
 
 ## 合并包构建
 
-DNS 常用/重型两个包共用一个入口、通过构建标签选择服务商；重构实现把两者合并为一个 `all-native` 包；部署与通知各一个入口：
+DNS 只发布一个 `all-native` 包，部署与通知各一个入口：
 
 ```bash
-go build -trimpath -tags "bundle_dns_core,nethttpomithttp2"  -o lactssl-dns-core  ./cmd/dns-helper
-go build -trimpath -tags "bundle_dns_heavy,nethttpomithttp2" -o lactssl-dns-heavy ./cmd/dns-helper
 go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2" -o lactssl-dns-all-native ./cmd/dns-helper
 go build -trimpath -tags nethttpomithttp2 -o lactssl-deploy-all ./cmd/deploy-helper
 go build -trimpath -tags nethttpomithttp2 -o lactssl-notify-all ./cmd/notify-helper
 ```
 
-`all-native` 覆盖原 `core` 与 `heavy` 的全部 194 个 provider，把原来两个重构包合并为一次构建：已迁移 provider 使用 `dns/native`，其余暂时继续使用原 lego 包装；每迁移一家，包体积继续下降。它与 `core`、`heavy` 使用相同的 provider ID，因此与二者互斥（索引中以 `conflicts_with` 标注）。
+不带 `bundle_dns_all_native` 标签时会构建全量 lego 实现，仅用于本地兼容性校验（`scripts/check_native.sh` 会用它对比 manifest），不作为发布包。
 
-`all-native` 与 `core` 在清单中声明 `hide_icon: true`；宿主对合并包本身也不会借用第一个 provider 的图标，市场只显示包 ID 对应的包级图标（目前未提供），因此这些条目名称前不再出现 `alidns` 等单家服务商 logo。
+`all-native` 覆盖全部 194 个 provider：已迁移 provider 使用 `dns/native`，其余继续使用原 lego 包装；每迁移一家，包体积继续下降。provider ID、字段与别名与旧 `core` / `heavy` 包完全一致。
+
+`all-native` 在清单中声明 `hide_icon: true`；宿主对合并包本身也不会借用第一个 provider 的图标，市场只显示包 ID 对应的包级图标（目前未提供），因此条目名称前不再出现 `alidns` 等单家服务商 logo。
 
 `manifest` 输出该类全部条目；`pluginctl` 会校验 manifest 与 `plugins.json` 的 `providers` 集合完全一致。部署 helper 的 manifest 还会为部署目标名称、描述以及字段/选项文案输出 `name_i18n` / `description_i18n` / `label_i18n` 等可选映射，宿主按当前界面语言直接选择；旧版宿主会忽略这些字段。
 
 ## 打包与索引
 
 ```bash
-# 生成 plugins.json（五个合并包）
+# 生成 plugins.json（三个合并包）
 make gen
 
-# 构建 DNS 常用包的单个平台包
-make plugin KIND=dns ID=core GOOS=linux GOARCH=amd64
-# 输出 dist/lactssl-dns-core_1.0.0_linux_amd64.tar.gz 与 .meta.json
+# 构建 DNS all-native 包的单个平台包
+make plugin KIND=dns ID=all-native GOOS=linux GOARCH=amd64
+# 输出 dist/lactssl-dns-all-native_0.1.0_linux_amd64.tar.gz 与 .meta.json
 
 # 从全部 meta 生成索引（资产放在 plugin-assets-<kind> Release 中）
 make index BASE_URL=https://github.com/AXmishell/LACTSSL-Plugins/releases/download BUCKET=plugin-assets
@@ -83,17 +83,14 @@ tar.gz
 
 | 包 | 解压后 | manifest 峰值内存 |
 |---|---:|---:|
-| DNS 常用（184 个服务商） | 约 21 MiB | 约 22 MiB |
-| DNS 大型云厂商（10 个服务商） | 约 39 MiB | 约 26 MiB |
 | DNS 全量·重构（194 个服务商） | **约 18.1 MiB** | 约 20 MiB |
 | 部署（25 个规范目标） | 约 7.8 MiB | 约 11 MiB |
 | 通知（23 个渠道） | 约 7 MiB | 约 10 MiB |
-| 旧布局合计 | 约 73 MiB | — |
 | 仅安装 DNS 全量·重构 | **约 18.1 MiB** | — |
 
-旧的单服务商打包约为 1.7 GiB（224 个包），合并后降到约 4%。DNS 拆成常用/重型两个包，是为了让绝大多数用户只安装约 21 MiB、运行内存约 22 MiB；选择重构实现时只需安装一个 `all-native` 包，不再需要同时安装常用和大型云厂商两个变体。
+旧的单服务商打包约为 1.7 GiB（224 个包），合并后降到约 4%。DNS 现在只保留一个 `all-native` 包，不再分别发布常用包和大型云厂商包。
 
-`all-native` 的 10 家大型云厂商全部为仓库重构实现，常用包中目前也已有 11 家迁移到重构实现（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 provider 不再链接 lego 包装或上游 SDK、以及 194 个 provider 的 manifest 兼容性。
+`all-native` 已迁移 21 家 provider 到仓库重构实现，其中 10 家为大型云厂商（Google Cloud、Yandex、Sakura、Route53、Azure DNS 等），11 家为常用服务商（阿里云 DNS/ESA、Vultr、Linode、NS1、DNSimple、Exoscale、Scaleway、Azion、OVH、火山引擎），其余继续使用 lego。`scripts/check_native.sh` 会校验体积预算、已迁移 provider 不再链接 lego 包装或上游 SDK、以及 194 个 provider 的 manifest 兼容性。
 
 ## 从 certd 移植的部署目标
 
@@ -157,6 +154,7 @@ tar.gz
   - `plugin-index`：只放 `index.json`（与 `index.json.sig`）。
   - `plugin-assets-<kind>`：放该类别合并包的 `tar.gz`，资产名自带版本与平台。
 - 增量构建：对比已发布 `index.json` 与 `plugins.json` 的版本号，只构建变化的合并包（`workflow_dispatch` 可勾选 `force_all` 强制全量）。
+- 从 `plugins.json` 删除插件后，即使没有版本变化，发布流程也会重写索引并从 bucket 清理对应资产。
 - 每个合并包 job 构建 4 个平台：linux/amd64、linux/arm64、darwin/arm64、windows/amd64。
 - 索引生成时合并上一次索引，未重建的合并包条目原样沿用；发布索引后删除被覆盖的旧版本资产，使每个 bucket 的资产数稳定在 `4 × 合并包数`（GitHub 单个 Release 上限 1000 个资产）。
 - 所有插件 Release 都带 `--latest=false`，避免插件产物抢占仓库的 “Latest” 标记。
@@ -167,8 +165,9 @@ tar.gz
 - 协议保持 v1；旧版单服务商包与旧全量 helper 会由新合并包在安装时自动替换。
 - `testdata/` 中的 manifest 基线用于验证合并包与旧 bundle 的字段一致。
 - `plugins.json` 中每个合并包独立 SemVer；升级插件时修改对应版本号并重新构建。
-- `all-native` 覆盖 `core` 与 `heavy` 的全部 provider，provider ID、字段、别名与原包完全一致；同一宿主只能启用一个 DNS 变体，切换时账户与任务无需迁移。
-- `all-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时继续使用原 `core` / `heavy` 包。
+- DNS 只保留 `all-native` 一个发布包，provider ID、字段、别名与旧 `core` + `heavy` 完全一致；账户与任务无需迁移。
+- `catalog.DeployMigrations()` 提供旧部署 ID 到规范部署器及配置覆盖的映射。宿主迁移旧账号时应把 `Config` 合并进部署配置（例如 `tencent_cos → tencent + target=cos`、`qiniu_kodo → qiniu + domain_type=kodo`），否则会落到规范部署器的默认目标。
+- `all-native` 的 `rfc2136` 不支持 GSS-TSIG（会明确报错）；需要 GSS-TSIG 时可本地构建不带 `bundle_dns_all_native` 标签的全量 lego helper，发布包不再提供旧 `core` / `heavy` 包。
 
 ## SDK 重构
 

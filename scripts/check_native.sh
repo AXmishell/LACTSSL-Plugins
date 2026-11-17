@@ -26,7 +26,7 @@ check_limit() {
   printf '%s size: %s bytes (%.2f MiB)\n' "$name" "$size" "$(awk -v s="$size" 'BEGIN { print s / 1048576 }')"
 }
 
-# all-native：常用 + 大型云厂商合并为一个包，已迁移 provider 使用仓库实现。
+# all-native：覆盖全部 194 个 provider，已迁移 provider 使用仓库实现。
 NATIVE_TAGS="bundle_dns_all_native,nethttpomithttp2"
 build "$NATIVE_TAGS" "$TMP/all-native"
 build "nethttpomithttp2" "$TMP/all-original"
