@@ -26,10 +26,11 @@ check_limit() {
   printf '%s size: %s bytes (%.2f MiB)\n' "$name" "$size" "$(awk -v s="$size" 'BEGIN { print s / 1048576 }')"
 }
 
-# all-native：覆盖全部 194 个 provider，已迁移 provider 使用仓库实现。
+# all-lego 与 all-native 都覆盖全部 194 个 provider。
+LEGO_TAGS="bundle_dns_all_lego,nethttpomithttp2,http2legacy"
 NATIVE_TAGS="bundle_dns_all_native,nethttpomithttp2,http2legacy"
+build "$LEGO_TAGS" "$TMP/all-lego"
 build "$NATIVE_TAGS" "$TMP/all-native"
-build "nethttpomithttp2,http2legacy" "$TMP/all-original"
 check_limit "all-native" "$(size_of "$TMP/all-native")" $((20 * 1024 * 1024))
 
 deps="$(go list -deps -tags "$NATIVE_TAGS" -f '{{with .Module}}{{if not .Main}}{{.Path}}{{end}}{{end}}' ./cmd/dns-helper | sort -u)"
@@ -52,10 +53,10 @@ if printf '%s\n' "$deps" | grep -Eq "$forbidden"; then
   exit 1
 fi
 
-"$TMP/all-original" manifest > "$TMP/all-original.json"
+"$TMP/all-lego" manifest > "$TMP/all-lego.json"
 "$TMP/all-native" manifest > "$TMP/all-native.json"
 
-python3 - "$TMP/all-original.json" "$TMP/all-native.json" <<'PY'
+python3 - "$TMP/all-lego.json" "$TMP/all-native.json" <<'PY'
 import json
 import sys
 
@@ -69,7 +70,7 @@ def load(path):
 original = load(sys.argv[1])
 native = load(sys.argv[2])
 if original != native:
-    raise SystemExit("all-native manifest 与原 manifest 不一致")
+    raise SystemExit("all-native manifest 与 all-lego manifest 不一致")
 print("all manifest parity: ok")
 PY
 

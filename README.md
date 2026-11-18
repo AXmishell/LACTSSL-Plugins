@@ -48,7 +48,8 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 
 同一类型的所有服务商合并为一个可执行文件，共享一份 Go 运行时，避免为每个服务商单独打包：
 
-- DNS 发布一个 `all-native` 包，覆盖全部 194 个服务商；其中 21 家使用 `dns/native` 的仓库实现，其余继续使用 lego 包装。
+- DNS 发布两个变体，均覆盖全部 194 个服务商：`all-lego` 全部使用 lego 官方实现，版本号跟随 go.mod 中的 lego 版本；`all-native` 中 21 家使用 `dns/native` 的仓库实现，其余继续使用 lego 包装。
+- 两个 DNS 变体共享同一批 provider ID，不能同时安装；`conflicts_with` 已声明互斥关系，`all-native` 通过 `variant_of` 指向 `all-lego`。
 - 部署与通知各发布一个包，分别包含全部规范部署目标与通知渠道。
 - 包内包含 `plugin.json`、平台可执行文件、可选的 `icons/` 与 `LICENSE`。
 - 索引声明版本、协议、最低宿主版本、服务商列表、各平台资产、sha256 与解压后大小，并内联图标供插件市场展示；官方索引可使用 Ed25519 签名。
@@ -61,10 +62,11 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 
 - 主/次版本在 `scripts/pluginctl/main.go` 的 `dnsBaseVer`、`deployBaseVer`、`notifyBaseVer` 中调整；修改后该包从 `<主>.<次>.0` 重新计数。
 - 补丁号由各合并包输入文件的内容指纹决定：相关源码、共享 SDK、元数据、图标或构建脚本变化时自动 +1，内容未变化则保持不变。
-- DNS、部署、通知三个包在非 tag 构建时独立计数；`sdk/`、`catalog/` 等共享目录变化会同时升级三个包。
+- `all-lego` 例外：版本号直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 的版本（`v4.35.2` → `4.35.2`），不参与补丁递增，也不会被发布 tag 覆盖；升级 lego 后重新运行 `make manifest` 即可。仅包装层变化而 lego 未升级时版本不变，非 tag 发布需使用 `force_all` 或打 tag 重建。
+- DNS native、部署、通知三个包在非 tag 构建时独立计数；`sdk/`、`catalog/` 等共享目录变化会同时升级这三个包。
 - 修改代码后运行 `make manifest`，并把更新后的 `plugins.json` 一起提交；CI 与发布流程会校验是否遗漏。
 
-发布时以 git tag 为准：`v1.3.4` 或 `plugins-v1.3.4` 会让发布流程先以 `manifest -version 1.3.4` 生成临时清单，三个合并包的资产名、索引、包内 `plugin.json` 与二进制 manifest 全部使用 `1.3.4`，并全量重建。仓库里的 `plugins.json` 保持按内容指纹维护的内部版本，不被 CI 改写，仅用于非 tag 的手动构建。
+发布时以 git tag 为准：`v1.3.4` 或 `plugins-v1.3.4` 会让发布流程先以 `manifest -version 1.3.4` 生成临时清单，DNS native、部署与通知包的资产名、索引、包内 `plugin.json` 与二进制 manifest 使用 `1.3.4`，并全量重建；`all-lego` 仍使用 go.mod 中的 lego 版本。仓库里的 `plugins.json` 保持按内容指纹维护的内部版本，不被 CI 改写，仅用于非 tag 的手动构建。
 
 `plugins.json` 里的 `source_hash` 只用于版本计算，不会写入插件索引。
 
@@ -73,7 +75,7 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 - DNS 服务商 ID、字段 key、别名与旧插件保持逐项一致。
 - 部署目标对外使用规范 ID，历史 ID 通过别名与迁移映射落到规范实现，并将旧配置合并进新目标。
 - 已迁移的 DNS 服务商不再链接 lego 包装或上游云 SDK，签名与协议逻辑由本仓库的 `sdk/` 实现。
-- `all-native` 的 `rfc2136` 不支持 GSS-TSIG，需要该能力时可使用不带合并标签的本地全量构建。
+- `all-native` 的 `rfc2136` 不支持 GSS-TSIG，需要该能力时请安装 `all-lego`。
 
 ## 文档
 

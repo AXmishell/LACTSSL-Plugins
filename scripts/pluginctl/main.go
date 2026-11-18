@@ -43,9 +43,11 @@ import (
 const (
 	manifestPath = "plugins.json"
 	// 主/次版本由人工维护；补丁号由 manifest 根据各合并包的输入内容自动递增。
+	// 上游版本跟随的包（如 all-lego）不走这套版本计算。
 	dnsBaseVer    = "0.1"
 	deployBaseVer = "1.3"
 	notifyBaseVer = "1.0"
+	legoModule    = "github.com/go-acme/lego/v4"
 )
 
 type pluginEntry struct {
@@ -67,6 +69,9 @@ type pluginEntry struct {
 
 	// baseVersion 是主/次版本基线，只用于 manifest 计算，不写入 plugins.json。
 	baseVersion string
+	// upstreamModule 非空时，版本号直接使用 go.mod 中该模块的版本（去掉 v 前缀），
+	// 不参与内容指纹递增，也不会被 tag 发布版本覆盖。
+	upstreamModule string
 }
 
 type manifestFile struct {
@@ -202,7 +207,7 @@ func main() {
 
 func cmdManifest(args []string) {
 	fs := flag.NewFlagSet("manifest", flag.ExitOnError)
-	version := fs.String("version", "", "所有合并包统一使用的发布版本（tag 构建）")
+	version := fs.String("version", "", "合并包统一使用的发布版本（tag 构建；跟随上游版本的包除外）")
 	fs.Parse(args)
 
 	entries := buildEntries()
@@ -222,6 +227,14 @@ func cmdManifest(args []string) {
 			fail("计算 " + entries[i].Kind + "/" + entries[i].ID + " 内容指纹失败: " + err.Error())
 		}
 		entries[i].SourceHash = hash
+		if entries[i].upstreamModule != "" {
+			v, err := moduleVersion(entries[i].upstreamModule)
+			if err != nil {
+				fail("读取 " + entries[i].upstreamModule + " 版本失败: " + err.Error())
+			}
+			entries[i].Version = v
+			continue
+		}
 		if old, ok := previous[entries[i].Kind+"|"+entries[i].ID]; ok {
 			entries[i].Version = buildver.Next(old.Version, old.SourceHash, entries[i].baseVersion, hash)
 		}
@@ -233,6 +246,10 @@ func cmdManifest(args []string) {
 			fail("发布版本格式不合法: " + *version)
 		}
 		for i := range entries {
+			// 跟随上游版本的包不使用仓库 tag 版本。
+			if entries[i].upstreamModule != "" {
+				continue
+			}
 			entries[i].Version = tagVersion
 		}
 	}
@@ -272,7 +289,7 @@ func sourcePaths(kind string) []string {
 	return paths
 }
 
-// buildEntries 生成三类合并插件包：DNS 全量、部署全量、通知全量。
+// buildEntries 生成合并插件包：DNS 全量的 lego / native 两个变体、部署全量、通知全量。
 // 不再按服务商拆分，减少仓库资产数量、安装文件数量与运行期进程数。
 func buildEntries() []pluginEntry {
 	dnsProviders := catalog.DNSProviders()
@@ -290,9 +307,16 @@ func buildEntries() []pluginEntry {
 	notifyIDs := channels.IDs()
 	return []pluginEntry{
 		{
+			Kind: "dns", ID: "all-lego", Version: "0.0.0", Tag: "bundle_dns_all_lego",
+			Name: "DNS 插件包（全量·lego）", Description: "194 个服务商合并构建，全部使用 lego 官方实现，保留完整上游能力（如 rfc2136 GSS-TSIG）。",
+			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "lego",
+			ConflictsWith: []string{"all-native"}, upstreamModule: legoModule,
+		},
+		{
 			Kind: "dns", ID: "all-native", Version: dnsBaseVer + ".0", Tag: "bundle_dns_all_native",
 			Name: "DNS 插件包（全量·重构）", Description: "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
-			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native", baseVersion: dnsBaseVer,
+			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native",
+			VariantOf: "all-lego", ConflictsWith: []string{"all-lego"}, baseVersion: dnsBaseVer,
 		},
 		{
 			Kind: "deploy", ID: "all", Version: deployBaseVer + ".0", Tag: "bundle_deploy_all",
@@ -334,6 +358,29 @@ func loadManifest() []pluginEntry {
 		fail("读取 plugins.json 失败: " + err.Error())
 	}
 	return entries
+}
+
+// moduleVersion 从 go.mod 读取指定模块的版本，并去掉 semver 的 v 前缀。
+// 只处理直接 require；replace / exclude 行会被忽略。
+func moduleVersion(module string) (string, error) {
+	raw, err := os.ReadFile("go.mod")
+	if err != nil {
+		return "", err
+	}
+	for _, line := range strings.Split(string(raw), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "//") || strings.Contains(line, "=>") {
+			continue
+		}
+		fields := strings.Fields(line)
+		switch {
+		case len(fields) >= 2 && fields[0] == module && strings.HasPrefix(fields[1], "v"):
+			return strings.TrimPrefix(fields[1], "v"), nil
+		case len(fields) >= 3 && fields[0] == "require" && fields[1] == module && strings.HasPrefix(fields[2], "v"):
+			return strings.TrimPrefix(fields[2], "v"), nil
+		}
+	}
+	return "", fmt.Errorf("go.mod 中没有找到 %s 的版本", module)
 }
 
 func cmdMatrix() {

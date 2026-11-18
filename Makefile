@@ -4,19 +4,25 @@ BUILD_ENV := CGO_ENABLED=0
 LDFLAGS := -s -w
 BIN := bin
 
-.PHONY: all build bundle bundle-native gen manifest plugins test fmt vet check check-native clean index
+.PHONY: all build bundle bundle-lego bundle-native gen manifest plugins test fmt vet check check-native clean index
 
 all: build
 
 build: bundle
 
-# 合并插件包：DNS 只发布 all-native 一个包，部署与通知各一个包，共享各自进程内的 Go 运行时。
+# 合并插件包：DNS 发布 all-lego 与 all-native 两个变体，部署与通知各一个包，
+# 共享各自进程内的 Go 运行时。
 bundle:
 	mkdir -p $(BIN)
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_lego,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-lego ./cmd/dns-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
-	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all ./cmd/dns-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-deploy-all ./cmd/deploy-helper
 	$(BUILD_ENV) $(GO) build -trimpath -tags nethttpomithttp2,http2legacy -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-notify-all ./cmd/notify-helper
+
+# all-lego 单独构建：全部服务商使用 lego 实现。
+bundle-lego:
+	mkdir -p $(BIN)
+	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_lego,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-lego ./cmd/dns-helper
 
 # all-native 单独构建（用于体积/依赖检查）。
 bundle-native:
@@ -31,8 +37,8 @@ gen:
 manifest:
 	$(GO) run scripts/pluginctl/main.go manifest
 
-# 构建单个合并包：make plugin KIND=dns ID=all-native GOOS=linux GOARCH=amd64
-# DNS 的 ID 为 all-native；部署和通知的 ID 为 all。
+# 构建单个合并包：make plugin KIND=dns ID=all-lego GOOS=linux GOARCH=amd64
+# DNS 的 ID 为 all-lego 或 all-native；部署和通知的 ID 为 all。
 ID ?= all-native
 plugin:
 	$(GO) run scripts/pluginctl/main.go build -kind "$(KIND)" -id "$(ID)" -goos "$(GOOS)" -goarch "$(GOARCH)" -out dist

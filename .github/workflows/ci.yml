@@ -32,6 +32,9 @@ jobs:
           go run scripts/pluginctl/main.go manifest
           go run scripts/pluginctl/main.go gen
           test -z "$(git status --porcelain -- plugins.json cmd/dns-helper dns/groups)"
+          lego_version=$(awk '$1 == "github.com/go-acme/lego/v4" { sub(/^v/, "", $2); print $2 }' go.mod)
+          test -n "$lego_version"
+          test "$(jq -r '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .version' plugins.json)" = "$lego_version"
 
       - name: Vet
         run: go vet ./...
@@ -50,12 +53,14 @@ jobs:
 
       - name: Build merged plugins
         run: |
+          go build -trimpath -tags "bundle_dns_all_lego,nethttpomithttp2,http2legacy" -o /tmp/dns-all-lego ./cmd/dns-helper
           go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -o /tmp/dns-all-native ./cmd/dns-helper
-          go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/dns-all ./cmd/dns-helper
           go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/deploy-all ./cmd/deploy-helper
           go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/notify-all ./cmd/notify-helper
+          test "$(/tmp/dns-all-lego manifest | jq '.providers | length')" = "194"
           test "$(/tmp/dns-all-native manifest | jq '.providers | length')" = "194"
-          test "$(/tmp/dns-all manifest | jq '.providers | length')" = "194"
+          diff <(/tmp/dns-all-lego manifest | jq -r '.providers[].id' | sort) \
+               <(/tmp/dns-all-native manifest | jq -r '.providers[].id' | sort)
           manifest="$(/tmp/dns-all-native manifest)"
           test "$(printf '%s' "$manifest" | jq -r '.providers[] | select(.id=="cloudflare") | .name_i18n["en-US"] | length')" -gt 0
           test "$(printf '%s' "$manifest" | wc -c)" -lt 1048576
@@ -65,13 +70,16 @@ jobs:
 
       - name: Package smoke
         run: |
-          version=$(jq -r '.plugins[] | select(.kind == "dns" and .id == "all-native") | .version' plugins.json)
-          go run scripts/pluginctl/main.go build -kind dns -id all-native -goos linux -goarch amd64 -out /tmp/dist
-          tar -tzf "/tmp/dist/lactssl-dns-all-native_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
-          tar -tzf "/tmp/dist/lactssl-dns-all-native_${version}_linux_amd64.tar.gz" | grep -qx icons/cloudflare.svg
+          for id in all-lego all-native; do
+            version=$(jq -r --arg id "$id" '.plugins[] | select(.kind == "dns" and .id == $id) | .version' plugins.json)
+            go run scripts/pluginctl/main.go build -kind dns -id "$id" -goos linux -goarch amd64 -out /tmp/dist
+            tar -tzf "/tmp/dist/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
+            tar -tzf "/tmp/dist/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx icons/cloudflare.svg
+          done
           go run scripts/pluginctl/main.go index -assets /tmp/dist -base-url https://example.invalid/releases/download -out /tmp/index.json
-          jq -e '.plugins[0].assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
-          jq -e '.plugins[0].bundle == true' /tmp/index.json >/dev/null
-          jq -e '.plugins[0].uncompressed_size > 0' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .bundle == true' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .sdk == "lego"' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-native") | .uncompressed_size > 0' /tmp/index.json >/dev/null
           jq -e '[.icons[] | select(.id == "cloudflare")] | length == 1' /tmp/index.json >/dev/null
           jq -e '.icons[] | select(.id == "cloudflare") | .data | startswith("data:image/svg+xml;base64,")' /tmp/index.json >/dev/null

@@ -5,8 +5,8 @@ name: Release plugins
 #   plugin-assets-<kind>      存放该类别全部插件的 tar.gz 资产
 # 资产名自带版本与平台，因此同一 Release 内可覆盖升级：
 #   lactssl-<kind>-<id>_<version>_<os>_<arch>.tar.gz
-# tag 构建（v1.3.4 / plugins-v1.3.4）时，所有插件包使用 tag 版本 1.3.4；
-# 手动触发时使用 plugins.json 中按内容指纹维护的内部版本。
+# tag 构建（v1.3.4 / plugins-v1.3.4）时，DNS native、部署与通知包使用 tag 版本 1.3.4；
+# all-lego 始终跟随 go.mod 中的 lego 版本。手动触发时使用 plugins.json 中维护的版本。
 on:
   workflow_dispatch:
     inputs:
@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "$RELEASE_VERSION" ]; then
-            # tag 构建：三个合并包统一使用 tag 版本；只改 CI 工作区，不提交。
+            # tag 构建：其余合并包统一使用 tag 版本，all-lego 跟随 lego 版本；只改 CI 工作区，不提交。
             go run scripts/pluginctl/main.go manifest -version "$RELEASE_VERSION"
           else
             go run scripts/pluginctl/main.go manifest
@@ -94,7 +94,7 @@ jobs:
           fi
           if [ -n "$TAG_VERSION" ]; then
             # tag 版本对所有插件包生效，必须全量重建，避免索引里混入旧 tag 的资产。
-            echo "tag 构建：全部插件使用版本 ${TAG_VERSION}"
+            echo "tag 构建：全量重建（all-lego 使用 go.mod 中的 lego 版本）"
             jq '[.plugins[]]' plugins.json > changed.json
           elif [ -s "$prev" ]; then
             # 只构建需要重建的插件：新增、版本变化、或索引里仍是旧的直链布局

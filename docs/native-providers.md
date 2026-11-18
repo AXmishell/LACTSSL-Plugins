@@ -1,6 +1,11 @@
 # Native Provider 实现说明
 
-`lactssl-dns-all-native` 是当前唯一发布的 DNS 包，覆盖原 `core` + `heavy` 的 194 个 provider，provider ID、字段、别名与 manifest 完全一致。已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK。旧 `core` / `heavy` 及 `core-native` / `heavy-native` 包已停止发布。
+DNS 目前发布两个全量变体，均覆盖 194 个 provider，provider ID、字段、别名与 manifest 完全一致：
+
+- `lactssl-dns-all-lego`：全部使用 lego 官方实现，保留完整上游能力（例如 `rfc2136` 的 GSS-TSIG）；版本号直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 的版本（如 `4.35.2`）。
+- `lactssl-dns-all-native`：已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK；其余继续使用 lego 包装。
+
+两个变体不能同时安装，`plugins.json` 通过 `conflicts_with` 声明互斥，`all-native` 的 `variant_of` 指向 `all-lego`。旧 `core` / `heavy` 及 `core-native` / `heavy-native` 包已停止发布。
 
 ## 1. 已实现 provider
 
@@ -63,7 +68,7 @@
 
 ## 5. 已知限制
 
-- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时可本地构建不带 `bundle_dns_all_native` 标签的全量 lego helper。
+- `rfc2136` 的 GSS-TSIG 依赖 Kerberos/GSSAPI，native 变体不实现；检测到 `tsig_algorithm=gss` 时会直接报错。需要 GSS-TSIG 时请安装 `all-lego` 变体。
 - `route53` / `lightsail` 目前支持静态 AK/SK 或环境变量，未实现 shared credentials 文件、STS AssumeRole、EC2 IMDS；旧 `heavy` 包曾保留这些能力，现已停止发布。
 - `gcloud` 未实现 metadata server 默认凭据；需要显式 service account JSON 或 `GOOGLE_APPLICATION_CREDENTIALS`。
 - `azuredns` 未实现 managed identity / workload identity，仅 client secret。
@@ -83,6 +88,6 @@ go test ./dns/native/... ./sdk/...
 ```
 
 `check_native.sh` 会：
-1. 构建 `all-native` 并检查 ≤ 20 MiB；
+1. 构建 `all-lego` 与 `all-native`，并检查 `all-native` ≤ 20 MiB；
 2. 检查已迁移 provider 不再链接对应 lego 包装，且已迁移 SDK 未回归；
-3. 对比全量 194 个 provider 的 manifest（忽略 version/name）。
+3. 对比两个全量包的 194 个 provider manifest（忽略 version/name）。
