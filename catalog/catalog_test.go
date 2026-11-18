@@ -78,6 +78,24 @@ func TestDeployMergeGroups(t *testing.T) {
 	}
 }
 
+func TestCloudRegionIsDeployField(t *testing.T) {
+	for _, id := range []string{"aliyun", "volcengine"} {
+		def, ok := LookupDeployer(id)
+		if !ok {
+			t.Errorf("deployer %s missing", id)
+			continue
+		}
+		for _, field := range def.Fields {
+			if field.Key == "region" {
+				t.Errorf("%s: region must not be an auth field", id)
+			}
+		}
+		if _, ok := deployField(def, "region"); !ok {
+			t.Errorf("%s: region must be a deploy field", id)
+		}
+	}
+}
+
 func TestDeployMigrations(t *testing.T) {
 	want := map[string]DeployMigration{
 		"1panel_panel":   {Provider: "1panel", Config: map[string]string{"target": "panel"}},

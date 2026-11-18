@@ -4772,12 +4772,6 @@
           "label_key": "meta.field.access_key_secret.label",
           "type": "password",
           "required": true
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.aliyun_region.label",
-          "type": "text",
-          "help_key": "meta.field.aliyun_region.help"
         }
       ],
       "deploy_fields": [
@@ -4809,6 +4803,12 @@
               "value": "waf"
             }
           ]
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.aliyun_region.label",
+          "type": "text",
+          "help_key": "meta.field.aliyun_region.help"
         },
         {
           "key": "domains",
@@ -6197,13 +6197,6 @@
           "label_key": "meta.field.secret_access_key.label",
           "type": "password",
           "required": true
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "default": "cn-north-1",
-          "placeholder_key": "meta.field.region.placeholder.volcengine"
         }
       ],
       "deploy_fields": [
@@ -6223,6 +6216,14 @@
               "value": "dcdn"
             }
           ]
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "default": "cn-north-1",
+          "placeholder_key": "meta.field.region.placeholder.volcengine",
+          "help_key": "meta.field.region.help.volcengine"
         },
         {
           "key": "domains",

@@ -1,9 +1,11 @@
 package volcengine
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/AXmishell/LACTSSL-Plugins/deploy"
@@ -61,6 +63,42 @@ func TestDuplicateCertificate(t *testing.T) {
 	cert := &deploy.Certificate{Domain: "example.com", FullchainPEM: "FULLCHAIN", KeyPEM: "KEY"}
 	if err := deployVolcengineCDN(cert, map[string]string{"access_key_id": "ak", "secret_access_key": "sk"}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// 部署节点中的 region 应覆盖凭据中的默认值。
+func TestDeployVolcengineRegionFromDeployConfig(t *testing.T) {
+	var scopes []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		scopes = append(scopes, r.Header.Get("Authorization"))
+		if r.URL.Query().Get("Action") == "AddCertificate" {
+			_, _ = w.Write([]byte(`{"Result":{"CertId":"cert-1"}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"Result":{}}`))
+	}))
+	defer server.Close()
+	old := volcengineBaseURL
+	volcengineBaseURL = server.URL
+	t.Cleanup(func() { volcengineBaseURL = old })
+
+	err := (volcenginePlugin{}).Deploy(context.Background(), deploy.Request{
+		Auth:   map[string]string{"access_key_id": "ak", "secret_access_key": "sk"},
+		Config: map[string]string{"region": "cn-shanghai"},
+		Certificate: deploy.Certificate{
+			Domain: "example.com", FullchainPEM: "FULLCHAIN", KeyPEM: "KEY",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(scopes) == 0 {
+		t.Fatal("no signed requests")
+	}
+	for _, auth := range scopes {
+		if !strings.Contains(auth, "/cn-shanghai/cdn/request") {
+			t.Fatalf("region from deploy config not used: %q", auth)
+		}
 	}
 }
 
