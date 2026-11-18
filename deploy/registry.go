@@ -18,6 +18,8 @@ type Request struct {
 	Auth        map[string]string
 	Config      map[string]string
 	Certificate Certificate
+	// Locale 仅用于 verify，让插件返回对应语言的检查消息。
+	Locale string
 }
 
 // Deployer 是部署目标的统一接口。
@@ -28,6 +30,54 @@ type Deployer interface {
 	Aliases() []string
 	// Deploy 执行一次证书部署。
 	Deploy(ctx context.Context, req Request) error
+}
+
+// OptionsRequest 是一次动态选项读取请求。
+// Field 是前端字段 key，Source 是 manifest 中声明的 options_source，
+// Query 是可选的搜索词；插件按自身 API 决定如何使用这些参数。
+type OptionsRequest struct {
+	Field  string
+	Source string
+	Query  string
+	Auth   map[string]string
+	Config map[string]string
+}
+
+// OptionLister 是可选接口：部署目标可通过远端 API 提供下拉选项，
+// 例如从宝塔面板读取网站或 Docker 网站列表。
+type OptionLister interface {
+	ListOptions(ctx context.Context, req OptionsRequest) ([]protocol.DeployOption, error)
+}
+
+// Verifier 是可选接口：部署目标通过只读 API 验证认证与目标作用域。
+// 实现方不得写入证书、创建持久对象或执行 reload 命令。
+type Verifier interface {
+	Verify(ctx context.Context, req Request) ([]protocol.VerifyCheck, error)
+}
+
+// verifiable 记录实现了 Verifier 的部署目标，供 manifest 输出能力位。
+// 用显式清单而不是反射，避免某个目标暂时未实现时误报能力。
+var verifiable = struct {
+	sync.RWMutex
+	ids map[string]bool
+}{ids: make(map[string]bool)}
+
+// MarkVerifiable 在 init 中声明部署目标支持只读验证。
+func MarkVerifiable(ids ...string) {
+	verifiable.Lock()
+	defer verifiable.Unlock()
+	for _, id := range ids {
+		if id = normalize(id); id != "" {
+			verifiable.ids[id] = true
+		}
+	}
+}
+
+// IsVerifiable 判断部署目标是否声明了 verify-v1 能力。
+func IsVerifiable(id string) bool {
+	verifiable.RLock()
+	defer verifiable.RUnlock()
+	return verifiable.ids[normalize(id)]
 }
 
 var registry = struct {

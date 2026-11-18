@@ -51,13 +51,17 @@ func main() {
 	panels.RegisterSafeline()
 	helper.ApplyMemoryLimit()
 	if len(os.Args) < 2 {
-		helper.Fail("用法: deploy-helper manifest|deploy")
+		helper.Fail("用法: deploy-helper manifest|deploy|options|verify")
 	}
 	switch os.Args[1] {
 	case "manifest", "list":
 		writeManifest()
 	case "deploy":
 		handle()
+	case "options":
+		handleOptions()
+	case "verify":
+		handleVerify()
 	default:
 		helper.Fail("未知子命令: " + os.Args[1])
 	}
@@ -74,6 +78,7 @@ func writeManifest() {
 // 七牛云、宝塔或 1Panel 目标整体不可用。
 func buildManifest() protocol.DeployManifest {
 	merged := helper.HasFeature(protocol.FeatureMergedDeployers)
+	dynamicOptions := helper.HasFeature(protocol.FeatureDynamicOptions)
 	deprecated := catalog.DeprecatedDeployTypes()
 	mergedCanonical := make(map[string]bool)
 	if !merged {
@@ -84,10 +89,11 @@ func buildManifest() protocol.DeployManifest {
 
 	plugins := deploy.List()
 	manifest := protocol.DeployManifest{
-		Protocol:  protocol.ProtocolVersion,
-		Name:      "lactssl deploy helper",
-		Version:   serviceVersion(),
-		Deployers: make([]protocol.Deployer, 0, len(plugins)),
+		Protocol:     protocol.ProtocolVersion,
+		Capabilities: []string{protocol.FeatureVerify},
+		Name:         "lactssl deploy helper",
+		Version:      serviceVersion(),
+		Deployers:    make([]protocol.Deployer, 0, len(plugins)),
 	}
 	for _, plugin := range plugins {
 		def, ok := catalog.LookupDeployer(plugin.ID())
@@ -109,14 +115,23 @@ func buildManifest() protocol.DeployManifest {
 			Description:     def.LocalizedDesc(i18n.Default),
 			DescriptionI18n: localizedTextMap(func(locale i18n.Locale) string { return def.LocalizedDesc(locale) }),
 			Aliases:         plugin.Aliases(),
-			Fields:          manifestFields(def.Fields),
-			DeployFields:    manifestFields(def.DeployFields),
+			Fields:          manifestFields(def.Fields, dynamicOptions),
+			DeployFields:    manifestFields(def.DeployFields, dynamicOptions),
+			Capabilities:    deployerCapabilities(plugin.ID()),
 		})
 	}
 	return manifest
 }
 
-func manifestFields(fields []catalog.Field) []protocol.DeployField {
+// deployerCapabilities 只给实现了只读探测的目标声明 verify-v1。
+func deployerCapabilities(id string) []string {
+	if deploy.IsVerifiable(id) {
+		return []string{protocol.FeatureVerify}
+	}
+	return nil
+}
+
+func manifestFields(fields []catalog.Field, dynamicOptions bool) []protocol.DeployField {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -144,6 +159,11 @@ func manifestFields(fields []catalog.Field) []protocol.DeployField {
 		}
 		if field.ShowIf != nil {
 			item.ShowIf = &protocol.DeployCondition{Key: field.ShowIf.Key, Value: field.ShowIf.Value, Values: field.ShowIf.Values}
+		}
+		// 旧版宿主不认识动态选项字段，声明特性后才输出，保持 manifest 兼容。
+		if dynamicOptions {
+			item.OptionsSource = field.OptionsSource
+			item.Multiple = field.Multiple
 		}
 		out = append(out, item)
 	}
@@ -183,6 +203,111 @@ func handle() {
 	}); err != nil {
 		helper.Fail(err.Error())
 	}
+}
+
+// handleVerify 执行只读探测。未实现 Verifier 的目标返回结构化 unsupported，
+// 宿主据此显示“该插件版本不支持验证”，而不是误报权限失败。
+func handleVerify() {
+	var req protocol.DeployRequest
+	if err := helper.ReadJSON(&req); err != nil {
+		helper.Fail("解析请求失败: " + err.Error())
+	}
+	if req.Protocol != "" && req.Protocol != protocol.ProtocolVersion {
+		helper.Fail("不支持的插件协议: " + req.Protocol)
+	}
+	if req.Provider == "" {
+		helper.Fail("请求缺少 provider")
+	}
+	loc := i18n.Normalize(firstNonEmpty(req.Locale, string(i18n.Default)))
+	plugin, ok := deploy.Lookup(req.Provider)
+	if !ok {
+		helper.Fail("不支持的部署目标: " + req.Provider)
+	}
+	verifier, ok := plugin.(deploy.Verifier)
+	if !ok {
+		response := protocol.VerifyResponse{OK: true, Checks: []protocol.VerifyCheck{{
+			Key: "verify", Status: protocol.VerifyStatusUnsupported,
+			Message: i18n.T(loc, "service.verify.unsupported", nil),
+		}}}
+		if err := helper.WriteJSON(response); err != nil {
+			helper.Fail("输出验证结果失败: " + err.Error())
+		}
+		return
+	}
+	checks, err := verifier.Verify(context.Background(), deploy.Request{
+		Auth:   req.Auth,
+		Config: req.Config,
+		Locale: string(loc),
+	})
+	if err != nil {
+		checks = append(checks, protocol.VerifyCheck{
+			Key: "verify", Status: protocol.VerifyStatusFailed,
+			Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()}),
+		})
+	}
+	if checks == nil {
+		checks = []protocol.VerifyCheck{}
+	}
+	response := protocol.VerifyResponse{OK: true, Checks: checks}
+	for _, check := range checks {
+		if check.Status == protocol.VerifyStatusFailed || check.Status == protocol.VerifyStatusError {
+			response.OK = false
+			break
+		}
+	}
+	if err := helper.WriteJSON(response); err != nil {
+		helper.Fail("输出验证结果失败: " + err.Error())
+	}
+}
+
+// handleOptions 读取部署字段的动态选项，例如宝塔面板中的网站列表。
+func handleOptions() {
+	var req protocol.DeployOptionsRequest
+	if err := helper.ReadJSON(&req); err != nil {
+		helper.Fail("解析请求失败: " + err.Error())
+	}
+	if req.Protocol != "" && req.Protocol != protocol.ProtocolVersion {
+		helper.Fail("不支持的插件协议: " + req.Protocol)
+	}
+	if req.Provider == "" {
+		helper.Fail("请求缺少 provider")
+	}
+	if req.Field == "" {
+		helper.Fail("请求缺少 field")
+	}
+	plugin, ok := deploy.Lookup(req.Provider)
+	if !ok {
+		helper.Fail("不支持的部署目标: " + req.Provider)
+	}
+	lister, ok := plugin.(deploy.OptionLister)
+	if !ok {
+		helper.Fail(i18n.E("service.deploy.options_unsupported").Error())
+	}
+	options, err := lister.ListOptions(context.Background(), deploy.OptionsRequest{
+		Field:  req.Field,
+		Source: req.Source,
+		Query:  req.Query,
+		Auth:   req.Auth,
+		Config: req.Config,
+	})
+	if err != nil {
+		helper.Fail(err.Error())
+	}
+	if options == nil {
+		options = []protocol.DeployOption{}
+	}
+	if err := helper.WriteJSON(protocol.DeployOptionsResponse{Options: options}); err != nil {
+		helper.Fail("输出选项失败: " + err.Error())
+	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 // buildVersion 由 pluginctl 通过 -ldflags 注入，必须与仓库索引中的版本一致。

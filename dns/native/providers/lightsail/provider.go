@@ -30,7 +30,10 @@ func (plugin) New(cfg map[string]string) (dns.ChallengeProvider, error) {
 	return newProvider(cfg)
 }
 
-func init() { dns.Register(plugin{}) }
+func init() {
+	dns.Register(plugin{})
+	dns.MarkVerifiable("lightsail")
+}
 
 type provider struct {
 	client      *httpapi.Client
@@ -75,6 +78,18 @@ type createDomainEntryRequest struct {
 type deleteDomainEntryRequest struct {
 	DomainName  string      `json:"domainName"`
 	DomainEntry domainEntry `json:"domainEntry"`
+}
+
+// Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
+func (p *provider) Verify(_ context.Context, domain string) (string, error) {
+	body, err := httpapi.EncodeJSON(map[string]string{"domainName": p.zone})
+	if err != nil {
+		return "", err
+	}
+	if _, err := p.call("GetDomain", body); err != nil {
+		return "", fmt.Errorf("lightsail: get domain: %w", err)
+	}
+	return p.zone, nil
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {

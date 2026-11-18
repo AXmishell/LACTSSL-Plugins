@@ -5,6 +5,7 @@
 package rfc2136
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -28,7 +29,10 @@ func (plugin) New(cfg map[string]string) (dns.ChallengeProvider, error) {
 	return newProvider(cfg)
 }
 
-func init() { dns.Register(plugin{}) }
+func init() {
+	dns.Register(plugin{})
+	dns.MarkVerifiable("rfc2136")
+}
 
 type provider struct {
 	nameserver string
@@ -72,6 +76,16 @@ func newProvider(cfg map[string]string) (*provider, error) {
 		ttl:        defaultTTL,
 		timeout:    30 * time.Second,
 	}, nil
+}
+
+// Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
+func (p *provider) Verify(_ context.Context, domain string) (string, error) {
+	fqdn := dnsutil.ChallengeFQDN(domain)
+	z, err := p.resolveZone(fqdn)
+	if err != nil {
+		return "", err
+	}
+	return z, nil
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {

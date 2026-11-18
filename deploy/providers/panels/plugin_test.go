@@ -61,6 +61,87 @@ func TestDeployBaotaSite(t *testing.T) {
 	}
 }
 
+func TestBaotaListOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   string
+		path     string
+		formKey  string
+		response string
+		want     []string
+	}{
+		{
+			name:     "website",
+			target:   "site",
+			path:     "/data",
+			formKey:  "table",
+			response: `{"data":[{"id":1,"name":"example.com"},{"id":2,"name":"blog.example.com"}]}`,
+			want:     []string{"example.com", "blog.example.com"},
+		},
+		{
+			name:     "docker",
+			target:   "docker",
+			path:     "/mod/docker/com/get_site_list",
+			formKey:  "type",
+			response: `{"status":true,"data":{"data":[{"name":"docker-a"},{"name":"docker-b"}]},"page":"1"}`,
+			want:     []string{"docker-a", "docker-b"},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost || r.URL.Path != tc.path {
+					t.Errorf("unexpected request: %s %s", r.Method, r.URL.String())
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				if err := r.ParseForm(); err != nil {
+					t.Errorf("invalid form: %v", err)
+				}
+				if r.Form.Get("request_token") != baotaRequestToken("secret", r.Form.Get("request_time")) {
+					t.Errorf("invalid request token")
+				}
+				if r.Form.Get(tc.formKey) == "" {
+					t.Errorf("missing form parameter %s: %v", tc.formKey, r.Form)
+				}
+				_, _ = w.Write([]byte(tc.response))
+			}))
+			defer server.Close()
+
+			options, err := baotaListOptions(context.Background(), map[string]string{
+				"panel_url":  server.URL,
+				"api_secret": "secret",
+			}, tc.target, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(options) != len(tc.want) {
+				t.Fatalf("options = %v, want %v", options, tc.want)
+			}
+			for index, want := range tc.want {
+				if options[index].Value != want || options[index].Label != want {
+					t.Fatalf("option %d = %+v, want %s", index, options[index], want)
+				}
+			}
+		})
+	}
+}
+
+func TestBaotaListOptionsRejectsPanelError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"status":false,"msg":"invalid token"}`))
+	}))
+	defer server.Close()
+
+	_, err := baotaListOptions(context.Background(), map[string]string{
+		"panel_url":  server.URL,
+		"api_secret": "secret",
+	}, "site", "")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestDeployBaotaPanel(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/config" || r.URL.Query().Get("action") != "SavePanelSSL" {

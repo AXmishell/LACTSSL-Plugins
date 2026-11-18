@@ -45,6 +45,10 @@ type Field struct {
 	Env     string     `json:"env,omitempty"`
 	Options []Option   `json:"options,omitempty"`
 	ShowIf  *Condition `json:"show_if,omitempty"`
+	// OptionsSource 非空表示选项由插件动态提供，例如 baota_sites。
+	OptionsSource string `json:"options_source,omitempty"`
+	// Multiple 表示字段值允许包含多个选项。
+	Multiple bool `json:"multiple,omitempty"`
 }
 
 // Provider 描述一个 DNS 服务商或部署目标。

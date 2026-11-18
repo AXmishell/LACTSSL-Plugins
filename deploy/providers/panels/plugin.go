@@ -18,6 +18,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy/util"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/outbound"
+	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
 
 // 以下部署目标都由部署插件提供：宝塔、1Panel 与雷池 WAF。
@@ -49,11 +50,26 @@ func (baotaPlugin) Deploy(_ context.Context, req deploy.Request) error {
 		return i18n.E("service.deploy.deploy_target_invalid", "type", cfg["target"])
 	}
 }
+func (baotaPlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) ([]protocol.DeployOption, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	target := strings.TrimSpace(cfg["target"])
+	switch target {
+	case "", "site":
+		return baotaListOptions(ctx, cfg, "site", req.Query)
+	case "docker":
+		return baotaListOptions(ctx, cfg, "docker", req.Query)
+	default:
+		return nil, i18n.E("service.deploy.baota_options_unsupported")
+	}
+}
 
 func (baotaDockerPlugin) ID() string        { return "baota_docker" }
 func (baotaDockerPlugin) Aliases() []string { return nil }
 func (baotaDockerPlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deployBaotaDockerSite(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+}
+func (baotaDockerPlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) ([]protocol.DeployOption, error) {
+	return baotaListOptions(ctx, util.Merge(req.Auth, req.Config), "docker", req.Query)
 }
 
 func (onePanelPlugin) ID() string        { return "1panel" }
@@ -75,6 +91,9 @@ func (baotaSitePlugin) ID() string        { return "baota_site" }
 func (baotaSitePlugin) Aliases() []string { return nil }
 func (baotaSitePlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deployBaotaSite(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+}
+func (baotaSitePlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) ([]protocol.DeployOption, error) {
+	return baotaListOptions(ctx, util.Merge(req.Auth, req.Config), "site", req.Query)
 }
 
 func (baotaPanelPlugin) ID() string        { return "baota_panel" }
@@ -126,6 +145,7 @@ func (safelinePortalPlugin) Deploy(_ context.Context, req deploy.Request) error 
 
 // RegisterBaota 注册宝塔规范目标及历史兼容 ID。
 func RegisterBaota() {
+	deploy.MarkVerifiable("baota", "baota_site", "baota_panel", "baota_docker")
 	deploy.Register(baotaPlugin{})
 	deploy.Register(baotaDockerPlugin{})
 	deploy.Register(baotaSitePlugin{})
@@ -134,6 +154,7 @@ func RegisterBaota() {
 
 // RegisterOnePanel 注册 1Panel 规范目标及历史兼容 ID。
 func RegisterOnePanel() {
+	deploy.MarkVerifiable("1panel", "1panel_site", "1panel_panel")
 	deploy.Register(onePanelPlugin{})
 	deploy.Register(onePanelSitePlugin{})
 	deploy.Register(onePanelPanelPlugin{})
@@ -141,6 +162,7 @@ func RegisterOnePanel() {
 
 // RegisterSafeline 注册雷池 WAF 目标。
 func RegisterSafeline() {
+	deploy.MarkVerifiable("safeline", "safeline_panel", "safeline_portal")
 	deploy.Register(safelinePlugin{})
 	deploy.Register(safelinePanelPlugin{})
 	deploy.Register(safelinePortalPlugin{})
@@ -168,7 +190,9 @@ func baotaRequestToken(secret, timestamp string) string {
 	return md5Hex(timestamp + md5Hex(secret))
 }
 
-func baotaPost(client *http.Client, base, secret, apiPath, action string, data url.Values) error {
+// baotaPostRaw 发送带签名的面板请求并返回原始响应。
+// 部分列表接口（如 data?action=getData）不返回 status 字段，必须由调用方解析。
+func baotaPostRaw(client *http.Client, base, secret, apiPath, action string, data url.Values) ([]byte, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	data.Set("request_time", timestamp)
 	data.Set("request_token", baotaRequestToken(secret, timestamp))
@@ -179,28 +203,36 @@ func baotaPost(client *http.Client, base, secret, apiPath, action string, data u
 	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
-		return i18n.E("service.deploy.request_build_failed", "error", err.Error())
+		return nil, i18n.E("service.deploy.request_build_failed", "error", err.Error())
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 	if err != nil {
-		return i18n.E("service.deploy.baota_request_failed", "error", outbound.SafeError(err))
+		return nil, i18n.E("service.deploy.baota_request_failed", "error", outbound.SafeError(err))
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, i18n.E("service.deploy.baota_status", "status", resp.StatusCode, "body", util.Truncate(string(body), 300))
+	}
+	return body, nil
+}
+
+func baotaPost(client *http.Client, base, secret, apiPath, action string, data url.Values) error {
+	body, err := baotaPostRaw(client, base, secret, apiPath, action, data)
+	if err != nil {
+		return err
+	}
 	var result struct {
 		Status bool   `json:"status"`
 		Msg    string `json:"msg"`
 	}
 	_ = json.Unmarshal(body, &result)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return i18n.E("service.deploy.baota_status", "status", resp.StatusCode, "body", util.Truncate(string(body), 300))
-	}
 	if !result.Status {
 		if result.Msg != "" {
 			return i18n.E("service.deploy.baota_error", "message", result.Msg)
 		}
-		return i18n.E("service.deploy.baota_status", "status", resp.StatusCode, "body", util.Truncate(string(body), 300))
+		return i18n.E("service.deploy.baota_status", "status", 0, "body", util.Truncate(string(body), 300))
 	}
 	return nil
 }
@@ -276,6 +308,138 @@ func deployBaotaDockerSite(cert *deploy.Certificate, cfg map[string]string) erro
 		return i18n.E("service.deploy.partial_failed", "errors", strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// baotaListOptions 从宝塔面板读取可部署对象名称。
+// 普通网站使用数据查询接口，Docker 网站使用 Docker 模块的 get_site_list。
+func baotaListOptions(_ context.Context, cfg map[string]string, target, query string) ([]protocol.DeployOption, error) {
+	base := panelURL(cfg["panel_url"])
+	secret := strings.TrimSpace(cfg["api_secret"])
+	if base == "" {
+		return nil, i18n.E("service.deploy.panel_url_required")
+	}
+	if err := outbound.ValidateURL(base); err != nil {
+		return nil, err
+	}
+	if secret == "" {
+		return nil, i18n.E("service.deploy.baota_secret_required")
+	}
+
+	client := deployHTTPClient(skipVerify(cfg))
+	var (
+		body []byte
+		err  error
+	)
+	switch target {
+	case "docker":
+		data := url.Values{
+			"p":    {"1"},
+			"row":  {"1000"},
+			"type": {"all"},
+		}
+		if keyword := strings.TrimSpace(query); keyword != "" {
+			data.Set("query", keyword)
+		}
+		body, err = baotaPostRaw(client, base, secret, "/mod/docker/com/get_site_list", "", data)
+	default:
+		data := url.Values{
+			"p":     {"1"},
+			"limit": {"1000"},
+			"type":  {"-1"},
+			"order": {"id desc"},
+		}
+		if keyword := strings.TrimSpace(query); keyword != "" {
+			data.Set("search", keyword)
+		}
+		body, err = baotaPostRaw(client, base, secret, "/data?action=getData&table=sites", "", data)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return parseBaotaSiteOptions(body)
+}
+
+// parseBaotaSiteOptions 兼容不同面板版本的响应结构：
+// 网站列表通常返回 data 数组，Docker 网站列表可能再包一层 data。
+func parseBaotaSiteOptions(body []byte) ([]protocol.DeployOption, error) {
+	var envelope struct {
+		Status *bool           `json:"status"`
+		Msg    string          `json:"msg"`
+		Data   json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, i18n.E("service.deploy.baota_sites_invalid")
+	}
+	if envelope.Status != nil && !*envelope.Status {
+		message := strings.TrimSpace(envelope.Msg)
+		if message == "" {
+			message = util.Truncate(string(body), 300)
+		}
+		return nil, i18n.E("service.deploy.baota_error", "message", message)
+	}
+	data := bytes.TrimSpace(envelope.Data)
+	if len(data) == 0 {
+		return nil, i18n.E("service.deploy.baota_sites_invalid")
+	}
+	if bytes.Equal(data, []byte("null")) {
+		return []protocol.DeployOption{}, nil
+	}
+	items, err := baotaSiteItems(data, 0)
+	if err != nil {
+		return nil, err
+	}
+	options := make([]protocol.DeployOption, 0, len(items))
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		name := baotaSiteName(item)
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		options = append(options, protocol.DeployOption{Label: name, Value: name})
+	}
+	if len(items) > 0 && len(options) == 0 {
+		return nil, i18n.E("service.deploy.baota_sites_invalid")
+	}
+	return options, nil
+}
+
+func baotaSiteItems(raw json.RawMessage, depth int) ([]map[string]any, error) {
+	if depth > 2 {
+		return nil, i18n.E("service.deploy.baota_sites_invalid")
+	}
+	var items []map[string]any
+	if err := json.Unmarshal(raw, &items); err == nil {
+		return items, nil
+	}
+	var names []string
+	if err := json.Unmarshal(raw, &names); err == nil {
+		items = make([]map[string]any, 0, len(names))
+		for _, name := range names {
+			items = append(items, map[string]any{"name": name})
+		}
+		return items, nil
+	}
+	var wrapper struct {
+		Data json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &wrapper); err == nil && len(bytes.TrimSpace(wrapper.Data)) > 0 {
+		return baotaSiteItems(wrapper.Data, depth+1)
+	}
+	return nil, i18n.E("service.deploy.baota_sites_invalid")
+}
+
+func baotaSiteName(item map[string]any) string {
+	for _, key := range []string{"name", "site_name", "siteName", "site"} {
+		value, ok := item[key].(string)
+		if !ok {
+			continue
+		}
+		if name := strings.TrimSpace(value); name != "" {
+			return name
+		}
+	}
+	return ""
 }
 
 func deployBaotaPanel(cert *deploy.Certificate, cfg map[string]string) error {
@@ -691,4 +855,197 @@ func uploadSafelineCert(client *http.Client, base, token string, certID float64,
 		return 0, i18n.E("service.deploy.safeline_cert_id_missing")
 	}
 	return id, nil
+}
+
+// Verify 只读检查面板认证与目标对象；不会上传证书或修改面板设置。
+func (baotaPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyBaotaPanelChecks(ctx, req, "")
+}
+
+func (baotaDockerPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyBaotaPanelChecks(ctx, req, "docker")
+}
+
+func (baotaSitePlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyBaotaPanelChecks(ctx, req, "site")
+}
+
+func (baotaPanelPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyBaotaPanelChecks(ctx, req, "panel")
+}
+
+func (onePanelPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyOnePanelChecks(ctx, req)
+}
+
+func (onePanelSitePlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyOnePanelChecks(ctx, req)
+}
+
+func (onePanelPanelPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyOnePanelChecks(ctx, req)
+}
+
+func (safelinePlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifySafelineChecks(ctx, req)
+}
+
+func (safelinePanelPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifySafelineChecks(ctx, req)
+}
+
+func (safelinePortalPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifySafelineChecks(ctx, req)
+}
+
+func verifyBaotaPanelChecks(ctx context.Context, req deploy.Request, forcedTarget string) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	target := forcedTarget
+	if target == "" {
+		target = strings.TrimSpace(cfg["target"])
+		if target == "" {
+			target = "site"
+		}
+	}
+	listTarget := "site"
+	if target == "docker" {
+		listTarget = "docker"
+	}
+	options, err := baotaListOptions(ctx, cfg, listTarget, "")
+	if err != nil {
+		return failedVerifyCheck(loc, err), nil
+	}
+	checks := []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+	}
+	if target == "panel" {
+		return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)}), nil
+	}
+	wanted := util.SplitList(cfg["sites"])
+	if len(wanted) == 0 {
+		return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)}), nil
+	}
+	existing := make(map[string]bool, len(options))
+	for _, option := range options {
+		existing[option.Value] = true
+	}
+	var missing []string
+	for _, name := range wanted {
+		if !existing[name] {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) > 0 {
+		checks = append(checks, protocol.VerifyCheck{
+			Key: "scope", Status: protocol.VerifyStatusFailed,
+			Message: i18n.T(loc, "service.verify.target_missing", map[string]any{"target": strings.Join(missing, ", ")}),
+		})
+		return checks, nil
+	}
+	return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.target_ok", nil)}), nil
+}
+
+func verifyOnePanelChecks(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	base := panelURL(cfg["panel_url"])
+	apiKey := strings.TrimSpace(cfg["api_key"])
+	if base == "" {
+		return failedVerifyCheck(loc, i18n.E("service.deploy.panel_url_required")), nil
+	}
+	if err := outbound.ValidateURL(base); err != nil {
+		return failedVerifyCheck(loc, err), nil
+	}
+	if apiKey == "" {
+		return failedVerifyCheck(loc, i18n.E("service.deploy.onepanel_key_required")), nil
+	}
+	client := deployHTTPClient(skipVerify(cfg))
+	version := onePanelVersion(cfg["api_version"])
+	payload := map[string]any{
+		"page":     1,
+		"pageSize": 10,
+		"name":     "",
+		"order":    "null",
+		"orderBy":  "created_at",
+	}
+	if _, err := onePanelRequest(client, base, version, apiKey, http.MethodPost, "/websites/search", payload); err != nil {
+		return failedVerifyCheck(loc, err), nil
+	}
+	checks := []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+	}
+	target := strings.TrimSpace(cfg["target"])
+	website := strings.TrimSpace(cfg["website"])
+	if target == "panel" || website == "" {
+		return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)}), nil
+	}
+	if _, err := onePanelResolveWebsite(client, base, version, apiKey, website); err != nil {
+		checks = append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusFailed, Message: err.Error()})
+		return checks, nil
+	}
+	return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.target_ok", nil)}), nil
+}
+
+func verifySafelineChecks(_ context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	base, token, client, err := safelineClient(cfg)
+	if err != nil {
+		return failedVerifyCheck(loc, err), nil
+	}
+	data, err := safelineRequest(client, base, token, http.MethodGet, "/api/open/cert", nil)
+	if err != nil {
+		return failedVerifyCheck(loc, err), nil
+	}
+	var result struct {
+		Nodes []safelineCert `json:"nodes"`
+	}
+	_ = json.Unmarshal(data, &result)
+	checks := []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+	}
+	target := strings.TrimSpace(cfg["target"])
+	if target == "portal" {
+		if _, err := safelineRequest(client, base, token, http.MethodGet, "/api/open/portal", nil); err != nil {
+			checks = append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusFailed, Message: err.Error()})
+			return checks, nil
+		}
+	}
+	rawIDs := util.SplitList(cfg["cert_ids"])
+	if len(rawIDs) == 0 {
+		return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)}), nil
+	}
+	existing := make(map[int64]bool, len(result.Nodes))
+	for _, node := range result.Nodes {
+		existing[node.ID] = true
+	}
+	var missing []string
+	for _, raw := range rawIDs {
+		id, convErr := strconv.ParseInt(raw, 10, 64)
+		if convErr != nil || !existing[id] {
+			missing = append(missing, raw)
+		}
+	}
+	if len(missing) > 0 {
+		checks = append(checks, protocol.VerifyCheck{
+			Key: "scope", Status: protocol.VerifyStatusFailed,
+			Message: i18n.T(loc, "service.verify.target_missing", map[string]any{"target": strings.Join(missing, ", ")}),
+		})
+		return checks, nil
+	}
+	return append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.target_ok", nil)}), nil
+}
+
+func failedVerifyCheck(loc i18n.Locale, err error) []protocol.VerifyCheck {
+	if err == nil {
+		return nil
+	}
+	return []protocol.VerifyCheck{{
+		Key: "verify", Status: protocol.VerifyStatusFailed,
+		Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()}),
+	}}
 }

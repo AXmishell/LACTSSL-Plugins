@@ -111,6 +111,41 @@ func TestManifestMergedDeployers(t *testing.T) {
 	}
 }
 
+func TestManifestDynamicOptionsFeature(t *testing.T) {
+	findSites := func(manifest protocol.DeployManifest, id string) *protocol.DeployField {
+		for index := range manifest.Deployers {
+			if manifest.Deployers[index].ID != id {
+				continue
+			}
+			for fieldIndex := range manifest.Deployers[index].DeployFields {
+				field := &manifest.Deployers[index].DeployFields[fieldIndex]
+				if field.Key == "sites" {
+					return field
+				}
+			}
+		}
+		return nil
+	}
+
+	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers)
+	legacy := findSites(buildManifest(), "baota")
+	if legacy == nil {
+		t.Fatal("baota sites field is missing")
+	}
+	if legacy.OptionsSource != "" || legacy.Multiple {
+		t.Fatalf("dynamic options leaked into legacy manifest: %+v", legacy)
+	}
+
+	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers+","+protocol.FeatureDynamicOptions)
+	dynamic := findSites(buildManifest(), "baota")
+	if dynamic == nil {
+		t.Fatal("baota sites field is missing")
+	}
+	if dynamic.OptionsSource != "baota_sites" || !dynamic.Multiple {
+		t.Fatalf("unexpected dynamic options metadata: %+v", dynamic)
+	}
+}
+
 func TestManifestContainsLocalizedMetadata(t *testing.T) {
 	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers)
 	got := buildManifest()

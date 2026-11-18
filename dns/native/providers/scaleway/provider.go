@@ -30,7 +30,10 @@ func (plugin) New(cfg map[string]string) (dns.ChallengeProvider, error) {
 	return newProvider(cfg)
 }
 
-func init() { dns.Register(plugin{}) }
+func init() {
+	dns.Register(plugin{})
+	dns.MarkVerifiable("scaleway")
+}
 
 type provider struct {
 	client    *httpapi.Client
@@ -92,6 +95,16 @@ type updateRequest struct {
 	Changes                 []recordChange `json:"changes"`
 	ReturnAllRecords        bool           `json:"return_all_records"`
 	DisallowNewZoneCreation bool           `json:"disallow_new_zone_creation"`
+}
+
+// Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
+func (p *provider) Verify(_ context.Context, domain string) (string, error) {
+	fqdn := dnsutil.ChallengeFQDN(domain)
+	z, err := p.findZone(fqdn)
+	if err != nil {
+		return "", err
+	}
+	return z, nil
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {

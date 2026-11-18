@@ -19,3 +19,33 @@ const (
 
 // FeatureMergedDeployers 告知部署 helper 只输出合并后的规范目标。
 const FeatureMergedDeployers = "merged-deployers-v1"
+
+// FeatureDynamicOptions 告知部署 helper 宿主支持 options 子命令和
+// fields[].options_source / multiple 元数据。旧版宿主不会声明该特性，
+// helper 因此继续输出与旧版完全一致的 manifest。
+const FeatureDynamicOptions = "dynamic-options-v1"
+
+// FeatureVerify 表示服务商/部署目标支持 verify 子命令的只读探测。
+const FeatureVerify = "verify-v1"
+
+// 验证检查项状态。
+const (
+	VerifyStatusOK          = "ok"
+	VerifyStatusFailed      = "failed"
+	VerifyStatusSkipped     = "skipped"
+	VerifyStatusUnsupported = "unsupported"
+	VerifyStatusError       = "error"
+)
+
+// VerifyCheck 是一项只读探测结果。
+type VerifyCheck struct {
+	Key     string `json:"key"`
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+}
+
+// VerifyResponse 是 verify 子命令的 stdout 响应。
+type VerifyResponse struct {
+	OK     bool          `json:"ok"`
+	Checks []VerifyCheck `json:"checks"`
+}

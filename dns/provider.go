@@ -4,6 +4,12 @@
 // 可以只依赖标准库；原有 lego 包装仍然可以通过结构类型满足该接口。
 package dns
 
+import (
+	"context"
+	"strings"
+	"sync"
+)
+
 // Provider 是 DNS 服务商插件的统一接口。
 type Provider interface {
 	// ID 是插件的规范标识，必须与主程序数据库中的 provider 值一致。
@@ -22,4 +28,34 @@ type Provider interface {
 type ChallengeProvider interface {
 	Present(domain, token, keyAuth string) error
 	CleanUp(domain, token, keyAuth string) error
+}
+
+// Verifier 是可选的只读探测接口：列出账号可管理的 zone，并确认域名归属。
+// 返回的 zone 用于展示；未实现该接口的服务商由 helper 返回 unsupported，
+// 宿主可回退到 DNS-01 写入测试。
+type Verifier interface {
+	Verify(ctx context.Context, domain string) (zone string, err error)
+}
+
+var verifiable = struct {
+	sync.RWMutex
+	ids map[string]bool
+}{ids: make(map[string]bool)}
+
+// MarkVerifiable 在 init 中声明服务商支持只读验证。
+func MarkVerifiable(ids ...string) {
+	verifiable.Lock()
+	defer verifiable.Unlock()
+	for _, id := range ids {
+		if id = strings.ToLower(strings.TrimSpace(id)); id != "" {
+			verifiable.ids[id] = true
+		}
+	}
+}
+
+// IsVerifiable 判断服务商是否声明了 verify-v1 能力。
+func IsVerifiable(id string) bool {
+	verifiable.RLock()
+	defer verifiable.RUnlock()
+	return verifiable.ids[strings.ToLower(strings.TrimSpace(id))]
 }

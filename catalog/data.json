@@ -5104,6 +5104,8 @@
           "label_key": "meta.field.sites.label",
           "type": "text",
           "help_key": "meta.field.baota_deploy_sites.help",
+          "options_source": "baota_sites",
+          "multiple": true,
           "show_if": {
             "key": "target",
             "values": [
@@ -7167,7 +7169,9 @@
           "label_key": "meta.field.sites.label",
           "type": "text",
           "required": true,
-          "help_key": "meta.field.baota_sites.help"
+          "help_key": "meta.field.baota_sites.help",
+          "options_source": "baota_sites",
+          "multiple": true
         }
       ],
       "deprecated": true

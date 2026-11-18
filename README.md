@@ -37,10 +37,11 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 
 插件以一次性子进程运行，主程序通过环境变量传入协议版本与常驻内存预算，双方以 JSON 交换数据：
 
-- 子命令按类型划分：`manifest` 通用，DNS 使用 `present` / `cleanup`，部署使用 `deploy`，通知使用 `send`。
+- 子命令按类型划分：`manifest` 通用，DNS 使用 `present` / `cleanup`，部署使用 `deploy` / `options`，通知使用 `send`。
 - `manifest` 输出插件自描述：版本、协议、服务商或渠道 ID、显示名称、别名与配置字段。
 - 请求与响应经 stdin/stdout 传递，凭据、任务参数与证书材料使用同一套结构。
 - 字段支持明文/密文、必填、默认值、条件显示与多语言文案；部署目标区分认证字段（`fields`）与任务字段（`deploy_fields`）。
+- 部署字段可声明 `options_source` 与 `multiple`，由宿主调用 `options` 从远端读取可选项，例如宝塔面板的网站与 Docker 网站列表。
 
 协议保持 v1，新能力通过可选字段与特性标记扩展，旧版宿主会忽略无法识别的字段。
 

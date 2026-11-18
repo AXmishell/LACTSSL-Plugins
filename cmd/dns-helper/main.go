@@ -5,11 +5,13 @@
 //	dns-helper manifest                 # 输出插件清单 JSON
 //	dns-helper present                  # 从 stdin 读取 JSON 请求并添加 TXT 记录
 //	dns-helper cleanup                  # 从 stdin 读取 JSON 请求并删除 TXT 记录
+//	dns-helper verify                   # 从 stdin 读取 JSON 请求并执行只读探测
 //
 // 内存上限由主程序通过 LACTSSL_PLUGIN_MEMORY_LIMIT 传入。
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -24,12 +26,12 @@ import (
 func main() {
 	helper.ApplyMemoryLimit()
 	if len(os.Args) < 2 {
-		helper.Fail("用法: dns-helper manifest|present|cleanup")
+		helper.Fail("用法: dns-helper manifest|present|cleanup|verify")
 	}
 	switch os.Args[1] {
 	case "manifest", "list":
 		writeManifest()
-	case "present", "cleanup":
+	case "present", "cleanup", "verify":
 		handle(os.Args[1])
 	default:
 		helper.Fail("未知子命令: " + os.Args[1])
@@ -44,10 +46,11 @@ func writeManifest() {
 
 func buildManifest() protocol.DNSManifest {
 	manifest := protocol.DNSManifest{
-		Protocol:  protocol.ProtocolVersion,
-		Name:      "lactssl dns helper",
-		Version:   serviceVersion(),
-		Providers: make([]protocol.DNSProvider, 0, len(dns.List())),
+		Protocol:     protocol.ProtocolVersion,
+		Capabilities: []string{protocol.FeatureVerify},
+		Name:         "lactssl dns helper",
+		Version:      serviceVersion(),
+		Providers:    make([]protocol.DNSProvider, 0, len(dns.List())),
 	}
 	for _, plugin := range dns.List() {
 		def, ok := catalog.LookupDNS(plugin.ID())
@@ -62,9 +65,18 @@ func buildManifest() protocol.DNSManifest {
 			DescriptionI18n: localizedTextMap(func(locale i18n.Locale) string { return def.LocalizedDesc(locale) }),
 			Aliases:         plugin.Aliases(),
 			Fields:          manifestFields(def.Fields),
+			Capabilities:    providerCapabilities(plugin.ID()),
 		})
 	}
 	return manifest
+}
+
+// providerCapabilities 只给实现了只读探测的服务商声明 verify-v1。
+func providerCapabilities(id string) []string {
+	if dns.IsVerifiable(id) {
+		return []string{protocol.FeatureVerify}
+	}
+	return nil
 }
 
 func manifestFields(fields []catalog.Field) []protocol.DNSField {
@@ -140,9 +152,56 @@ func handle(action string) {
 	if err != nil {
 		helper.Fail("初始化服务商失败: " + err.Error())
 	}
+	if action == "verify" {
+		handleVerify(provider, req)
+		return
+	}
 	if err := run(provider, action, req); err != nil {
 		helper.Fail(err.Error())
 	}
+}
+
+// handleVerify 执行只读探测。未实现 Verifier 的服务商返回结构化 unsupported，
+// 让宿主在 auto 模式下回退到 DNS-01 写入测试。
+func handleVerify(provider dns.ChallengeProvider, req protocol.DNSRequest) {
+	loc := i18n.Normalize(firstNonEmpty(req.Locale, string(i18n.Default)))
+	response := protocol.VerifyResponse{OK: true, Checks: make([]protocol.VerifyCheck, 0, 2)}
+	verifier, ok := provider.(dns.Verifier)
+	if !ok {
+		response.Checks = append(response.Checks, protocol.VerifyCheck{
+			Key: "verify", Status: protocol.VerifyStatusUnsupported,
+			Message: i18n.T(loc, "service.verify.unsupported", nil),
+		})
+		if err := helper.WriteJSON(response); err != nil {
+			helper.Fail("输出验证结果失败: " + err.Error())
+		}
+		return
+	}
+	zone, err := verifier.Verify(context.Background(), req.Domain)
+	if err != nil {
+		response.OK = false
+		response.Checks = append(response.Checks, protocol.VerifyCheck{
+			Key: "zone", Status: protocol.VerifyStatusFailed,
+			Message: i18n.T(loc, "service.verify.zone_failed", map[string]any{"domain": req.Domain, "error": err.Error()}),
+		})
+	} else {
+		response.Checks = append(response.Checks, protocol.VerifyCheck{
+			Key: "zone", Status: protocol.VerifyStatusOK,
+			Message: i18n.T(loc, "service.verify.zone_ok", map[string]any{"domain": req.Domain, "zone": zone}),
+		})
+	}
+	if err := helper.WriteJSON(response); err != nil {
+		helper.Fail("输出验证结果失败: " + err.Error())
+	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func run(provider dns.ChallengeProvider, action string, req protocol.DNSRequest) error {

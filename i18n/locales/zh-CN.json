@@ -54,6 +54,9 @@
   "service.deploy.webhook_https_required": "Webhook 会携带证书私钥，公网地址必须使用 https",
   "service.deploy.baota_secret_required": "宝塔面板接口密钥不能为空",
   "service.deploy.baota_sites_empty": "没有可部署的网站",
+  "service.deploy.baota_sites_invalid": "解析宝塔网站列表失败",
+  "service.deploy.baota_options_unsupported": "该宝塔部署对象不支持读取网站列表",
+  "service.deploy.options_unsupported": "该部署插件不支持读取动态选项",
   "service.deploy.baota_request_failed": "请求宝塔面板 API 失败: {error}",
   "service.deploy.baota_status": "宝塔面板返回状态码 {status}: {body}",
   "service.deploy.baota_error": "宝塔面板错误: {message}",
@@ -1004,5 +1007,15 @@
   "service.deploy.safeline_cert_id_missing": "雷池未返回证书 ID",
   "meta.field.baota_sites.help": "Docker 网站名称，多个用逗号分隔",
   "meta.deploy.baota_docker.label": "宝塔 Docker 网站",
-  "meta.deploy.baota_docker.desc": "通过宝塔面板 API 为 Docker 网站部署 SSL 证书"
+  "meta.deploy.baota_docker.desc": "通过宝塔面板 API 为 Docker 网站部署 SSL 证书",
+  "service.verify.unsupported": "该服务商或部署目标暂不支持只读验证",
+  "service.verify.zone_ok": "域名 {domain} 属于可管理 zone {zone}",
+  "service.verify.zone_failed": "未找到 {domain} 对应的可管理 zone: {error}",
+  "service.verify.deploy_failed": "验证失败: {error}",
+  "service.verify.connect_ok": "连接成功",
+  "service.verify.auth_ok": "认证通过",
+  "service.verify.target_ok": "目标存在且可访问",
+  "service.verify.target_missing": "未找到目标对象: {target}",
+  "service.verify.list_failed": "读取远端资源失败: {error}",
+  "service.verify.scope_skipped": "未提供部署作用域，仅验证了认证与连接"
 }

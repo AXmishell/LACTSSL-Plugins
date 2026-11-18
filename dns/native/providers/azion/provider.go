@@ -31,7 +31,10 @@ func (plugin) New(cfg map[string]string) (dns.ChallengeProvider, error) {
 	return newProvider(cfg)
 }
 
-func init() { dns.Register(plugin{}) }
+func init() {
+	dns.Register(plugin{})
+	dns.MarkVerifiable("azion")
+}
 
 type provider struct {
 	client   *httpapi.Client
@@ -76,6 +79,16 @@ type record struct {
 type recordsResponse struct {
 	Results    []record `json:"results"`
 	TotalPages int      `json:"total_pages"`
+}
+
+// Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
+func (p *provider) Verify(_ context.Context, domain string) (string, error) {
+	fqdn := dnsutil.ChallengeFQDN(domain)
+	z, err := p.findZone(fqdn)
+	if err != nil {
+		return "", err
+	}
+	return z.Name, nil
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {

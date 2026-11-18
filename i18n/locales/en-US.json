@@ -54,6 +54,9 @@
   "service.deploy.webhook_https_required": "Webhooks carry certificate private keys, so public endpoints must use https",
   "service.deploy.baota_secret_required": "BaoTa panel API secret is required",
   "service.deploy.baota_sites_empty": "No websites to deploy",
+  "service.deploy.baota_sites_invalid": "Failed to parse the BaoTa website list",
+  "service.deploy.baota_options_unsupported": "This BaoTa deploy target does not support listing websites",
+  "service.deploy.options_unsupported": "This deploy plugin does not support dynamic options",
   "service.deploy.baota_request_failed": "BaoTa panel API request failed: {error}",
   "service.deploy.baota_status": "BaoTa panel returned status {status}: {body}",
   "service.deploy.baota_error": "BaoTa panel error: {message}",
@@ -1004,5 +1007,15 @@
   "service.deploy.safeline_cert_id_missing": "Safeline did not return a certificate ID",
   "meta.field.baota_sites.help": "Docker website names, separated by commas",
   "meta.deploy.baota_docker.label": "Baota Docker Website",
-  "meta.deploy.baota_docker.desc": "Deploy an SSL certificate to a Baota Docker website"
+  "meta.deploy.baota_docker.desc": "Deploy an SSL certificate to a Baota Docker website",
+  "service.verify.unsupported": "This provider or deployment target does not support read-only verification yet",
+  "service.verify.zone_ok": "Domain {domain} belongs to manageable zone {zone}",
+  "service.verify.zone_failed": "No manageable zone found for {domain}: {error}",
+  "service.verify.deploy_failed": "Verification failed: {error}",
+  "service.verify.connect_ok": "Connected",
+  "service.verify.auth_ok": "Authenticated",
+  "service.verify.target_ok": "Target exists and is accessible",
+  "service.verify.target_missing": "Target not found: {target}",
+  "service.verify.list_failed": "Failed to read remote resources: {error}",
+  "service.verify.scope_skipped": "No deployment scope provided; only authentication and connectivity were verified"
 }

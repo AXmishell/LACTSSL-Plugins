@@ -22,6 +22,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy/util"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/outbound"
+	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
 
 type sitePlugin struct{}
@@ -49,6 +50,7 @@ func (panelPlugin) Deploy(_ context.Context, req deploy.Request) error {
 }
 
 func init() {
+	deploy.MarkVerifiable("acepanel", "acepanel_panel")
 	deploy.Register(sitePlugin{})
 	deploy.Register(panelPlugin{})
 }
@@ -366,4 +368,77 @@ func versionAtLeast(left, right string) bool {
 		}
 	}
 	return true
+}
+
+// Verify 只读检查 AcePanel 认证与网站/面板作用域。
+func (sitePlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyAcepanel(ctx, req)
+}
+
+func (panelPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyAcepanel(ctx, req)
+}
+
+func verifyAcepanel(_ context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	c, err := newClient(cfg)
+	if err != nil {
+		return verifyFailed(loc, err), nil
+	}
+	target := strings.TrimSpace(cfg["target"])
+	checks := make([]protocol.VerifyCheck, 0, 3)
+	if target == "panel" {
+		if _, err := c.request(http.MethodGet, "/api/setting", nil); err != nil {
+			return verifyFailed(loc, err), nil
+		}
+		checks = append(checks,
+			protocol.VerifyCheck{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+			protocol.VerifyCheck{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+			protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)},
+		)
+		return checks, nil
+	}
+	websites, err := c.getWebsites()
+	if err != nil {
+		return verifyFailed(loc, err), nil
+	}
+	checks = append(checks,
+		protocol.VerifyCheck{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		protocol.VerifyCheck{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+	)
+	selected := util.SplitList(cfg["websites"])
+	if len(selected) == 0 {
+		checks = append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)})
+		return checks, nil
+	}
+	existing := make(map[string]bool, len(websites))
+	for _, item := range websites {
+		existing[item.Name] = true
+	}
+	var missing []string
+	for _, name := range selected {
+		if !existing[name] {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) > 0 {
+		checks = append(checks, protocol.VerifyCheck{
+			Key: "scope", Status: protocol.VerifyStatusFailed,
+			Message: i18n.T(loc, "service.verify.target_missing", map[string]any{"target": strings.Join(missing, ", ")}),
+		})
+		return checks, nil
+	}
+	checks = append(checks, protocol.VerifyCheck{Key: "scope", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.target_ok", nil)})
+	return checks, nil
+}
+
+func verifyFailed(loc i18n.Locale, err error) []protocol.VerifyCheck {
+	if err == nil {
+		return nil
+	}
+	return []protocol.VerifyCheck{{
+		Key: "verify", Status: protocol.VerifyStatusFailed,
+		Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()}),
+	}}
 }

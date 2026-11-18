@@ -36,7 +36,10 @@ func (plugin) New(cfg map[string]string) (dns.ChallengeProvider, error) {
 	return newProvider(cfg)
 }
 
-func init() { dns.Register(plugin{}) }
+func init() {
+	dns.Register(plugin{})
+	dns.MarkVerifiable("route53")
+}
 
 type provider struct {
 	client         *httpapi.Client
@@ -122,6 +125,17 @@ type changeResponse struct {
 		ID     string `xml:"Id"`
 		Status string `xml:"Status"`
 	} `xml:"ChangeInfo"`
+}
+
+// Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
+func (p *provider) Verify(_ context.Context, domain string) (string, error) {
+	fqdn := dnsutil.ChallengeFQDN(domain)
+	p.hostedZoneID = ""
+	z, err := p.findZoneID(fqdn)
+	if err != nil {
+		return "", err
+	}
+	return z, nil
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
