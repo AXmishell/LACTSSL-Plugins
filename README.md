@@ -55,6 +55,19 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 
 合并包在安装时自动替换同类的旧单服务商包；DNS 服务商的 ID、字段与凭据无需迁移。
 
+## 版本管理
+
+`plugins.json` 中的版本由 `make manifest` 自动维护，不需要手工修改补丁号：
+
+- 主/次版本在 `scripts/pluginctl/main.go` 的 `dnsBaseVer`、`deployBaseVer`、`notifyBaseVer` 中调整；修改后该包从 `<主>.<次>.0` 重新计数。
+- 补丁号由各合并包输入文件的内容指纹决定：相关源码、共享 SDK、元数据、图标或构建脚本变化时自动 +1，内容未变化则保持不变。
+- DNS、部署、通知三个包在非 tag 构建时独立计数；`sdk/`、`catalog/` 等共享目录变化会同时升级三个包。
+- 修改代码后运行 `make manifest`，并把更新后的 `plugins.json` 一起提交；CI 与发布流程会校验是否遗漏。
+
+发布时以 git tag 为准：`v1.3.4` 或 `plugins-v1.3.4` 会让发布流程先以 `manifest -version 1.3.4` 生成临时清单，三个合并包的资产名、索引、包内 `plugin.json` 与二进制 manifest 全部使用 `1.3.4`，并全量重建。仓库里的 `plugins.json` 保持按内容指纹维护的内部版本，不被 CI 改写，仅用于非 tag 的手动构建。
+
+`plugins.json` 里的 `source_hash` 只用于版本计算，不会写入插件索引。
+
 ## 兼容性约定
 
 - DNS 服务商 ID、字段 key、别名与旧插件保持逐项一致。

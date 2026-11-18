@@ -5,6 +5,8 @@ name: Release plugins
 #   plugin-assets-<kind>      存放该类别全部插件的 tar.gz 资产
 # 资产名自带版本与平台，因此同一 Release 内可覆盖升级：
 #   lactssl-<kind>-<id>_<version>_<os>_<arch>.tar.gz
+# tag 构建（v1.3.4 / plugins-v1.3.4）时，所有插件包使用 tag 版本 1.3.4；
+# 手动触发时使用 plugins.json 中按内容指纹维护的内部版本。
 on:
   workflow_dispatch:
     inputs:
@@ -46,19 +48,55 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Resolve release version
+        id: release
+        run: |
+          set -euo pipefail
+          version=""
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            version="${GITHUB_REF_NAME#plugins-}"
+            version="${version#v}"
+            if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.-]+)?$'; then
+              echo "无法从 tag ${GITHUB_REF_NAME} 解析版本号: ${version}" >&2
+              exit 1
+            fi
+            echo "tag ${GITHUB_REF_NAME} -> 包版本 ${version}"
+          else
+            echo "非 tag 触发，使用 plugins.json 中的内部版本"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare version manifest
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "$RELEASE_VERSION" ]; then
+            # tag 构建：三个合并包统一使用 tag 版本；只改 CI 工作区，不提交。
+            go run scripts/pluginctl/main.go manifest -version "$RELEASE_VERSION"
+          else
+            go run scripts/pluginctl/main.go manifest
+            git diff --exit-code -- plugins.json
+          fi
+
       - name: Detect changed plugins
         id: matrix
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_ALL: ${{ inputs.force_all }}
+          TAG_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
           prev=prev-index.json
           rm -f "$prev"
-          if [ "$FORCE_ALL" != "true" ] && gh release view "$INDEX_TAG" >/dev/null 2>&1; then
+          if [ -z "$TAG_VERSION" ] && [ "$FORCE_ALL" != "true" ] && gh release view "$INDEX_TAG" >/dev/null 2>&1; then
             gh release download "$INDEX_TAG" --pattern index.json --output "$prev" --clobber || rm -f "$prev"
           fi
-          if [ -s "$prev" ]; then
+          if [ -n "$TAG_VERSION" ]; then
+            # tag 版本对所有插件包生效，必须全量重建，避免索引里混入旧 tag 的资产。
+            echo "tag 构建：全部插件使用版本 ${TAG_VERSION}"
+            jq '[.plugins[]]' plugins.json > changed.json
+          elif [ -s "$prev" ]; then
             # 只构建需要重建的插件：新增、版本变化、或索引里仍是旧的直链布局
             # （旧版 workflow 的 /<kind>-<id>-v<version>/ 资产地址）。
             jq --arg bucket "$BUCKET_PREFIX" --slurpfile prev "$prev" '

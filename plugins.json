@@ -4,7 +4,7 @@
     {
       "kind": "deploy",
       "id": "all",
-      "version": "1.3.0",
+      "version": "1.3.2",
       "tag": "bundle_deploy_all",
       "name": "部署插件包",
       "description": "包含全部官方证书部署目标实现。",
@@ -35,12 +35,13 @@
         "lecdn",
         "rainyun",
         "btwaf"
-      ]
+      ],
+      "source_hash": "b15b65ca82b8161de7c39406a081e63bc56f01dee1a8ef0748b3d628dfe2ea2e"
     },
     {
       "kind": "dns",
       "id": "all-native",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "tag": "bundle_dns_all_native",
       "name": "DNS 插件包（全量·重构）",
       "description": "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
@@ -242,12 +243,13 @@
         "zonomi"
       ],
       "hide_icon": true,
-      "sdk": "native"
+      "sdk": "native",
+      "source_hash": "8aed83328c33bcecba4ce106657769d1ce66f896c867ed23a6c0659fb27337bf"
     },
     {
       "kind": "notify",
       "id": "all",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "tag": "bundle_notify_all",
       "name": "通知插件包",
       "description": "包含全部官方通知渠道实现。",
@@ -276,7 +278,8 @@
         "pushme",
         "chronocat",
         "custom"
-      ]
+      ],
+      "source_hash": "8428bf0a429c6cecb55c114e0361a77f3d8b0d28bfe2028c8bbce4c881efecbf"
     }
   ]
 }

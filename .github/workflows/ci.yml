@@ -65,9 +65,10 @@ jobs:
 
       - name: Package smoke
         run: |
+          version=$(jq -r '.plugins[] | select(.kind == "dns" and .id == "all-native") | .version' plugins.json)
           go run scripts/pluginctl/main.go build -kind dns -id all-native -goos linux -goarch amd64 -out /tmp/dist
-          tar -tzf /tmp/dist/lactssl-dns-all-native_0.1.0_linux_amd64.tar.gz | grep -qx plugin.json
-          tar -tzf /tmp/dist/lactssl-dns-all-native_0.1.0_linux_amd64.tar.gz | grep -qx icons/cloudflare.svg
+          tar -tzf "/tmp/dist/lactssl-dns-all-native_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
+          tar -tzf "/tmp/dist/lactssl-dns-all-native_${version}_linux_amd64.tar.gz" | grep -qx icons/cloudflare.svg
           go run scripts/pluginctl/main.go index -assets /tmp/dist -base-url https://example.invalid/releases/download -out /tmp/index.json
           jq -e '.plugins[0].assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
           jq -e '.plugins[0].bundle == true' /tmp/index.json >/dev/null

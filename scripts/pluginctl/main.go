@@ -4,7 +4,8 @@
 //
 // 用法：
 //
-//	go run scripts/pluginctl manifest   # 生成 plugins.json
+//	go run scripts/pluginctl manifest   # 生成 plugins.json（内部版本）
+//	go run scripts/pluginctl manifest -version 1.3.4  # 三个合并包统一使用 tag 版本
 //	go run scripts/pluginctl gen        # 校验合并包清单
 //	go run scripts/pluginctl matrix     # 输出 CI 矩阵 JSON
 //	go run scripts/pluginctl build -kind dns -id cloudflare -version 1.0.0 -goos linux -goarch amd64
@@ -36,13 +37,15 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/catalog"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels"
+	"github.com/AXmishell/LACTSSL-Plugins/scripts/buildver"
 )
 
 const (
 	manifestPath = "plugins.json"
-	defaultVer   = "1.0.0"
-	// deployVer 单独维护：新增 certd / ALLinSSL 移植目标时递增，发布流程据此重建部署包。
-	deployVer = "1.3.0"
+	// 主/次版本由人工维护；补丁号由 manifest 根据各合并包的输入内容自动递增。
+	dnsBaseVer    = "0.1"
+	deployBaseVer = "1.3"
+	notifyBaseVer = "1.0"
 )
 
 type pluginEntry struct {
@@ -59,6 +62,11 @@ type pluginEntry struct {
 	ConflictsWith []string `json:"conflicts_with,omitempty"`
 	HideIcon      bool     `json:"hide_icon,omitempty"`
 	SDK           string   `json:"sdk,omitempty"`
+	// SourceHash 是该合并包输入文件的内容指纹，用于自动递增补丁版本。
+	SourceHash string `json:"source_hash,omitempty"`
+
+	// baseVersion 是主/次版本基线，只用于 manifest 计算，不写入 plugins.json。
+	baseVersion string
 }
 
 type manifestFile struct {
@@ -176,7 +184,7 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "manifest":
-		cmdManifest()
+		cmdManifest(os.Args[2:])
 	case "gen":
 		cmdGen()
 	case "matrix":
@@ -192,12 +200,76 @@ func main() {
 	}
 }
 
-func cmdManifest() {
+func cmdManifest(args []string) {
+	fs := flag.NewFlagSet("manifest", flag.ExitOnError)
+	version := fs.String("version", "", "所有合并包统一使用的发布版本（tag 构建）")
+	fs.Parse(args)
+
 	entries := buildEntries()
+
+	previous := map[string]pluginEntry{}
+	if old, err := readManifest(); err == nil {
+		for _, entry := range old {
+			previous[entry.Kind+"|"+entry.ID] = entry
+		}
+	} else if !os.IsNotExist(err) {
+		fail(err.Error())
+	}
+
+	for i := range entries {
+		hash, err := buildver.HashPaths(".", sourcePaths(entries[i].Kind))
+		if err != nil {
+			fail("计算 " + entries[i].Kind + "/" + entries[i].ID + " 内容指纹失败: " + err.Error())
+		}
+		entries[i].SourceHash = hash
+		if old, ok := previous[entries[i].Kind+"|"+entries[i].ID]; ok {
+			entries[i].Version = buildver.Next(old.Version, old.SourceHash, entries[i].baseVersion, hash)
+		}
+	}
+
+	if raw := strings.TrimSpace(*version); raw != "" {
+		tagVersion := strings.TrimPrefix(raw, "v")
+		if !versionPattern.MatchString(tagVersion) {
+			fail("发布版本格式不合法: " + *version)
+		}
+		for i := range entries {
+			entries[i].Version = tagVersion
+		}
+	}
+
 	sortEntries(entries)
 	out := manifestFile{Schema: 2, Plugins: entries}
 	writeJSON(manifestPath, out)
 	fmt.Printf("wrote %s with %d bundles\n", manifestPath, len(entries))
+}
+
+var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.-]+)?$`)
+
+// sourcePaths 返回影响某个合并包产物的输入。
+// 共享目录（sdk、protocol 等）变化会同时升级三个包，因为改动会被链接进全部产物。
+func sourcePaths(kind string) []string {
+	paths := []string{
+		"go.mod",
+		"go.sum",
+		"LICENSE",
+		"protocol",
+		"sdk",
+		"i18n",
+		"outbound",
+		"catalog",
+		"scripts/pluginctl",
+		"scripts/buildver",
+		"assets/icons/icons.json",
+	}
+	switch kind {
+	case "dns":
+		return append(paths, "cmd/dns-helper", "dns", "assets/icons/dns")
+	case "deploy":
+		return append(paths, "cmd/deploy-helper", "deploy", "assets/icons/deploy")
+	case "notify":
+		return append(paths, "cmd/notify-helper", "notify", "assets/icons/notify")
+	}
+	return paths
 }
 
 // buildEntries 生成三类合并插件包：DNS 全量、部署全量、通知全量。
@@ -218,19 +290,19 @@ func buildEntries() []pluginEntry {
 	notifyIDs := channels.IDs()
 	return []pluginEntry{
 		{
-			Kind: "dns", ID: "all-native", Version: "0.1.0", Tag: "bundle_dns_all_native",
+			Kind: "dns", ID: "all-native", Version: dnsBaseVer + ".0", Tag: "bundle_dns_all_native",
 			Name: "DNS 插件包（全量·重构）", Description: "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
-			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native",
+			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native", baseVersion: dnsBaseVer,
 		},
 		{
-			Kind: "deploy", ID: "all", Version: deployVer, Tag: "bundle_deploy_all",
+			Kind: "deploy", ID: "all", Version: deployBaseVer + ".0", Tag: "bundle_deploy_all",
 			Name: "部署插件包", Description: "包含全部官方证书部署目标实现。",
-			Bundle: true, Providers: deployIDs,
+			Bundle: true, Providers: deployIDs, baseVersion: deployBaseVer,
 		},
 		{
-			Kind: "notify", ID: "all", Version: defaultVer, Tag: "bundle_notify_all",
+			Kind: "notify", ID: "all", Version: notifyBaseVer + ".0", Tag: "bundle_notify_all",
 			Name: "通知插件包", Description: "包含全部官方通知渠道实现。",
-			Bundle: true, Providers: notifyIDs,
+			Bundle: true, Providers: notifyIDs, baseVersion: notifyBaseVer,
 		},
 	}
 }
@@ -244,16 +316,24 @@ func sortEntries(entries []pluginEntry) {
 	})
 }
 
-func loadManifest() []pluginEntry {
+func readManifest() ([]pluginEntry, error) {
 	raw, err := os.ReadFile(manifestPath)
 	if err != nil {
-		fail("读取 plugins.json 失败: " + err.Error())
+		return nil, err
 	}
 	var m manifestFile
 	if err := json.Unmarshal(raw, &m); err != nil {
-		fail("解析 plugins.json 失败: " + err.Error())
+		return nil, fmt.Errorf("解析 plugins.json 失败: %w", err)
 	}
-	return m.Plugins
+	return m.Plugins, nil
+}
+
+func loadManifest() []pluginEntry {
+	entries, err := readManifest()
+	if err != nil {
+		fail("读取 plugins.json 失败: " + err.Error())
+	}
+	return entries
 }
 
 func cmdMatrix() {
