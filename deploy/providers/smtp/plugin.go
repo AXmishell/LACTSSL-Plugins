@@ -22,6 +22,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy"
 	"github.com/AXmishell/LACTSSL-Plugins/deploy/util"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
+	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
 
 type plugin struct{}
@@ -32,7 +33,78 @@ func (plugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deploySMTP(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
-func init() { deploy.Register(plugin{}) }
+// Verify 只读连接 SMTP 并完成认证，不发送任何邮件。
+func (plugin) Verify(_ context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	host := strings.TrimSpace(cfg["host"])
+	if host == "" {
+		return smtpVerifyFailed(loc, i18n.E("service.deploy.smtp_host_from_required")), nil
+	}
+	port := util.Int(cfg["port"], 465)
+	if port < 1 || port > 65535 {
+		return smtpVerifyFailed(loc, i18n.E("service.deploy.smtp_port_invalid")), nil
+	}
+	tlsMode := strings.ToLower(strings.TrimSpace(cfg["tls"]))
+	if tlsMode == "" {
+		tlsMode = "tls"
+	}
+	switch tlsMode {
+	case "none", "starttls", "tls":
+	default:
+		return smtpVerifyFailed(loc, i18n.E("service.deploy.smtp_tls_invalid", "mode", tlsMode)), nil
+	}
+	address := net.JoinHostPort(host, strconv.Itoa(port))
+	dialer := &net.Dialer{Timeout: 15 * time.Second}
+	var conn net.Conn
+	var err error
+	if tlsMode == "tls" {
+		conn, err = tls.DialWithDialer(dialer, "tcp", address, &tls.Config{ServerName: host, MinVersion: tls.VersionTLS12, InsecureSkipVerify: util.Bool(cfg["skip_verify"])})
+	} else {
+		conn, err = dialer.Dial("tcp", address)
+	}
+	if err != nil {
+		return smtpVerifyFailed(loc, i18n.E("service.notify.connect_failed", "error", err.Error())), nil
+	}
+	_ = conn.SetDeadline(time.Now().Add(30 * time.Second))
+	defer conn.Close()
+	client, err := smtp.NewClient(conn, host)
+	if err != nil {
+		return smtpVerifyFailed(loc, i18n.E("service.notify.connect_failed", "error", err.Error())), nil
+	}
+	defer client.Close()
+	if tlsMode == "starttls" {
+		if ok, _ := client.Extension("STARTTLS"); !ok {
+			return smtpVerifyFailed(loc, i18n.E("service.notify.starttls_required")), nil
+		}
+		if err := client.StartTLS(&tls.Config{ServerName: host, MinVersion: tls.VersionTLS12, InsecureSkipVerify: util.Bool(cfg["skip_verify"])}); err != nil {
+			return smtpVerifyFailed(loc, i18n.E("service.notify.starttls_failed", "error", err.Error())), nil
+		}
+	}
+	if username := strings.TrimSpace(cfg["user"]); username != "" {
+		if err := client.Auth(smtp.PlainAuth("", username, cfg["password"], host)); err != nil {
+			return smtpVerifyFailed(loc, i18n.E("service.notify.auth_failed", "error", err.Error())), nil
+		}
+	}
+	_ = client.Quit()
+	return []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+		{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)},
+	}, nil
+}
+
+func smtpVerifyFailed(loc i18n.Locale, err error) []protocol.VerifyCheck {
+	if err == nil {
+		return nil
+	}
+	return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()})}}
+}
+
+func init() {
+	deploy.MarkVerifiable("smtp")
+	deploy.Register(plugin{})
+}
 
 func deploySMTP(cert *deploy.Certificate, cfg map[string]string) error {
 	host := strings.TrimSpace(cfg["host"])

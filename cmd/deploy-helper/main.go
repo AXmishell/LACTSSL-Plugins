@@ -79,6 +79,7 @@ func writeManifest() {
 func buildManifest() protocol.DeployManifest {
 	merged := helper.HasFeature(protocol.FeatureMergedDeployers)
 	dynamicOptions := helper.HasFeature(protocol.FeatureDynamicOptions)
+	verifyEnabled := helper.HasFeature(protocol.FeatureVerify)
 	deprecated := catalog.DeprecatedDeployTypes()
 	mergedCanonical := make(map[string]bool)
 	if !merged {
@@ -89,11 +90,13 @@ func buildManifest() protocol.DeployManifest {
 
 	plugins := deploy.List()
 	manifest := protocol.DeployManifest{
-		Protocol:     protocol.ProtocolVersion,
-		Capabilities: []string{protocol.FeatureVerify},
-		Name:         "lactssl deploy helper",
-		Version:      serviceVersion(),
-		Deployers:    make([]protocol.Deployer, 0, len(plugins)),
+		Protocol:  protocol.ProtocolVersion,
+		Name:      "lactssl deploy helper",
+		Version:   serviceVersion(),
+		Deployers: make([]protocol.Deployer, 0, len(plugins)),
+	}
+	if verifyEnabled {
+		manifest.Capabilities = []string{protocol.FeatureVerify}
 	}
 	for _, plugin := range plugins {
 		def, ok := catalog.LookupDeployer(plugin.ID())
@@ -117,15 +120,15 @@ func buildManifest() protocol.DeployManifest {
 			Aliases:         plugin.Aliases(),
 			Fields:          manifestFields(def.Fields, dynamicOptions),
 			DeployFields:    manifestFields(def.DeployFields, dynamicOptions),
-			Capabilities:    deployerCapabilities(plugin.ID()),
+			Capabilities:    deployerCapabilities(plugin.ID(), verifyEnabled),
 		})
 	}
 	return manifest
 }
 
 // deployerCapabilities 只给实现了只读探测的目标声明 verify-v1。
-func deployerCapabilities(id string) []string {
-	if deploy.IsVerifiable(id) {
+func deployerCapabilities(id string, enabled bool) []string {
+	if enabled && deploy.IsVerifiable(id) {
 		return []string{protocol.FeatureVerify}
 	}
 	return nil

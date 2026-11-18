@@ -76,3 +76,30 @@ func stripManifestI18n(manifest *protocol.DNSManifest) {
 		}
 	}
 }
+
+// TestManifestVerifyCapability 验证只有在宿主声明 verify-v1 时才输出能力位，
+// 且只有原生 provider 声明只读探测能力。
+func TestManifestVerifyCapability(t *testing.T) {
+	t.Setenv(protocol.DNSFeaturesEnv, "")
+	for _, provider := range buildManifest().Providers {
+		if len(provider.Capabilities) != 0 {
+			t.Fatalf("旧宿主不应看到能力位: %s %v", provider.ID, provider.Capabilities)
+		}
+	}
+
+	t.Setenv(protocol.DNSFeaturesEnv, protocol.FeatureVerify)
+	capabilities := map[string][]string{}
+	for _, provider := range buildManifest().Providers {
+		capabilities[provider.ID] = provider.Capabilities
+	}
+	for id, values := range capabilities {
+		for _, value := range values {
+			if value != protocol.FeatureVerify {
+				t.Fatalf("%s 声明了未知能力: %v", id, values)
+			}
+		}
+	}
+	if len(capabilities["cloudflare"]) != 0 {
+		t.Fatalf("lego provider 不应声明只读能力: %v", capabilities["cloudflare"])
+	}
+}

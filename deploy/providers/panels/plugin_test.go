@@ -417,3 +417,51 @@ func TestOnePanelPluginDispatch(t *testing.T) {
 		t.Fatalf("panel target should deploy to panel: websites=%d panels=%d", websites, panels)
 	}
 }
+
+func TestVerifyBaotaScope(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/data" || r.URL.Query().Get("action") != "getData" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.String())
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Errorf("invalid form: %v", err)
+		}
+		if r.Form.Get("table") != "sites" {
+			t.Errorf("unexpected table: %q", r.Form.Get("table"))
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":1,"name":"example.com"},{"id":2,"name":"blog.example.com"}]}`))
+	}))
+	defer server.Close()
+
+	auth := map[string]string{"panel_url": server.URL, "api_secret": "secret"}
+	checks, err := baotaPlugin{}.Verify(context.Background(), deploy.Request{
+		Auth:   auth,
+		Config: map[string]string{"target": "site", "sites": "example.com"},
+		Locale: "zh-CN",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(checks) != 3 {
+		t.Fatalf("checks = %+v", checks)
+	}
+	for _, check := range checks {
+		if check.Status != "ok" {
+			t.Fatalf("check failed: %+v", check)
+		}
+	}
+
+	checks, err = baotaPlugin{}.Verify(context.Background(), deploy.Request{
+		Auth:   auth,
+		Config: map[string]string{"target": "site", "sites": "missing.example.com"},
+		Locale: "zh-CN",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if checks[len(checks)-1].Status != "failed" {
+		t.Fatalf("missing site should fail scope check: %+v", checks)
+	}
+}

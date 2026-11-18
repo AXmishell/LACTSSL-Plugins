@@ -130,7 +130,9 @@ type changeResponse struct {
 // Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
 func (p *provider) Verify(_ context.Context, domain string) (string, error) {
 	fqdn := dnsutil.ChallengeFQDN(domain)
+	original := p.hostedZoneID
 	p.hostedZoneID = ""
+	defer func() { p.hostedZoneID = original }()
 	z, err := p.findZoneID(fqdn)
 	if err != nil {
 		return "", err

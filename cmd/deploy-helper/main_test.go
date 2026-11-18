@@ -176,3 +176,20 @@ func TestManifestContainsLocalizedMetadata(t *testing.T) {
 		}
 	}
 }
+
+// TestManifestVerifyCapability 验证 verify-v1 能力位只按部署目标输出。
+func TestManifestVerifyCapability(t *testing.T) {
+	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers+","+protocol.FeatureVerify)
+	capabilities := map[string][]string{}
+	for _, deployer := range buildManifest().Deployers {
+		capabilities[deployer.ID] = deployer.Capabilities
+	}
+	for _, id := range []string{"baota", "1panel", "safeline", "tencent", "aliyun", "huawei_cdn", "qiniu", "ftp", "smtp", "acepanel"} {
+		if len(capabilities[id]) == 0 {
+			t.Fatalf("%s 应声明 verify-v1", id)
+		}
+	}
+	if len(capabilities["webhook"]) != 0 {
+		t.Fatalf("未实现的 webhook 不应声明能力: %v", capabilities["webhook"])
+	}
+}

@@ -17,6 +17,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy"
 	"github.com/AXmishell/LACTSSL-Plugins/deploy/util"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
+	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 )
 
 type qiniuPlugin struct{}
@@ -50,7 +51,43 @@ func (kodoPlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deployQiniuKodo(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
+// Verify 只读拉取一个域名，验证 AK/SK 与域名管理权限。
+func (qiniuPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyQiniu(ctx, req)
+}
+
+func (cdnPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyQiniu(ctx, req)
+}
+
+func (kodoPlugin) Verify(ctx context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	return verifyQiniu(ctx, req)
+}
+
+func verifyQiniu(_ context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	accessKey := strings.TrimSpace(cfg["access_key"])
+	secretKey := strings.TrimSpace(cfg["secret_key"])
+	if accessKey == "" || secretKey == "" {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": i18n.T(loc, "service.deploy.qiniu_key_required", nil)})}}, nil
+	}
+	resp, err := qiniuDomainRequest(http.MethodGet, "/domain?limit=1", accessKey, secretKey, nil)
+	if err != nil {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()})}}, nil
+	}
+	if !resp.ok() {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": resp.err().Error()})}}, nil
+	}
+	return []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+		{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)},
+	}, nil
+}
+
 func init() {
+	deploy.MarkVerifiable("qiniu", "qiniu_cdn", "qiniu_kodo")
 	deploy.Register(qiniuPlugin{})
 	deploy.Register(cdnPlugin{})
 	deploy.Register(kodoPlugin{})

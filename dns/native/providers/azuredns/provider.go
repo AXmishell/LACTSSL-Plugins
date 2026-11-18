@@ -105,7 +105,9 @@ type recordSet struct {
 // Verify 只读检查凭据与 zone 归属，不写入任何 DNS 记录。
 func (p *provider) Verify(_ context.Context, domain string) (string, error) {
 	fqdn := dnsutil.ChallengeFQDN(domain)
+	original := p.zoneName
 	p.zoneName = ""
+	defer func() { p.zoneName = original }()
 	zone, _, err := p.resolve(fqdn)
 	if err != nil {
 		return "", err

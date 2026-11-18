@@ -45,12 +45,12 @@ func writeManifest() {
 }
 
 func buildManifest() protocol.DNSManifest {
+	verifyEnabled := helper.HasFeature(protocol.FeatureVerify)
 	manifest := protocol.DNSManifest{
-		Protocol:     protocol.ProtocolVersion,
-		Capabilities: []string{protocol.FeatureVerify},
-		Name:         "lactssl dns helper",
-		Version:      serviceVersion(),
-		Providers:    make([]protocol.DNSProvider, 0, len(dns.List())),
+		Protocol:  protocol.ProtocolVersion,
+		Name:      "lactssl dns helper",
+		Version:   serviceVersion(),
+		Providers: make([]protocol.DNSProvider, 0, len(dns.List())),
 	}
 	for _, plugin := range dns.List() {
 		def, ok := catalog.LookupDNS(plugin.ID())
@@ -65,15 +65,15 @@ func buildManifest() protocol.DNSManifest {
 			DescriptionI18n: localizedTextMap(func(locale i18n.Locale) string { return def.LocalizedDesc(locale) }),
 			Aliases:         plugin.Aliases(),
 			Fields:          manifestFields(def.Fields),
-			Capabilities:    providerCapabilities(plugin.ID()),
+			Capabilities:    providerCapabilities(plugin.ID(), verifyEnabled),
 		})
 	}
 	return manifest
 }
 
 // providerCapabilities 只给实现了只读探测的服务商声明 verify-v1。
-func providerCapabilities(id string) []string {
-	if dns.IsVerifiable(id) {
+func providerCapabilities(id string, enabled bool) []string {
+	if enabled && dns.IsVerifiable(id) {
 		return []string{protocol.FeatureVerify}
 	}
 	return nil

@@ -53,11 +53,14 @@ func ReadJSON(v any) error {
 	return json.NewDecoder(os.Stdin).Decode(v)
 }
 
-// HasFeature 判断主程序是否声明了某个部署插件特性。
+// HasFeature 判断主程序是否声明了某个插件特性。
+// 部署 helper 读取部署特性环境变量，DNS helper 读取 DNS 特性环境变量。
 func HasFeature(name string) bool {
-	for _, item := range strings.Split(os.Getenv(protocol.DeployFeaturesEnv), ",") {
-		if strings.TrimSpace(item) == name {
-			return true
+	for _, env := range []string{protocol.DeployFeaturesEnv, protocol.DNSFeaturesEnv} {
+		for _, item := range strings.Split(os.Getenv(env), ",") {
+			if strings.TrimSpace(item) == name {
+				return true
+			}
 		}
 	}
 	return false
