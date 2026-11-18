@@ -17,6 +17,7 @@ import (
 	"github.com/AXmishell/LACTSSL-Plugins/deploy/util"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/outbound"
+	"github.com/AXmishell/LACTSSL-Plugins/protocol"
 	"github.com/AXmishell/LACTSSL-Plugins/sdk/huawei"
 )
 
@@ -28,7 +29,43 @@ func (plugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deployHuaweiCDN(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
 }
 
-func init() { deploy.Register(plugin{}) }
+// Verify 只读列出 CDN 域名，验证 AK/SK 与 CDN 服务权限。
+func (plugin) Verify(_ context.Context, req deploy.Request) ([]protocol.VerifyCheck, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	loc := i18n.Normalize(req.Locale)
+	accessKey := strings.TrimSpace(cfg["access_key_id"])
+	secretKey := cfg["secret_access_key"]
+	if accessKey == "" || secretKey == "" {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": i18n.T(loc, "service.deploy.huawei_key_required", nil)})}}, nil
+	}
+	endpoint := strings.TrimRight(huaweiCDNBaseURL, "/") + "/v1.0/cdn/domains?page_size=1"
+	reqHTTP, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()})}}, nil
+	}
+	if err := (huawei.Signer{AccessKey: accessKey, SecretKey: secretKey}).Sign(reqHTTP, nil); err != nil {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()})}}, nil
+	}
+	resp, err := outbound.NewClient(30*time.Second, false).Do(reqHTTP)
+	if err != nil {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": err.Error()})}}, nil
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return []protocol.VerifyCheck{{Key: "verify", Status: protocol.VerifyStatusFailed, Message: i18n.T(loc, "service.verify.deploy_failed", map[string]any{"error": util.Truncate(string(raw), 300)})}}, nil
+	}
+	return []protocol.VerifyCheck{
+		{Key: "connect", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.connect_ok", nil)},
+		{Key: "auth", Status: protocol.VerifyStatusOK, Message: i18n.T(loc, "service.verify.auth_ok", nil)},
+		{Key: "scope", Status: protocol.VerifyStatusSkipped, Message: i18n.T(loc, "service.verify.scope_skipped", nil)},
+	}, nil
+}
+
+func init() {
+	deploy.MarkVerifiable("huawei_cdn")
+	deploy.Register(plugin{})
+}
 
 var huaweiCDNBaseURL = "https://cdn.myhuaweicloud.com"
 
