@@ -94,6 +94,28 @@ func TestCloudRegionIsDeployField(t *testing.T) {
 			t.Errorf("%s: region must be a deploy field", id)
 		}
 	}
+	def, _ := LookupDeployer("aliyun")
+	region, _ := deployField(def, "region")
+	if region.ShowIf == nil || region.ShowIf.Key != "target" ||
+		len(region.ShowIf.Values) != 2 || region.ShowIf.Values[0] != "oss" || region.ShowIf.Values[1] != "waf" {
+		t.Errorf("aliyun region must only show for oss/waf: %+v", region.ShowIf)
+	}
+	domains, _ := deployField(def, "domains")
+	if domains.ShowIf == nil || len(domains.ShowIf.Values) != 4 {
+		t.Errorf("aliyun domains must only show for cdn/dcdn/oss/waf: %+v", domains.ShowIf)
+	}
+	certName, _ := deployField(def, "cert_name")
+	if certName.ShowIf == nil || len(certName.ShowIf.Values) != 2 ||
+		certName.ShowIf.Values[0] != "cdn" || certName.ShowIf.Values[1] != "waf" {
+		t.Errorf("aliyun cert_name must only show for cdn/waf: %+v", certName.ShowIf)
+	}
+
+	baota, _ := LookupDeployer("baota")
+	sites, _ := deployField(baota, "sites")
+	if sites.ShowIf == nil || len(sites.ShowIf.Values) != 2 ||
+		sites.ShowIf.Values[0] != "site" || sites.ShowIf.Values[1] != "docker" {
+		t.Errorf("baota sites must only show for site/docker: %+v", sites.ShowIf)
+	}
 }
 
 func TestDeployMigrations(t *testing.T) {

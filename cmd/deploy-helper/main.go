@@ -143,7 +143,7 @@ func manifestFields(fields []catalog.Field) []protocol.DeployField {
 			})
 		}
 		if field.ShowIf != nil {
-			item.ShowIf = &protocol.DeployCondition{Key: field.ShowIf.Key, Value: field.ShowIf.Value}
+			item.ShowIf = &protocol.DeployCondition{Key: field.ShowIf.Key, Value: field.ShowIf.Value, Values: field.ShowIf.Values}
 		}
 		out = append(out, item)
 	}

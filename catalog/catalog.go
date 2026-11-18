@@ -21,9 +21,11 @@ type Option struct {
 }
 
 // Condition 描述字段显示条件。
+// Value 兼容单值条件；Values 非空时表示满足任一值即可显示。
 type Condition struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key    string   `json:"key"`
+	Value  string   `json:"value,omitempty"`
+	Values []string `json:"values,omitempty"`
 }
 
 // Field 描述服务商或部署目标的配置字段。

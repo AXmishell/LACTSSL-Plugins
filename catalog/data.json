@@ -4808,19 +4808,42 @@
           "key": "region",
           "label_key": "meta.field.aliyun_region.label",
           "type": "text",
-          "help_key": "meta.field.aliyun_region.help"
+          "help_key": "meta.field.aliyun_region.help",
+          "show_if": {
+            "key": "target",
+            "values": [
+              "oss",
+              "waf"
+            ]
+          }
         },
         {
           "key": "domains",
-          "label_key": "meta.field.domains.label",
+          "label_key": "meta.field.aliyun_domains.label",
           "type": "text",
-          "help_key": "meta.field.domains.help"
+          "help_key": "meta.field.aliyun_domains.help",
+          "show_if": {
+            "key": "target",
+            "values": [
+              "cdn",
+              "dcdn",
+              "oss",
+              "waf"
+            ]
+          }
         },
         {
           "key": "cert_name",
           "label_key": "meta.field.cert_name.label",
           "type": "text",
-          "help_key": "meta.field.cert_name.help"
+          "help_key": "meta.field.cert_name.help",
+          "show_if": {
+            "key": "target",
+            "values": [
+              "cdn",
+              "waf"
+            ]
+          }
         },
         {
           "key": "bucket",
@@ -5080,7 +5103,14 @@
           "key": "sites",
           "label_key": "meta.field.sites.label",
           "type": "text",
-          "help_key": "meta.field.sites.help"
+          "help_key": "meta.field.baota_deploy_sites.help",
+          "show_if": {
+            "key": "target",
+            "values": [
+              "site",
+              "docker"
+            ]
+          }
         }
       ]
     },
@@ -6014,9 +6044,9 @@
         },
         {
           "key": "domains",
-          "label_key": "meta.field.domains.label",
+          "label_key": "meta.field.tencent_domains.label",
           "type": "text",
-          "help_key": "meta.field.domains.help"
+          "help_key": "meta.field.tencent_domains.help"
         },
         {
           "key": "cert_name",
