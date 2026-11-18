@@ -89,6 +89,7 @@ type updateRecordSetsRequest struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -104,10 +105,10 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 		values = append(values, existing.Data...)
 		deletions = append(deletions, *existing)
 	}
-	if dnsutil.ContainsTXT(values, keyAuth) {
+	if dnsutil.ContainsTXT(values, txtValue) {
 		return nil
 	}
-	values = append(values, dnsutil.QuoteTXT(keyAuth))
+	values = append(values, dnsutil.QuoteTXT(txtValue))
 	return p.update(zone.ID, deletions, []recordSet{{
 		Name: fqdn,
 		Type: "TXT",
@@ -117,6 +118,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -126,10 +128,10 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("yandexcloud: %w", err)
 	}
-	if existing == nil || !dnsutil.ContainsTXT(existing.Data, keyAuth) {
+	if existing == nil || !dnsutil.ContainsTXT(existing.Data, txtValue) {
 		return nil
 	}
-	remaining := dnsutil.RemoveTXT(existing.Data, keyAuth)
+	remaining := dnsutil.RemoveTXT(existing.Data, txtValue)
 	var additions []recordSet
 	if len(remaining) > 0 {
 		additions = []recordSet{{

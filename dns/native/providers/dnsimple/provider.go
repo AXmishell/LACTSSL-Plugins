@@ -80,6 +80,7 @@ type listRecordsResponse struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -95,7 +96,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	body, _ := httpapi.EncodeJSON(map[string]any{
 		"name":    sub,
 		"type":    "TXT",
-		"content": keyAuth,
+		"content": txtValue,
 		"ttl":     p.ttl,
 	})
 	_, err = p.do(http.MethodPost, p.accountPath()+"/zones/"+url.PathEscape(zoneName)+"/records", nil, body, map[string]string{"Content-Type": "application/json"})
@@ -103,6 +104,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -120,7 +122,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("dnsimple: %w", err)
 	}
 	for _, item := range records {
-		if item.Type != "TXT" || !dnsutil.ContainsTXT([]string{item.Content}, keyAuth) {
+		if item.Type != "TXT" || !dnsutil.ContainsTXT([]string{item.Content}, txtValue) {
 			continue
 		}
 		_, err := p.do(http.MethodDelete, p.accountPath()+"/zones/"+url.PathEscape(zoneName)+"/records/"+strconv.Itoa(item.ID), nil, nil, nil)

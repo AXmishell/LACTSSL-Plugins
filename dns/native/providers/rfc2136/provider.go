@@ -75,12 +75,13 @@ func newProvider(cfg map[string]string) (*provider, error) {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.resolveZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("rfc2136: %w", err)
 	}
-	msg, err := p.updateMessage(zone, fqdn, keyAuth, true)
+	msg, err := p.updateMessage(zone, fqdn, txtValue, true)
 	if err != nil {
 		return fmt.Errorf("rfc2136: %w", err)
 	}
@@ -88,19 +89,20 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.resolveZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("rfc2136: %w", err)
 	}
-	msg, err := p.updateMessage(zone, fqdn, keyAuth, false)
+	msg, err := p.updateMessage(zone, fqdn, txtValue, false)
 	if err != nil {
 		return fmt.Errorf("rfc2136: %w", err)
 	}
 	return p.send(msg)
 }
 
-func (p *provider) updateMessage(zone, fqdn, keyAuth string, insert bool) (*mdns.Msg, error) {
+func (p *provider) updateMessage(zone, fqdn, value string, insert bool) (*mdns.Msg, error) {
 	msg := new(mdns.Msg)
 	msg.SetUpdate(mdns.Fqdn(zone))
 	rr := &mdns.TXT{
@@ -110,7 +112,7 @@ func (p *provider) updateMessage(zone, fqdn, keyAuth string, insert bool) (*mdns
 			Class:  mdns.ClassINET,
 			Ttl:    uint32(p.ttl),
 		},
-		Txt: []string{keyAuth},
+		Txt: []string{value},
 	}
 	if insert {
 		// 与原 lego 实现一致：先删除同名 TXT 记录集，避免遗留旧 challenge 值。

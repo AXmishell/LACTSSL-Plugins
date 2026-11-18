@@ -45,7 +45,7 @@ func TestPresentAndCleanup(t *testing.T) {
 	if err := p.Present("example.com", "token", "value"); err != nil {
 		t.Fatalf("Present: %v", err)
 	}
-	if len(records) != 1 || records[0].Name != "_acme-challenge" || records[0].Content != "value" {
+	if len(records) != 1 || records[0].Name != "_acme-challenge" || records[0].Content != "zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk" {
 		t.Fatalf("unexpected records: %+v", records)
 	}
 	if err := p.CleanUp("example.com", "token", "value"); err != nil {

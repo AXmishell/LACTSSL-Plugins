@@ -95,6 +95,7 @@ type recordListResponse struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	zone, owner, err := p.splitDomain(domain)
 	if err != nil {
 		return fmt.Errorf("iij: %w", err)
@@ -103,7 +104,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 		"Owner":      owner,
 		"TTL":        strconv.Itoa(p.ttl),
 		"RecordType": "TXT",
-		"RData":      keyAuth,
+		"RData":      txtValue,
 	})
 	if err := p.call(http.MethodPost, "/"+p.serviceCode+"/"+url.PathEscape(zone)+"/record.json", body); err != nil {
 		return fmt.Errorf("iij: add record: %w", err)
@@ -112,6 +113,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	zone, owner, err := p.splitDomain(domain)
 	if err != nil {
 		return fmt.Errorf("iij: %w", err)
@@ -121,7 +123,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 		return fmt.Errorf("iij: %w", err)
 	}
 	for _, record := range records {
-		if record.Owner == owner && strings.EqualFold(record.RecordType, "TXT") && dnsutil.UnquoteTXT(record.RData) == keyAuth {
+		if record.Owner == owner && strings.EqualFold(record.RecordType, "TXT") && dnsutil.UnquoteTXT(record.RData) == txtValue {
 			path := "/" + p.serviceCode + "/" + url.PathEscape(zone) + "/record/" + url.PathEscape(record.ID) + ".json"
 			if err := p.call(http.MethodDelete, path, nil); err != nil {
 				return fmt.Errorf("iij: delete record: %w", err)

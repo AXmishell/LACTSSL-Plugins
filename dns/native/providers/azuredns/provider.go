@@ -100,6 +100,7 @@ type recordSet struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneName, relative, err := p.resolve(fqdn)
 	if err != nil {
@@ -115,14 +116,15 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 			values = append(values, item.Value...)
 		}
 	}
-	if dnsutil.ContainsTXT(values, keyAuth) {
+	if dnsutil.ContainsTXT(values, txtValue) {
 		return nil
 	}
-	values = append(values, keyAuth)
+	values = append(values, txtValue)
 	return p.putRecord(zoneName, relative, values)
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneName, relative, err := p.resolve(fqdn)
 	if err != nil {
@@ -139,7 +141,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	for _, item := range existing.Properties.TXTRecords {
 		values = append(values, item.Value...)
 	}
-	remaining := dnsutil.RemoveTXT(values, keyAuth)
+	remaining := dnsutil.RemoveTXT(values, txtValue)
 	if len(remaining) == len(values) {
 		return nil
 	}

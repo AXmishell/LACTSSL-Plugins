@@ -72,6 +72,7 @@ type listRecordsResponse struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -80,7 +81,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	body, _ := httpapi.EncodeJSON(map[string]any{
 		"type":    "TXT",
 		"name":    dnsutil.UnFqdn(fqdn),
-		"target":  keyAuth,
+		"target":  txtValue,
 		"ttl_sec": p.ttl,
 	})
 	_, err = p.do(http.MethodPost, "/domains/"+strconv.Itoa(zone.ID)+"/records", nil, body)
@@ -88,6 +89,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -104,7 +106,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		if item.Name != dnsutil.UnFqdn(fqdn) {
 			continue
 		}
-		if !dnsutil.ContainsTXT([]string{item.Target}, keyAuth) {
+		if !dnsutil.ContainsTXT([]string{item.Target}, txtValue) {
 			continue
 		}
 		if _, err := p.do(http.MethodDelete, "/domains/"+strconv.Itoa(zone.ID)+"/records/"+strconv.Itoa(item.ID), nil, nil); err != nil {

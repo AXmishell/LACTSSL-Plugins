@@ -101,6 +101,7 @@ type envelope struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -111,13 +112,14 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("volcengine: %w", err)
 	}
 	body, _ := httpapi.EncodeJSON(map[string]any{
-		"Host": sub, "TTL": p.ttl, "Type": "TXT", "Value": keyAuth, "ZID": zone.ZID,
+		"Host": sub, "TTL": p.ttl, "Type": "TXT", "Value": txtValue, "ZID": zone.ZID,
 	})
 	_, err = p.call(http.MethodPost, "CreateRecord", nil, body, nil)
 	return err
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -132,7 +134,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("volcengine: %w", err)
 	}
 	for _, item := range records {
-		if !strings.EqualFold(item.Type, "TXT") || !dnsutil.ContainsTXT([]string{item.Value}, keyAuth) {
+		if !strings.EqualFold(item.Type, "TXT") || !dnsutil.ContainsTXT([]string{item.Value}, txtValue) {
 			continue
 		}
 		body, _ := httpapi.EncodeJSON(map[string]any{"RecordID": item.RecordID})

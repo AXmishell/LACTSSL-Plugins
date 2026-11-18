@@ -92,6 +92,7 @@ type record struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -102,7 +103,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("edgedns: %w", err)
 	}
-	value := dnsutil.QuoteTXT(keyAuth)
+	value := dnsutil.QuoteTXT(txtValue)
 	if existing != nil {
 		if dnsutil.ContainsTXT(existing.RData, value) {
 			return nil
@@ -121,6 +122,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -134,7 +136,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	if existing == nil {
 		return nil
 	}
-	remaining := dnsutil.RemoveTXT(existing.RData, keyAuth)
+	remaining := dnsutil.RemoveTXT(existing.RData, txtValue)
 	if len(remaining) == len(existing.RData) {
 		return nil
 	}

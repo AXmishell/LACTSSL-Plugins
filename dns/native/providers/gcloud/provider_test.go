@@ -56,7 +56,7 @@ func TestPresentAndCleanup(t *testing.T) {
 	if err := p.Present("example.com", "token", "value"); err != nil {
 		t.Fatalf("Present: %v", err)
 	}
-	if current == nil || len(current.RRDatas) != 1 || current.RRDatas[0] != `"value"` {
+	if current == nil || len(current.RRDatas) != 1 || current.RRDatas[0] != `"zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk"` {
 		t.Fatalf("unexpected current: %+v", current)
 	}
 	if err := p.CleanUp("example.com", "token", "value"); err != nil {

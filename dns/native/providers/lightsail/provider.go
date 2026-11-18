@@ -78,11 +78,12 @@ type deleteDomainEntryRequest struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	body, err := httpapi.EncodeJSON(createDomainEntryRequest{
 		DomainName: p.zone,
 		DomainEntry: domainEntry{
 			Name:   dnsutil.ChallengeFQDN(domain),
-			Target: dnsutil.QuoteTXT(keyAuth),
+			Target: dnsutil.QuoteTXT(txtValue),
 			Type:   "TXT",
 		},
 	})
@@ -97,11 +98,12 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	body, err := httpapi.EncodeJSON(deleteDomainEntryRequest{
 		DomainName: p.zone,
 		DomainEntry: domainEntry{
 			Name:   dnsutil.ChallengeFQDN(domain),
-			Target: dnsutil.QuoteTXT(keyAuth),
+			Target: dnsutil.QuoteTXT(txtValue),
 			Type:   "TXT",
 		},
 	})

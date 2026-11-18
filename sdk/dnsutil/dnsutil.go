@@ -2,6 +2,8 @@
 package dnsutil
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"sort"
 	"strings"
@@ -68,6 +70,13 @@ func RelativeName(fqdn, zone string) (string, error) {
 		return "", fmt.Errorf("%s is not inside zone %s", fqdn, zone)
 	}
 	return strings.TrimSuffix(name, suffix), nil
+}
+
+// TXTValue 返回 DNS-01 挑战的 TXT 记录值：base64url(sha256(keyAuth))，无 padding。
+// keyAuth 是 ACME 的 key authorization（token.thumbprint），不能直接写入 DNS。
+func TXTValue(keyAuth string) string {
+	sum := sha256.Sum256([]byte(keyAuth))
+	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
 // QuoteTXT 返回带双引号的 TXT 值。

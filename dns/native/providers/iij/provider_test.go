@@ -49,7 +49,7 @@ func TestPresentAndCleanup(t *testing.T) {
 	if err := p.Present("example.com", "token", "value"); err != nil {
 		t.Fatalf("Present: %v", err)
 	}
-	if len(records) != 1 || records[0].RData != "value" || records[0].Owner != "_acme-challenge" {
+	if len(records) != 1 || records[0].RData != "zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk" || records[0].Owner != "_acme-challenge" {
 		t.Fatalf("unexpected records: %+v", records)
 	}
 	if err := p.CleanUp("example.com", "token", "value"); err != nil {

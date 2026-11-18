@@ -79,6 +79,7 @@ type recordsResponse struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -94,19 +95,20 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	}
 	if existing == nil {
 		body, _ := httpapi.EncodeJSON(map[string]any{
-			"entry": entry, "record_type": "TXT", "answers_list": []string{keyAuth}, "ttl": p.ttl,
+			"entry": entry, "record_type": "TXT", "answers_list": []string{txtValue}, "ttl": p.ttl,
 		})
 		_, err = p.do(http.MethodPost, "/intelligent_dns/"+strconv.Itoa(int(zone.ID))+"/records", nil, body)
 		return err
 	}
-	if dnsutil.ContainsTXT(existing.AnswersList, keyAuth) {
+	if dnsutil.ContainsTXT(existing.AnswersList, txtValue) {
 		return nil
 	}
-	existing.AnswersList = append(existing.AnswersList, keyAuth)
+	existing.AnswersList = append(existing.AnswersList, txtValue)
 	return p.putRecord(zone.ID, *existing)
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -123,7 +125,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 	if existing == nil {
 		return nil
 	}
-	remaining := dnsutil.RemoveTXT(existing.AnswersList, keyAuth)
+	remaining := dnsutil.RemoveTXT(existing.AnswersList, txtValue)
 	if len(remaining) == len(existing.AnswersList) {
 		return nil
 	}

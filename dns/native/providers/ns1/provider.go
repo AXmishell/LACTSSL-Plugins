@@ -65,6 +65,7 @@ type record struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -78,19 +79,20 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	if existing == nil {
 		return p.putRecord(zoneName, name, record{
 			Zone: zoneName, Domain: name, Type: "TXT", TTL: p.ttl,
-			Answers: []answer{{Rdata: []string{keyAuth}}},
+			Answers: []answer{{Rdata: []string{txtValue}}},
 			Filters: []any{}, Tags: []string{}, BlockedTag: []string{},
 		})
 	}
 	values := answerValues(existing.Answers)
-	if dnsutil.ContainsTXT(values, keyAuth) {
+	if dnsutil.ContainsTXT(values, txtValue) {
 		return nil
 	}
-	existing.Answers = append(existing.Answers, answer{Rdata: []string{keyAuth}})
+	existing.Answers = append(existing.Answers, answer{Rdata: []string{txtValue}})
 	return p.putRecord(zoneName, name, *existing)
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -107,7 +109,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 	var answers []answer
 	removed := false
 	for _, item := range existing.Answers {
-		if len(item.Rdata) == 1 && dnsutil.ContainsTXT(item.Rdata, keyAuth) {
+		if len(item.Rdata) == 1 && dnsutil.ContainsTXT(item.Rdata, txtValue) {
 			removed = true
 			continue
 		}

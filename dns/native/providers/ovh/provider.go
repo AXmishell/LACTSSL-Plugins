@@ -68,6 +68,7 @@ type record struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -77,7 +78,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("ovh: %w", err)
 	}
-	body, _ := httpapi.EncodeJSON(record{FieldType: "TXT", SubDomain: sub, Target: keyAuth, TTL: p.ttl})
+	body, _ := httpapi.EncodeJSON(record{FieldType: "TXT", SubDomain: sub, Target: txtValue, TTL: p.ttl})
 	resp, err := p.do(http.MethodPost, "/domain/zone/"+url.PathEscape(zone)+"/record", nil, body)
 	if err != nil {
 		return fmt.Errorf("ovh: create record: %w", err)
@@ -87,6 +88,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -109,7 +111,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 			}
 			return fmt.Errorf("ovh: %w", err)
 		}
-		if !strings.EqualFold(item.FieldType, "TXT") || !dnsutil.ContainsTXT([]string{item.Target}, keyAuth) {
+		if !strings.EqualFold(item.FieldType, "TXT") || !dnsutil.ContainsTXT([]string{item.Target}, txtValue) {
 			continue
 		}
 		if _, err := p.do(http.MethodDelete, "/domain/zone/"+url.PathEscape(zone)+"/record/"+strconv.FormatInt(id, 10), nil, nil); err != nil {

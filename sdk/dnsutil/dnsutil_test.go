@@ -23,6 +23,17 @@ func TestZoneAndRelativeName(t *testing.T) {
 	}
 }
 
+func TestTXTValue(t *testing.T) {
+	// keyAuth 是 ACME 的 key authorization（token.thumbprint），
+	// TXT 记录值必须是它的 SHA-256 base64url 摘要。
+	if got, want := TXTValue("value"), "zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk"; got != want {
+		t.Fatalf("TXTValue = %q, want %q", got, want)
+	}
+	if got := TXTValue("token.thumbprint"); len(got) != 43 {
+		t.Fatalf("unexpected TXT value length: %d", len(got))
+	}
+}
+
 func TestTXTValues(t *testing.T) {
 	values := []string{`"a"`, `"b"`}
 	if !ContainsTXT(values, "a") {

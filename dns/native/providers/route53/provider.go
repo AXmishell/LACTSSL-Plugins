@@ -125,6 +125,7 @@ type changeResponse struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneID, err := p.findZoneID(fqdn)
 	if err != nil {
@@ -140,7 +141,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 			values = append(values, record.Value)
 		}
 	}
-	quoted := dnsutil.QuoteTXT(keyAuth)
+	quoted := dnsutil.QuoteTXT(txtValue)
 	if dnsutil.ContainsTXT(values, quoted) {
 		return nil
 	}
@@ -154,6 +155,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneID, err := p.findZoneID(fqdn)
 	if err != nil {
@@ -170,7 +172,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	for _, record := range existing.ResourceRecords {
 		values = append(values, record.Value)
 	}
-	remaining := dnsutil.RemoveTXT(values, dnsutil.QuoteTXT(keyAuth))
+	remaining := dnsutil.RemoveTXT(values, dnsutil.QuoteTXT(txtValue))
 	if len(remaining) == len(values) {
 		return nil
 	}

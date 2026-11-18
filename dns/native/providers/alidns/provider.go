@@ -84,6 +84,7 @@ type describeRecordsResponse struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -98,7 +99,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("alidns: %w", err)
 	}
 	for _, item := range existing {
-		if item.RR == rr && strings.EqualFold(item.Type, "TXT") && dnsutil.ContainsTXT([]string{item.Value}, keyAuth) {
+		if item.RR == rr && strings.EqualFold(item.Type, "TXT") && dnsutil.ContainsTXT([]string{item.Value}, txtValue) {
 			return nil
 		}
 	}
@@ -106,12 +107,13 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 		"DomainName": zone.DomainName,
 		"RR":         rr,
 		"Type":       "TXT",
-		"Value":      keyAuth,
+		"Value":      txtValue,
 		"TTL":        fmt.Sprint(p.ttl),
 	}, nil)
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -126,7 +128,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("alidns: %w", err)
 	}
 	for _, item := range records {
-		if item.RR != rr || !strings.EqualFold(item.Type, "TXT") || !dnsutil.ContainsTXT([]string{item.Value}, keyAuth) {
+		if item.RR != rr || !strings.EqualFold(item.Type, "TXT") || !dnsutil.ContainsTXT([]string{item.Value}, txtValue) {
 			continue
 		}
 		if err := p.signer.Do(context.Background(), p.client, p.endpoint, "DeleteDomainRecord", apiVersion, map[string]string{

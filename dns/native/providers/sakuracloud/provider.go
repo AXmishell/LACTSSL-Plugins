@@ -91,6 +91,7 @@ type findResponse struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -109,14 +110,15 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 			values = append(values, item.RData)
 		}
 	}
-	if dnsutil.ContainsTXT(values, keyAuth) {
+	if dnsutil.ContainsTXT(values, txtValue) {
 		return nil
 	}
-	records = append(records, record{Name: sub, Type: "TXT", RData: keyAuth, TTL: p.ttl})
+	records = append(records, record{Name: sub, Type: "TXT", RData: txtValue, TTL: p.ttl})
 	return p.update(zone.item, records)
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -131,7 +133,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	records := make([]record, 0, len(zone.item.Settings.DNS.ResourceRecordSets))
 	removed := false
 	for _, item := range zone.item.Settings.DNS.ResourceRecordSets {
-		if item.Name == sub && strings.EqualFold(item.Type, "TXT") && dnsutil.ContainsTXT([]string{item.RData}, keyAuth) {
+		if item.Name == sub && strings.EqualFold(item.Type, "TXT") && dnsutil.ContainsTXT([]string{item.RData}, txtValue) {
 			removed = true
 			continue
 		}

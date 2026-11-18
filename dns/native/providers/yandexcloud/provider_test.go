@@ -61,7 +61,7 @@ func TestPresentAndCleanup(t *testing.T) {
 	if len(updates) != 1 || len(updates[0].Additions) != 1 {
 		t.Fatalf("unexpected updates: %+v", updates)
 	}
-	if got := updates[0].Additions[0].Data; len(got) != 1 || got[0] != `"value"` {
+	if got := updates[0].Additions[0].Data; len(got) != 1 || got[0] != `"zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk"` {
 		t.Fatalf("unexpected data: %#v", got)
 	}
 	if err := p.CleanUp("example.com", "token", "value"); err != nil {

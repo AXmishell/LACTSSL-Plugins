@@ -104,6 +104,7 @@ type changeRequest struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -113,7 +114,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("gcloud: %w", err)
 	}
-	value := dnsutil.QuoteTXT(keyAuth)
+	value := dnsutil.QuoteTXT(txtValue)
 	values := []string{}
 	var deletions []rrset
 	if existing != nil {
@@ -132,6 +133,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -144,7 +146,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	if existing == nil {
 		return nil
 	}
-	remaining := dnsutil.RemoveTXT(existing.RRDatas, keyAuth)
+	remaining := dnsutil.RemoveTXT(existing.RRDatas, txtValue)
 	if len(remaining) == len(existing.RRDatas) {
 		return nil
 	}

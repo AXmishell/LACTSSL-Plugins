@@ -95,6 +95,7 @@ type updateRequest struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -102,7 +103,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 	}
 	body, _ := httpapi.EncodeJSON(updateRequest{
 		Changes: []recordChange{{Add: &recordChangeAdd{Records: []record{{
-			Data: dnsutil.QuoteTXT(keyAuth),
+			Data: dnsutil.QuoteTXT(txtValue),
 			Name: fqdn,
 			TTL:  p.ttl,
 			Type: "TXT",
@@ -114,6 +115,7 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zoneName, err := p.findZone(fqdn)
 	if err != nil {
@@ -123,7 +125,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		Changes: []recordChange{{Delete: &recordChangeDelete{IDFields: recordIdentifier{
 			Name: fqdn,
 			Type: "TXT",
-			Data: dnsutil.QuoteTXT(keyAuth),
+			Data: dnsutil.QuoteTXT(txtValue),
 		}}}},
 		DisallowNewZoneCreation: true,
 	})

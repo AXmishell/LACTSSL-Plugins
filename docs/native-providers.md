@@ -55,8 +55,8 @@
 
 ## 4. 行为约定
 
-- `Present`：确保 `_acme-challenge.<domain>` 的 TXT 记录集包含本次 `keyAuth`；保留其他 TXT 值。
-- `CleanUp`：只删除本次 `keyAuth`；记录集为空时删除整条记录；不存在时视为成功。
+- `Present`：`keyAuth` 是 ACME 的 key authorization（`token.thumbprint`），写入 DNS 前必须先用 `dnsutil.TXTValue` 编码为 `base64url(sha256(keyAuth))`；确保 `_acme-challenge.<domain>` 的 TXT 记录集包含该编码值；保留其他 TXT 值。
+- `CleanUp`：只删除本次编码后的值；记录集为空时删除整条记录；不存在时视为成功。
 - TTL 使用各 provider 的原默认值（route53 10s、huaweicloud/iij 300s、其余 60s），与 lego 行为保持一致。
 - 错误信息包含 provider 与动作，不输出 token/secret；响应体由 `httpapi` 截断。
 - 所有请求使用 `net/http`，默认超时 30s；GCP/Azure token 请求使用 60s 上下文。

@@ -88,6 +88,7 @@ type recordSetBody struct {
 }
 
 func (p *provider) Present(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneID, err := p.findZoneID(fqdn)
 	if err != nil {
@@ -97,7 +98,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("huaweicloud: %w", err)
 	}
-	value := dnsutil.QuoteTXT(keyAuth)
+	value := dnsutil.QuoteTXT(txtValue)
 	if existing == nil {
 		body, _ := httpapi.EncodeJSON(recordSetBody{
 			Name:    fqdn,
@@ -123,6 +124,7 @@ func (p *provider) Present(domain, _ string, keyAuth string) error {
 }
 
 func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domain)
 	zoneID, err := p.findZoneID(fqdn)
 	if err != nil {
@@ -135,7 +137,7 @@ func (p *provider) CleanUp(domain, _ string, keyAuth string) error {
 	if existing == nil {
 		return nil
 	}
-	remaining := dnsutil.RemoveTXT(existing.Records, keyAuth)
+	remaining := dnsutil.RemoveTXT(existing.Records, txtValue)
 	if len(remaining) == len(existing.Records) {
 		return nil
 	}

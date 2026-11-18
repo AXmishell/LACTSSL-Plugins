@@ -77,6 +77,7 @@ type listRecordsResponse struct {
 }
 
 func (p *provider) Present(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -87,13 +88,14 @@ func (p *provider) Present(domainName, _ string, keyAuth string) error {
 		return fmt.Errorf("exoscale: %w", err)
 	}
 	body, _ := httpapi.EncodeJSON(map[string]any{
-		"name": name, "type": "TXT", "content": keyAuth, "ttl": p.ttl,
+		"name": name, "type": "TXT", "content": txtValue, "ttl": p.ttl,
 	})
 	_, err = p.do(http.MethodPost, "/dns-domain/"+url.PathEscape(zone.ID)+"/record", nil, body)
 	return err
 }
 
 func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
+	txtValue := dnsutil.TXTValue(keyAuth)
 	fqdn := dnsutil.ChallengeFQDN(domainName)
 	zone, err := p.findZone(fqdn)
 	if err != nil {
@@ -111,7 +113,7 @@ func (p *provider) CleanUp(domainName, _ string, keyAuth string) error {
 		if item.Name != name || !strings.EqualFold(item.Type, "TXT") {
 			continue
 		}
-		if !dnsutil.ContainsTXT([]string{item.Content}, keyAuth) {
+		if !dnsutil.ContainsTXT([]string{item.Content}, txtValue) {
 			continue
 		}
 		if _, err := p.do(http.MethodDelete, "/dns-domain/"+url.PathEscape(zone.ID)+"/record/"+url.PathEscape(item.ID), nil, nil); err != nil {

@@ -46,7 +46,7 @@ func TestPresentAndCleanup(t *testing.T) {
 	if len(targets) != 2 {
 		t.Fatalf("unexpected targets: %#v", targets)
 	}
-	if bodies[0].DomainEntry.Target != `"value"` || bodies[0].DomainEntry.Type != "TXT" {
+	if bodies[0].DomainEntry.Target != `"zUJATVKtVcz6mspK3IKKpYAK2dOFoGcfvL9yQRgyBhk"` || bodies[0].DomainEntry.Type != "TXT" {
 		t.Fatalf("unexpected present body: %+v", bodies[0])
 	}
 	if bodies[1].DomainEntry.Name != "_acme-challenge.example.com." {
