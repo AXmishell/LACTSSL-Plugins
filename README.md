@@ -64,7 +64,7 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 - 补丁号由各合并包输入文件的内容指纹决定：相关源码、共享 SDK、元数据、图标或构建脚本变化时自动 +1，内容未变化则保持不变。
 - `all-lego` 例外：版本号直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 的版本（`v4.35.2` → `4.35.2`），不参与补丁递增，也不会被发布 tag 覆盖；升级 lego 后重新运行 `make manifest` 即可。仅包装层变化而 lego 未升级时版本不变，非 tag 发布需使用 `force_all` 或打 tag 重建。
 - DNS native、部署、通知三个包在非 tag 构建时独立计数；`sdk/`、`catalog/` 等共享目录变化会同时升级这三个包。
-- 修改代码后运行 `make manifest`，并把更新后的 `plugins.json` 一起提交；CI 与发布流程会校验是否遗漏。
+- 修改代码后运行 `make manifest`（历史名称 `make gen`，两者等价），并把更新后的 `plugins.json`、`cmd/dns-helper`、`dns/groups` 一起提交；CI 会校验是否遗漏，失败时直接打印差异。
 
 发布时以 git tag 为准：`v1.3.4` 或 `plugins-v1.3.4` 会让发布流程先以 `manifest -version 1.3.4` 生成临时清单，DNS native、部署与通知包的资产名、索引、包内 `plugin.json` 与二进制 manifest 使用 `1.3.4`，并全量重建；`all-lego` 仍使用 go.mod 中的 lego 版本。仓库里的 `plugins.json` 保持按内容指纹维护的内部版本，不被 CI 改写，仅用于非 tag 的手动构建。
 

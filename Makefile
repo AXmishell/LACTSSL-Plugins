@@ -29,13 +29,12 @@ bundle-native:
 	mkdir -p $(BIN)
 	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
 
-# 生成 plugins.json；bundle 模式不再生成单服务商 selector。
-gen:
+# 生成 plugins.json 与各合并包的分组注册文件（manifest + gen）。
+# 改动会被链接进产物的代码后运行本目标，并把变更一起提交；CI 会校验是否遗漏。
+# gen 为历史名称，与 manifest 等价。
+manifest gen:
 	$(GO) run scripts/pluginctl/main.go manifest
 	$(GO) run scripts/pluginctl/main.go gen
-
-manifest:
-	$(GO) run scripts/pluginctl/main.go manifest
 
 # 构建单个合并包：make plugin KIND=dns ID=all-lego GOOS=linux GOARCH=amd64
 # DNS 的 ID 为 all-lego 或 all-native；部署和通知的 ID 为 all。

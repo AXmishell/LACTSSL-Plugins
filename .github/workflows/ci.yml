@@ -29,9 +29,14 @@ jobs:
 
       - name: Verify bundle manifest
         run: |
-          go run scripts/pluginctl/main.go manifest
-          go run scripts/pluginctl/main.go gen
-          test -z "$(git status --porcelain -- plugins.json cmd/dns-helper dns/groups)"
+          make manifest
+          if [ -n "$(git status --porcelain -- plugins.json cmd/dns-helper dns/groups)" ]; then
+            echo "生成产物与仓库不一致，以下为差异：" >&2
+            git --no-pager diff -- plugins.json cmd/dns-helper dns/groups >&2
+            git status --porcelain -- plugins.json cmd/dns-helper dns/groups >&2
+            echo "::error::生成产物未提交，请运行 make manifest 并提交 plugins.json / cmd/dns-helper / dns/groups 的变更" >&2
+            exit 1
+          fi
           lego_version=$(awk '$1 == "github.com/go-acme/lego/v4" { sub(/^v/, "", $2); print $2 }' go.mod)
           test -n "$lego_version"
           test "$(jq -r '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .version' plugins.json)" = "$lego_version"
