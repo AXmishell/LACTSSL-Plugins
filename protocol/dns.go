@@ -15,32 +15,39 @@ type DNSManifest struct {
 }
 
 // DNSProvider 描述一个由 helper 提供的 DNS 服务商。
+// Name/Description 是默认语言，*I18n 是可选的多语言覆盖表；旧版宿主忽略。
 type DNSProvider struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Aliases     []string   `json:"aliases,omitempty"`
-	Fields      []DNSField `json:"fields,omitempty"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name,omitempty"`
+	NameI18n        map[string]string `json:"name_i18n,omitempty"`
+	Description     string            `json:"description,omitempty"`
+	DescriptionI18n map[string]string `json:"description_i18n,omitempty"`
+	Aliases         []string          `json:"aliases,omitempty"`
+	Fields          []DNSField        `json:"fields,omitempty"`
 }
 
 // DNSField 描述外部服务商的配置字段，与内置 FieldDef 的 JSON 结构保持兼容。
 type DNSField struct {
-	Key         string        `json:"key"`
-	Label       string        `json:"label"`
-	Type        string        `json:"type"`
-	Required    bool          `json:"required,omitempty"`
-	Secret      bool          `json:"secret,omitempty"`
-	Placeholder string        `json:"placeholder,omitempty"`
-	Help        string        `json:"help,omitempty"`
-	Default     string        `json:"default,omitempty"`
-	Options     []DNSOption   `json:"options,omitempty"`
-	ShowIf      *DNSCondition `json:"show_if,omitempty"`
+	Key             string            `json:"key"`
+	Label           string            `json:"label"`
+	LabelI18n       map[string]string `json:"label_i18n,omitempty"`
+	Type            string            `json:"type"`
+	Required        bool              `json:"required,omitempty"`
+	Secret          bool              `json:"secret,omitempty"`
+	Placeholder     string            `json:"placeholder,omitempty"`
+	PlaceholderI18n map[string]string `json:"placeholder_i18n,omitempty"`
+	Help            string            `json:"help,omitempty"`
+	HelpI18n        map[string]string `json:"help_i18n,omitempty"`
+	Default         string            `json:"default,omitempty"`
+	Options         []DNSOption       `json:"options,omitempty"`
+	ShowIf          *DNSCondition     `json:"show_if,omitempty"`
 }
 
 // DNSOption 是下拉选项。
 type DNSOption struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
+	Label     string            `json:"label"`
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+	Value     string            `json:"value"`
 }
 
 // DNSCondition 描述字段显示条件。

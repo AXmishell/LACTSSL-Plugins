@@ -55,11 +55,13 @@ func buildManifest() protocol.DNSManifest {
 			continue
 		}
 		manifest.Providers = append(manifest.Providers, protocol.DNSProvider{
-			ID:          plugin.ID(),
-			Name:        def.LocalizedName(i18n.Default),
-			Description: def.LocalizedDesc(i18n.Default),
-			Aliases:     plugin.Aliases(),
-			Fields:      manifestFields(def.Fields),
+			ID:              plugin.ID(),
+			Name:            def.LocalizedName(i18n.Default),
+			NameI18n:        localizedTextMap(func(locale i18n.Locale) string { return def.LocalizedName(locale) }),
+			Description:     def.LocalizedDesc(i18n.Default),
+			DescriptionI18n: localizedTextMap(func(locale i18n.Locale) string { return def.LocalizedDesc(locale) }),
+			Aliases:         plugin.Aliases(),
+			Fields:          manifestFields(def.Fields),
 		})
 	}
 	return manifest
@@ -72,25 +74,40 @@ func manifestFields(fields []catalog.Field) []protocol.DNSField {
 	out := make([]protocol.DNSField, 0, len(fields))
 	for _, field := range fields {
 		item := protocol.DNSField{
-			Key:         field.Key,
-			Label:       field.LocalizedLabel(i18n.Default),
-			Type:        field.Type,
-			Required:    field.Required,
-			Secret:      field.Secret,
-			Placeholder: field.LocalizedPlaceholder(i18n.Default),
-			Help:        field.LocalizedHelp(i18n.Default),
-			Default:     field.Default,
+			Key:             field.Key,
+			Label:           field.LocalizedLabel(i18n.Default),
+			LabelI18n:       localizedTextMap(func(locale i18n.Locale) string { return field.LocalizedLabel(locale) }),
+			Type:            field.Type,
+			Required:        field.Required,
+			Secret:          field.Secret,
+			Placeholder:     field.LocalizedPlaceholder(i18n.Default),
+			PlaceholderI18n: localizedTextMap(func(locale i18n.Locale) string { return field.LocalizedPlaceholder(locale) }),
+			Help:            field.LocalizedHelp(i18n.Default),
+			HelpI18n:        localizedTextMap(func(locale i18n.Locale) string { return field.LocalizedHelp(locale) }),
+			Default:         field.Default,
 		}
 		for _, option := range field.Options {
 			item.Options = append(item.Options, protocol.DNSOption{
-				Label: option.LocalizedLabel(i18n.Default),
-				Value: option.Value,
+				Label:     option.LocalizedLabel(i18n.Default),
+				LabelI18n: localizedTextMap(func(locale i18n.Locale) string { return option.LocalizedLabel(locale) }),
+				Value:     option.Value,
 			})
 		}
 		if field.ShowIf != nil {
 			item.ShowIf = &protocol.DNSCondition{Key: field.ShowIf.Key, Value: field.ShowIf.Value}
 		}
 		out = append(out, item)
+	}
+	return out
+}
+
+// localizedTextMap 展开全部受支持语言；默认语言条目始终存在。
+// 没有翻译时 Localized* 会回退到默认语言。
+func localizedTextMap(text func(i18n.Locale) string) map[string]string {
+	locales := i18n.Supported()
+	out := make(map[string]string, len(locales))
+	for _, locale := range locales {
+		out[string(locale)] = text(locale)
 	}
 	return out
 }

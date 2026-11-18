@@ -1,13 +1,12 @@
 # LACTSSL 插件迁移实施方案
 
-> **状态：已实施（2026-11-15）。**
+> **状态：已实施（2026-11-15），并已于 2026-11-18 完成宿主/插件仓库的进一步分离。**
 >
 > - 插件实现、协议、元数据与 3 个 helper 已迁入本仓库。
 > - 主仓库已删除 194 个 DNS 包装、部署/通知 provider、`dns_all` 全量版与三个 helper 入口。
 > - 迁移前后三份 manifest 逐字段一致（`cmd/*-helper` 的测试会校验）。
 > - 主仓库 `go.mod` 由 249 行降至 71 行，`go.sum` 由 2686 行降至 585 行。
->
-> 仍需人工完成：推送本仓库并打 `v0.1.0` tag；在主仓库执行 `go mod tidy` 生成该版本的 `go.sum`；移除本地 `go.work`。
+> - 2026-11-18：主仓库不再通过 `go.mod` 依赖本仓库的 `protocol`/`catalog`/`i18n`，改为宿主内本地协议实现与 manifest 元数据；`catalog` 仅作为插件内部元数据。本文中“主仓库 → protocol/catalog”的依赖关系已不再适用。
 >
 > 下文保留原始方案与决策记录，便于回溯。
 
@@ -25,7 +24,7 @@
    - 部署：5 个 provider 包，提供 7 个规范目标 + 6 个历史兼容 ID
    - 通知：23 个通知渠道
    - 3 个 helper 入口、3 套 manifest 类型、2 个代码生成器
-2. **不迁移**：`internal/pluginexec`、三个 `discover/exec/registry` 宿主包、插件上传/重扫/启停 API、前端插件页、内嵌 helper 安装逻辑。
+2. **不迁移**：`internal/plugin/exec`、三个 `discover/exec/registry` 宿主包、插件上传/重扫/启停 API、前端插件页、内嵌 helper 安装逻辑。
 3. **依赖方向**（必须保持单向）：
    - 主仓库 → `protocol`、`catalog`
    - 新仓库插件 → `protocol`、`sdk`、`catalog`
@@ -47,7 +46,7 @@
 |---|---|---|---|
 | 官方实现 | 194 个 lego 服务商包装包 | 5 个包 / 7 个规范目标 | 23 个渠道 |
 | helper 入口 | `cmd/dns-helper` | `cmd/deploy-helper` | `cmd/notify-helper` |
-| 宿主包 | `internal/dnsplugin` | `internal/deployplugin` | `internal/notifyplugin` |
+| 宿主包 | `internal/plugin/dns` | `internal/plugin/deploy` | `internal/plugin/notify` |
 | 协议 | `manifest` / `present` / `cleanup` | `manifest` / `deploy` | `manifest` / `send` |
 | 单次超时默认 | 60s | 300s | 30s |
 | 默认安装 | 发布版内嵌并自动安装 | 手动安装，`deploy_plugins.enabled=false` | 手动安装，`notify_plugins.enabled=false` |
@@ -58,19 +57,19 @@
 
 | 路径 | 处理 | 说明 |
 |---|---|---|
-| `internal/pluginexec/*` | 保留 | 宿主侧子进程执行器（超时、RSS、环境白名单、脱敏） |
-| `internal/dnsplugin/{registry,exec}.go` | 保留 | 宿主注册表与外部插件发现 |
-| `internal/deployplugin/{registry,exec}.go` | 保留 | 同上 |
-| `internal/notifyplugin/{registry,exec}.go` | 保留 | 同上 |
-| `internal/dnsplugin/exec_manifest.go` | 改成类型别名 | 类型迁到 `protocol` |
-| `internal/deployplugin/exec_manifest.go` | 改成类型别名 | 同上 |
-| `internal/notifyplugin/exec_manifest.go` | 改成类型别名 | 同上 |
-| `internal/dnsplugin/providers/**`（194 包） | 迁移 | 纯 lego 包装 |
-| `internal/dnsplugin/builtin/profile_*.go` | 删除 | `dns_all` 全量版移除，主程序不再内置任何服务商 |
-| `internal/dnsplugin/bundled/*` | 保留 | 仍负责把 helper 装进插件目录 |
-| `internal/deployplugin/providers/**` | 迁移 | FTP/Webhook/阿里云 CDN/七牛/面板 |
-| `internal/deployplugin/pluginutil/` | 迁移 | 部署侧工具 |
-| `internal/notifyplugin/providers/channels/**` | 迁移 | 23 个渠道 |
+| `internal/plugin/exec/*` | 保留 | 宿主侧子进程执行器（超时、RSS、环境白名单、脱敏） |
+| `internal/plugin/dns/{registry,exec}.go` | 保留 | 宿主注册表与外部插件发现 |
+| `internal/plugin/deploy/{registry,exec}.go` | 保留 | 同上 |
+| `internal/plugin/notify/{registry,exec}.go` | 保留 | 同上 |
+| `internal/plugin/dns/exec_manifest.go` | 改成类型别名 | 类型迁到 `protocol` |
+| `internal/plugin/deploy/exec_manifest.go` | 改成类型别名 | 同上 |
+| `internal/plugin/notify/exec_manifest.go` | 改成类型别名 | 同上 |
+| `internal/plugin/dns/providers/**`（194 包） | 迁移 | 纯 lego 包装 |
+| `internal/plugin/dns/builtin/profile_*.go` | 删除 | `dns_all` 全量版移除，主程序不再内置任何服务商 |
+| `internal/plugin/dns/bundled/*` | 保留 | 仍负责把 helper 装进插件目录 |
+| `internal/plugin/deploy/providers/**` | 迁移 | FTP/Webhook/阿里云 CDN/七牛/面板 |
+| `internal/plugin/deploy/pluginutil/` | 迁移 | 部署侧工具 |
+| `internal/plugin/notify/providers/channels/**` | 迁移 | 23 个渠道 |
 | `internal/service/dns_providers_gen.go` | 迁移为 `catalog` | 159 条生成数据 |
 | `internal/service/meta.go` 的 `DNSProviders`（35 条） | 迁移为 `catalog` | 手工维护数据 |
 | `internal/service/deploy_plugin_targets.go` 的 `PluginDeployTypes`（13 条） | 迁移为 `catalog` | 含 6 个历史 ID 映射 |
@@ -103,7 +102,7 @@ make build
   ├─ web build
   └─ go build -tags embed ./cmd/server
        └─ embed_helper 构建标签
-            └─ go:embed internal/dnsplugin/bundled/lactssl-dns-helper-extra
+            └─ go:embed internal/plugin/dns/bundled/lactssl-dns-helper-extra
                  └─ 该文件由 Makefile/Dockerfile/release.sh 用 ./cmd/dns-helper 现场构建
 
 make helper / helper-extra / helper-full
@@ -212,7 +211,7 @@ LACTSSL-Plugins/
 ┌────┴─────────────────────────────────────────┐
 │  LACTSSL（宿主）                              │
 │  internal/{dns,deploy,notify}plugin           │
-│  internal/pluginexec / api / service          │
+│  internal/plugin/exec / api / service          │
 └──────────────────────────────────────────────┘
 ```
 
@@ -261,9 +260,9 @@ LACTSSL-Plugins/
 
 | 位置 | 改动 |
 |---|---|
-| `internal/dnsplugin/providers/**` | 迁到新仓库 |
-| `internal/dnsplugin/builtin/**` | 删除 |
-| `internal/dnsplugin/registry.go` | 保留注册表与 `Source` 类型；注释改为「仅测试或未来扩展使用」 |
+| `internal/plugin/dns/providers/**` | 迁到新仓库 |
+| `internal/plugin/dns/builtin/**` | 删除 |
+| `internal/plugin/dns/registry.go` | 保留注册表与 `Source` 类型；注释改为「仅测试或未来扩展使用」 |
 | `internal/service/acme.go` | 删除 `newDNSProvider` 的 builtin 分支、`EnvForProvider`、`builtinProviderEnv`、`applyProviderEnv` |
 | `scripts/gen_dns_plugins`、`scripts/dns_plugins.json` | 删除（生成器迁到新仓库，不再有 profile 概念） |
 | `Makefile` | 删除 `build-full`、`backend-full`、`helper-full`、`FULL_TAGS`、`gen-plugins` |
@@ -364,7 +363,7 @@ go 1.27.4
 
 2. 迁移 manifest / 请求结构：
    - `cmd/dns-helper/main.go` 的 `request`
-   - `internal/dnsplugin/exec_manifest.go` 的 `Manifest*`
+   - `internal/plugin/dns/exec_manifest.go` 的 `Manifest*`
    - 部署、通知同理
 3. 增加 `protocol.ProtocolVersion = "v1"` 与环境变量常量。
 4. 实现 `sdk/helper`：内存上限、子命令分发、JSON 输出、错误退出。
@@ -406,7 +405,7 @@ func init() {
 
 ### P3：DNS 插件迁移
 
-1. 复制 194 个 `internal/dnsplugin/providers/<id>` 到 `dns/providers/<id>`，import 改为新仓库 `dns` 包。
+1. 复制 194 个 `internal/plugin/dns/providers/<id>` 到 `dns/providers/<id>`，import 改为新仓库 `dns` 包。
 2. 新仓库实现插件侧注册表（`dns.Register/List/Lookup`），接口只保留 `ID/Aliases/New`。
 3. `dns/all/all.go` 空导入全部包装包。
 4. 迁移 `scripts/gen_dns_plugins`，只生成包装包与 `all` 清单；删除 profile、`lite` 配置和 `dns_extra` / `dns_all` 标签（helper 始终包含全部）。
@@ -415,8 +414,8 @@ func init() {
    - `present/cleanup` 使用 `catalog.Env`
    - 保留 `serviceVersion()` 读取 lego 版本的逻辑
 6. 主仓库：
-   - 删除 `internal/dnsplugin/providers/**`
-   - 删除 `internal/dnsplugin/builtin/**`
+   - 删除 `internal/plugin/dns/providers/**`
+   - 删除 `internal/plugin/dns/builtin/**`
    - 删除 `scripts/gen_dns_plugins`、`scripts/dns_plugins.json`
    - 删除 `service/acme.go` 中 builtin 分支与 `EnvForProvider` / `builtinProviderEnv` / `applyProviderEnv`
    - 删除 `Makefile` 的 `gen-plugins`

@@ -2,7 +2,7 @@
 
 LACTSSL 官方插件仓库，为 [LACTSSL](https://github.com/AXmishell/LACTSSL) 证书管理工具提供 DNS 验证、证书部署与通知推送能力，同时维护插件协议、服务商元数据、合并包格式与签名索引。
 
-LACTSSL 主仓库只保留插件宿主：它通过 `go.mod` 依赖本仓库的 `protocol` 与 `catalog`，在运行期从插件索引下载对应类型的合并包，并以子进程方式调用插件。
+LACTSSL 主仓库只保留插件宿主：宿主内实现插件协议 v1 的 manifest 解码，在运行期从插件索引下载对应类型的合并包，并以子进程方式调用插件。两个仓库通过签名索引、协议版本与 `min_host` 兼容，构建期不共享 Go 模块。
 
 ## 插件类型
 
@@ -17,8 +17,8 @@ LACTSSL 主仓库只保留插件宿主：它通过 `go.mod` 依赖本仓库的 `
 ## 项目结构
 
 ```text
-protocol/        插件协议 v1 的线格式（零第三方依赖，主程序与插件共用）
-catalog/         服务商与部署目标的静态元数据（data.json）
+protocol/        插件协议 v1 的线格式（零第三方依赖，插件侧实现）
+catalog/         插件内部的服务商与部署目标元数据（data.json，不对外提供 Go API）
 i18n/            插件侧精简文案与语言选择
 sdk/             插件共用的实现：HTTP、签名、DNS 工具、helper 框架等
 outbound/        带 SSRF 防护的出站 HTTP 客户端

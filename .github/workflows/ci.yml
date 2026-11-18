@@ -56,6 +56,9 @@ jobs:
           go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/notify-all ./cmd/notify-helper
           test "$(/tmp/dns-all-native manifest | jq '.providers | length')" = "194"
           test "$(/tmp/dns-all manifest | jq '.providers | length')" = "194"
+          manifest="$(/tmp/dns-all-native manifest)"
+          test "$(printf '%s' "$manifest" | jq -r '.providers[] | select(.id=="cloudflare") | .name_i18n["en-US"] | length')" -gt 0
+          test "$(printf '%s' "$manifest" | wc -c)" -lt 1048576
           test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "25"
           test "$(/tmp/notify-all manifest | jq '.channels | length')" = "23"
           test "$(/tmp/dns-all-native manifest | jq -r '.providers[] | select(.id=="cloudflare") | .id')" = "cloudflare"
