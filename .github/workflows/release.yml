@@ -14,6 +14,10 @@ on:
         description: "忽略增量检测，重建全部插件"
         type: boolean
         default: false
+      allow_downgrade:
+        description: "允许索引版本低于已发布版本（重置插件版本后使用）"
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
@@ -238,10 +242,13 @@ jobs:
           fi
 
       - name: Generate index
+        env:
+          ALLOW_DOWNGRADE: ${{ inputs.allow_downgrade }}
         run: |
           set -euo pipefail
           args=()
           [ -s prev-index.json ] && args+=(-prev prev-index.json)
+          [ "$ALLOW_DOWNGRADE" = "true" ] && args+=(-allow-downgrade)
           go run scripts/pluginctl/main.go index \
             -assets dist \
             -base-url "https://github.com/${{ github.repository }}/releases/download" \

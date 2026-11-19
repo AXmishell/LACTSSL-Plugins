@@ -71,6 +71,8 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 
 `plugins.json` 里的 `source_hash` 只用于版本计算，不会写入插件索引。
 
+需要显式重置版本（例如把内部版本从 `1.3.x` 降到 `1.0.0`）时，先修改 `dnsBaseVer`/`deployBaseVer`/`notifyBaseVer` 并清除对应条目的 `source_hash`，重新生成 `plugins.json`；手动触发 Release 时勾选 `allow_downgrade`，否则索引合并会保留更高的旧版本。tag 发布仍会覆盖内部版本，两者不要混用。
+
 ## 兼容性约定
 
 - DNS 服务商 ID、字段 key、别名与旧插件保持逐项一致。

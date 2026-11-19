@@ -870,6 +870,7 @@ func cmdIndex(args []string) {
 	baseURL := fs.String("base-url", "", "release download base URL")
 	bucket := fs.String("bucket", "", "release 名前缀：URL 为 <base-url>/<bucket>-<kind>/<asset>；留空按 <kind>-<id>-v<version>")
 	prev := fs.String("prev", "", "已有 index.json，用于合并未重建的插件")
+	allowDowngrade := fs.Bool("allow-downgrade", false, "允许新索引版本低于旧索引（用于显式重置插件版本）")
 	out := fs.String("out", "index.json", "output index path")
 	fs.Parse(args)
 	if *baseURL == "" {
@@ -952,7 +953,7 @@ func cmdIndex(args []string) {
 	}
 	index := indexFile{Schema: 1, Channel: "stable", Protocol: "v1", GeneratedAt: time.Now().UTC().Format(time.RFC3339), Plugins: plugins}
 	if *prev != "" {
-		plugins = mergeIndex(plugins, *prev)
+		plugins = mergeIndex(plugins, *prev, *allowDowngrade)
 		index.Plugins = plugins
 	}
 	sort.Slice(index.Plugins, func(i, j int) bool {
@@ -968,9 +969,10 @@ func cmdIndex(args []string) {
 }
 
 // mergeIndex 把未参与本次构建的插件从旧索引沿用过来。
-// 已被重新构建的插件以新结果为准，但不会把版本降级；
+// 已被重新构建的插件以新结果为准，默认不会把版本降级（避免非 tag 发布盖掉 tag 版本）；
+// allowDowngrade 为 true 时允许显式重置版本后覆盖旧索引。
 // plugins.json 中已删除的插件不再保留。
-func mergeIndex(fresh []indexPlugin, prevPath string) []indexPlugin {
+func mergeIndex(fresh []indexPlugin, prevPath string, allowDowngrade bool) []indexPlugin {
 	raw, err := os.ReadFile(prevPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -989,7 +991,7 @@ func mergeIndex(fresh []indexPlugin, prevPath string) []indexPlugin {
 	for _, p := range old.Plugins {
 		key := p.Kind + "|" + p.ID
 		if cur, ok := merged[key]; ok {
-			if compareVersion(cur.Version, p.Version) < 0 {
+			if !allowDowngrade && compareVersion(cur.Version, p.Version) < 0 {
 				merged[key] = p
 			}
 			continue
