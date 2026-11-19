@@ -42,10 +42,12 @@ import (
 
 const (
 	manifestPath = "plugins.json"
-	// 主/次版本由人工维护；补丁号由 manifest 根据各合并包的输入内容自动递增。
+	// 主/次版本由人工维护；补丁号由 manifest 根据各合并包自身的输入内容自动递增。
+	// 每个包独立计数：只有自己的源码/图标等输入变化时才升版，共享目录（protocol、sdk、
+	// i18n 等）的改动不再同时触发三个包升版。
 	// 上游版本跟随的包（如 all-lego）不走这套版本计算。
-	dnsBaseVer    = "0.1"
-	deployBaseVer = "1.3"
+	dnsBaseVer    = "1.0"
+	deployBaseVer = "1.0"
 	notifyBaseVer = "1.0"
 	legoModule    = "github.com/go-acme/lego/v4"
 )
@@ -263,19 +265,15 @@ func cmdManifest(args []string) {
 var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.-]+)?$`)
 
 // sourcePaths 返回影响某个合并包产物的输入。
-// 共享目录（sdk、protocol 等）变化会同时升级三个包，因为改动会被链接进全部产物。
+// 各包只统计自己的输入，保证版本独立演进：
+// 公共构建输入（go.mod/go.sum、许可证、图标别名表）变化才同时影响全部包；
+// protocol、sdk、i18n、outbound、catalog 等共享源码目录不计入，避免一处改动
+// 导致 deploy/all、dns/all-native、notify/all 同时升版。
 func sourcePaths(kind string) []string {
 	paths := []string{
 		"go.mod",
 		"go.sum",
 		"LICENSE",
-		"protocol",
-		"sdk",
-		"i18n",
-		"outbound",
-		"catalog",
-		"scripts/pluginctl",
-		"scripts/buildver",
 		"assets/icons/icons.json",
 	}
 	switch kind {
