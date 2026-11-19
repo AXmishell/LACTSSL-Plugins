@@ -57,6 +57,7 @@
   "service.deploy.baota_sites_invalid": "解析宝塔网站列表失败",
   "service.deploy.baota_options_unsupported": "该宝塔部署对象不支持读取网站列表",
   "service.deploy.options_unsupported": "该部署插件不支持读取动态选项",
+  "service.deploy.plan_unsupported": "该部署插件不支持预读取部署对象",
   "service.deploy.baota_request_failed": "请求宝塔面板 API 失败: {error}",
   "service.deploy.baota_status": "宝塔面板返回状态码 {status}: {body}",
   "service.deploy.baota_error": "宝塔面板错误: {message}",

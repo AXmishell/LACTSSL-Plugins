@@ -43,6 +43,17 @@ func (sitePlugin) Deploy(_ context.Context, req deploy.Request) error {
 	}
 }
 
+// Plan 读取 AcePanel 网站列表，供宿主按证书域名匹配。
+func (sitePlugin) Plan(_ context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "site":
+		return acepanelPlan(cfg)
+	default:
+		return deploy.PlanResponse{}, nil
+	}
+}
+
 func (panelPlugin) ID() string        { return "acepanel_panel" }
 func (panelPlugin) Aliases() []string { return nil }
 func (panelPlugin) Deploy(_ context.Context, req deploy.Request) error {
@@ -51,6 +62,7 @@ func (panelPlugin) Deploy(_ context.Context, req deploy.Request) error {
 
 func init() {
 	deploy.MarkVerifiable("acepanel", "acepanel_panel")
+	deploy.MarkPlannable("acepanel")
 	deploy.Register(sitePlugin{})
 	deploy.Register(panelPlugin{})
 }
@@ -89,6 +101,43 @@ func newClient(cfg map[string]string) (*client, error) {
 		return nil, i18n.E("service.deploy.acepanel_token_required")
 	}
 	return &client{base: base, token: token, id: id, http: util.Client(cfg)}, nil
+}
+
+// acepanelPlan 读取网站列表，返回主机可直接写入 websites 字段的对象。
+func acepanelPlan(cfg map[string]string) (deploy.PlanResponse, error) {
+	c, err := newClient(cfg)
+	if err != nil {
+		return deploy.PlanResponse{}, err
+	}
+	websites, err := c.getWebsites()
+	if err != nil {
+		return deploy.PlanResponse{}, err
+	}
+	objects := make([]deploy.PlanObject, 0, len(websites))
+	for _, item := range websites {
+		value := strings.TrimSpace(item.Name)
+		if value == "" && item.ID > 0 {
+			value = strconv.FormatInt(item.ID, 10)
+		}
+		if value == "" {
+			continue
+		}
+		domains := append([]string(nil), item.Domains...)
+		if name := strings.TrimSpace(item.Name); name != "" {
+			domains = append(domains, name)
+		}
+		var identifiers []string
+		if item.ID > 0 {
+			identifiers = []string{strconv.FormatInt(item.ID, 10)}
+		}
+		objects = append(objects, deploy.PlanObject{
+			Value:       value,
+			Name:        item.Name,
+			Domains:     domains,
+			Identifiers: identifiers,
+		})
+	}
+	return deploy.PlanResponse{Field: "websites", Multiple: true, Objects: objects}, nil
 }
 
 func deploySite(cert *deploy.Certificate, cfg map[string]string) error {

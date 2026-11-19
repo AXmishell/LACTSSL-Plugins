@@ -4,6 +4,9 @@
 //
 //	deploy-helper manifest   # 输出插件清单 JSON
 //	deploy-helper deploy     # 从 stdin 读取 JSON 请求并执行部署
+//	deploy-helper options    # 读取部署字段的动态选项
+//	deploy-helper plan       # 读取可部署对象，供批量部署按证书域名匹配
+//	deploy-helper verify     # 执行只读凭据验证
 package main
 
 import (
@@ -51,7 +54,7 @@ func main() {
 	panels.RegisterSafeline()
 	helper.ApplyMemoryLimit()
 	if len(os.Args) < 2 {
-		helper.Fail("用法: deploy-helper manifest|deploy|options|verify")
+		helper.Fail("用法: deploy-helper manifest|deploy|options|plan|verify")
 	}
 	switch os.Args[1] {
 	case "manifest", "list":
@@ -60,6 +63,8 @@ func main() {
 		handle()
 	case "options":
 		handleOptions()
+	case "plan":
+		handlePlan()
 	case "verify":
 		handleVerify()
 	default:
@@ -80,6 +85,7 @@ func buildManifest() protocol.DeployManifest {
 	merged := helper.HasFeature(protocol.FeatureMergedDeployers)
 	dynamicOptions := helper.HasFeature(protocol.FeatureDynamicOptions)
 	verifyEnabled := helper.HasFeature(protocol.FeatureVerify)
+	planEnabled := helper.HasFeature(protocol.FeaturePlan)
 	deprecated := catalog.DeprecatedDeployTypes()
 	mergedCanonical := make(map[string]bool)
 	if !merged {
@@ -97,6 +103,9 @@ func buildManifest() protocol.DeployManifest {
 	}
 	if verifyEnabled {
 		manifest.Capabilities = []string{protocol.FeatureVerify}
+	}
+	if planEnabled {
+		manifest.Capabilities = append(manifest.Capabilities, protocol.FeaturePlan)
 	}
 	for _, plugin := range plugins {
 		def, ok := catalog.LookupDeployer(plugin.ID())
@@ -120,18 +129,25 @@ func buildManifest() protocol.DeployManifest {
 			Aliases:         plugin.Aliases(),
 			Fields:          manifestFields(def.Fields, dynamicOptions),
 			DeployFields:    manifestFields(def.DeployFields, dynamicOptions),
-			Capabilities:    deployerCapabilities(plugin.ID(), verifyEnabled),
+			Capabilities:    deployerCapabilities(plugin.ID(), verifyEnabled, planEnabled),
 		})
 	}
 	return manifest
 }
 
-// deployerCapabilities 只给实现了只读探测的目标声明 verify-v1。
-func deployerCapabilities(id string, enabled bool) []string {
-	if enabled && deploy.IsVerifiable(id) {
-		return []string{protocol.FeatureVerify}
+// deployerCapabilities 只给实现了只读探测或预匹配的目标声明对应能力。
+func deployerCapabilities(id string, verifyEnabled, planEnabled bool) []string {
+	out := make([]string, 0, 2)
+	if verifyEnabled && deploy.IsVerifiable(id) {
+		out = append(out, protocol.FeatureVerify)
 	}
-	return nil
+	if planEnabled && deploy.IsPlannable(id) {
+		out = append(out, protocol.FeaturePlan)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 func manifestFields(fields []catalog.Field, dynamicOptions bool) []protocol.DeployField {
@@ -301,6 +317,54 @@ func handleOptions() {
 	}
 	if err := helper.WriteJSON(protocol.DeployOptionsResponse{Options: options}); err != nil {
 		helper.Fail("输出选项失败: " + err.Error())
+	}
+}
+
+// handlePlan 读取目标系统中可部署的对象清单。该操作只读，不写入证书。
+func handlePlan() {
+	var req protocol.DeployPlanRequest
+	if err := helper.ReadJSON(&req); err != nil {
+		helper.Fail("解析请求失败: " + err.Error())
+	}
+	if req.Protocol != "" && req.Protocol != protocol.ProtocolVersion {
+		helper.Fail("不支持的插件协议: " + req.Protocol)
+	}
+	if req.Provider == "" {
+		helper.Fail("请求缺少 provider")
+	}
+	plugin, ok := deploy.Lookup(req.Provider)
+	if !ok {
+		helper.Fail("不支持的部署目标: " + req.Provider)
+	}
+	planner, ok := plugin.(deploy.Planner)
+	if !ok {
+		helper.Fail(i18n.E("service.deploy.plan_unsupported").Error())
+	}
+	loc := i18n.Normalize(firstNonEmpty(req.Locale, string(i18n.Default)))
+	result, err := planner.Plan(context.Background(), deploy.PlanRequest{
+		Auth:   req.Auth,
+		Config: req.Config,
+		Locale: string(loc),
+	})
+	if err != nil {
+		helper.Fail(err.Error())
+	}
+	response := protocol.DeployPlanResponse{
+		OK:       true,
+		Field:    result.Field,
+		Multiple: result.Multiple,
+		Objects:  make([]protocol.DeployPlanObject, 0, len(result.Objects)),
+	}
+	for _, object := range result.Objects {
+		response.Objects = append(response.Objects, protocol.DeployPlanObject{
+			Value:       object.Value,
+			Name:        object.Name,
+			Domains:     object.Domains,
+			Identifiers: object.Identifiers,
+		})
+	}
+	if err := helper.WriteJSON(response); err != nil {
+		helper.Fail("输出部署对象失败: " + err.Error())
 	}
 }
 

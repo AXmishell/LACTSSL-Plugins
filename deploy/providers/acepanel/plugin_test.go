@@ -1,6 +1,7 @@
 package acepanel
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -51,6 +52,31 @@ func TestDeploySite(t *testing.T) {
 	}
 	if err := deploySite(cert, cfg); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAcePanelPlan(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/website" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(`{"code":200,"data":{"items":[{"id":3,"name":"demo","domains":["example.com"]},{"id":4,"name":"other","domains":["other.com","www.other.com"]}]}}`))
+	}))
+	defer server.Close()
+
+	result, err := (sitePlugin{}).Plan(context.Background(), deploy.PlanRequest{
+		Auth: map[string]string{"panel_url": server.URL, "token_id": "1", "access_token": "token"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Field != "websites" || !result.Multiple || len(result.Objects) != 2 {
+		t.Fatalf("unexpected plan: %+v", result)
+	}
+	if result.Objects[0].Value != "demo" || len(result.Objects[0].Domains) != 2 {
+		t.Fatalf("unexpected object: %+v", result.Objects[0])
 	}
 }
 

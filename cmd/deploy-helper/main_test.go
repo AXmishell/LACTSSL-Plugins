@@ -146,6 +146,31 @@ func TestManifestDynamicOptionsFeature(t *testing.T) {
 	}
 }
 
+func TestManifestPlanFeature(t *testing.T) {
+	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers+","+protocol.FeaturePlan)
+	manifest := buildManifest()
+	wantPlan := map[string]bool{"baota": true, "baota_site": true, "baota_docker": true, "1panel": true, "1panel_site": true, "acepanel": true}
+	found := 0
+	for _, item := range manifest.Deployers {
+		if !wantPlan[item.ID] {
+			continue
+		}
+		found++
+		hasPlan := false
+		for _, capability := range item.Capabilities {
+			if capability == protocol.FeaturePlan {
+				hasPlan = true
+			}
+		}
+		if !hasPlan {
+			t.Fatalf("deployer %s should advertise plan-v1: %+v", item.ID, item.Capabilities)
+		}
+	}
+	if found == 0 {
+		t.Fatal("no plannable deployer found")
+	}
+}
+
 func TestManifestContainsLocalizedMetadata(t *testing.T) {
 	t.Setenv(protocol.DeployFeaturesEnv, protocol.FeatureMergedDeployers)
 	got := buildManifest()

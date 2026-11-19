@@ -30,6 +30,9 @@ const FeatureDynamicOptions = "dynamic-options-v1"
 // FeatureVerify 表示服务商/部署目标支持 verify 子命令的只读探测。
 const FeatureVerify = "verify-v1"
 
+// FeaturePlan 表示宿主支持 plan 子命令，可在批量部署前读取可部署对象。
+const FeaturePlan = "plan-v1"
+
 // 验证检查项状态。
 const (
 	VerifyStatusOK          = "ok"

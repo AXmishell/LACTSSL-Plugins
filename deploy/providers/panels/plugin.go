@@ -63,6 +63,19 @@ func (baotaPlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) (
 	}
 }
 
+// Plan 返回宝塔网站列表，供宿主按证书域名匹配后再部署。
+func (baotaPlugin) Plan(ctx context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "site":
+		return baotaPlan(ctx, cfg, "site")
+	case "docker":
+		return baotaPlan(ctx, cfg, "docker")
+	default:
+		return deploy.PlanResponse{}, nil
+	}
+}
+
 func (baotaDockerPlugin) ID() string        { return "baota_docker" }
 func (baotaDockerPlugin) Aliases() []string { return nil }
 func (baotaDockerPlugin) Deploy(_ context.Context, req deploy.Request) error {
@@ -70,6 +83,10 @@ func (baotaDockerPlugin) Deploy(_ context.Context, req deploy.Request) error {
 }
 func (baotaDockerPlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) ([]protocol.DeployOption, error) {
 	return baotaListOptions(ctx, util.Merge(req.Auth, req.Config), "docker", req.Query)
+}
+
+func (baotaDockerPlugin) Plan(ctx context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	return baotaPlan(ctx, util.Merge(req.Auth, req.Config), "docker")
 }
 
 func (onePanelPlugin) ID() string        { return "1panel" }
@@ -87,6 +104,16 @@ func (onePanelPlugin) Deploy(_ context.Context, req deploy.Request) error {
 	}
 }
 
+func (onePanelPlugin) Plan(_ context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	cfg := util.Merge(req.Auth, req.Config)
+	switch strings.TrimSpace(cfg["target"]) {
+	case "", "site":
+		return onePanelPlan(cfg)
+	default:
+		return deploy.PlanResponse{}, nil
+	}
+}
+
 func (baotaSitePlugin) ID() string        { return "baota_site" }
 func (baotaSitePlugin) Aliases() []string { return nil }
 func (baotaSitePlugin) Deploy(_ context.Context, req deploy.Request) error {
@@ -94,6 +121,10 @@ func (baotaSitePlugin) Deploy(_ context.Context, req deploy.Request) error {
 }
 func (baotaSitePlugin) ListOptions(ctx context.Context, req deploy.OptionsRequest) ([]protocol.DeployOption, error) {
 	return baotaListOptions(ctx, util.Merge(req.Auth, req.Config), "site", req.Query)
+}
+
+func (baotaSitePlugin) Plan(ctx context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	return baotaPlan(ctx, util.Merge(req.Auth, req.Config), "site")
 }
 
 func (baotaPanelPlugin) ID() string        { return "baota_panel" }
@@ -106,6 +137,10 @@ func (onePanelSitePlugin) ID() string        { return "1panel_site" }
 func (onePanelSitePlugin) Aliases() []string { return nil }
 func (onePanelSitePlugin) Deploy(_ context.Context, req deploy.Request) error {
 	return deployOnePanelSite(util.Certificate(req.Certificate), util.Merge(req.Auth, req.Config))
+}
+
+func (onePanelSitePlugin) Plan(_ context.Context, req deploy.PlanRequest) (deploy.PlanResponse, error) {
+	return onePanelPlan(util.Merge(req.Auth, req.Config))
 }
 
 func (onePanelPanelPlugin) ID() string        { return "1panel_panel" }
@@ -146,6 +181,7 @@ func (safelinePortalPlugin) Deploy(_ context.Context, req deploy.Request) error 
 // RegisterBaota 注册宝塔规范目标及历史兼容 ID。
 func RegisterBaota() {
 	deploy.MarkVerifiable("baota", "baota_site", "baota_panel", "baota_docker")
+	deploy.MarkPlannable("baota", "baota_site", "baota_docker")
 	deploy.Register(baotaPlugin{})
 	deploy.Register(baotaDockerPlugin{})
 	deploy.Register(baotaSitePlugin{})
@@ -155,6 +191,7 @@ func RegisterBaota() {
 // RegisterOnePanel 注册 1Panel 规范目标及历史兼容 ID。
 func RegisterOnePanel() {
 	deploy.MarkVerifiable("1panel", "1panel_site", "1panel_panel")
+	deploy.MarkPlannable("1panel", "1panel_site")
 	deploy.Register(onePanelPlugin{})
 	deploy.Register(onePanelSitePlugin{})
 	deploy.Register(onePanelPanelPlugin{})
@@ -308,6 +345,23 @@ func deployBaotaDockerSite(cert *deploy.Certificate, cfg map[string]string) erro
 		return i18n.E("service.deploy.partial_failed", "errors", strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// baotaPlan 读取宝塔网站或 Docker 网站列表，供宿主按证书域名匹配。
+func baotaPlan(ctx context.Context, cfg map[string]string, target string) (deploy.PlanResponse, error) {
+	options, err := baotaListOptions(ctx, cfg, target, "")
+	if err != nil {
+		return deploy.PlanResponse{}, err
+	}
+	objects := make([]deploy.PlanObject, 0, len(options))
+	for _, option := range options {
+		objects = append(objects, deploy.PlanObject{
+			Value:   option.Value,
+			Name:    option.Label,
+			Domains: []string{option.Value},
+		})
+	}
+	return deploy.PlanResponse{Field: "sites", Multiple: true, Objects: objects}, nil
 }
 
 // baotaListOptions 从宝塔面板读取可部署对象名称。
@@ -546,6 +600,72 @@ func onePanelResolveWebsite(client *http.Client, base, version, apiKey, target s
 		return result.Items[0].ID, nil
 	}
 	return 0, i18n.E("service.deploy.onepanel_website_not_found", "website", target)
+}
+
+// onePanelPlan 读取 1Panel 网站列表。返回的 Value 是主域名，
+// 宿主可直接写入部署节点的 website 字段。
+func onePanelPlan(cfg map[string]string) (deploy.PlanResponse, error) {
+	base := panelURL(cfg["panel_url"])
+	apiKey := strings.TrimSpace(cfg["api_key"])
+	if base == "" {
+		return deploy.PlanResponse{}, i18n.E("service.deploy.panel_url_required")
+	}
+	if err := outbound.ValidateURL(base); err != nil {
+		return deploy.PlanResponse{}, err
+	}
+	if apiKey == "" {
+		return deploy.PlanResponse{}, i18n.E("service.deploy.onepanel_key_required")
+	}
+	version := onePanelVersion(cfg["api_version"])
+	payload := map[string]any{
+		"page":     1,
+		"pageSize": 1000,
+		"order":    "null",
+		"orderBy":  "created_at",
+	}
+	data, err := onePanelRequest(deployHTTPClient(skipVerify(cfg)), base, version, apiKey, http.MethodPost, "/websites/search", payload)
+	if err != nil {
+		return deploy.PlanResponse{}, err
+	}
+	var result struct {
+		Items []struct {
+			ID            int64  `json:"id"`
+			PrimaryDomain string `json:"primaryDomain"`
+			Alias         string `json:"alias"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return deploy.PlanResponse{}, i18n.E("service.deploy.onepanel_status", "status", http.StatusOK, "body", util.Truncate(string(data), 300))
+	}
+	objects := make([]deploy.PlanObject, 0, len(result.Items))
+	for _, item := range result.Items {
+		domains := make([]string, 0, 8)
+		if value := strings.TrimSpace(item.PrimaryDomain); value != "" {
+			domains = append(domains, value)
+		}
+		domains = append(domains, util.SplitList(item.Alias)...)
+		value := strings.TrimSpace(item.PrimaryDomain)
+		if value == "" && len(domains) > 0 {
+			value = domains[0]
+		}
+		if value == "" && item.ID > 0 {
+			value = strconv.FormatInt(item.ID, 10)
+		}
+		if value == "" {
+			continue
+		}
+		var identifiers []string
+		if item.ID > 0 {
+			identifiers = []string{strconv.FormatInt(item.ID, 10)}
+		}
+		objects = append(objects, deploy.PlanObject{
+			Value:       value,
+			Name:        strings.TrimSpace(item.PrimaryDomain),
+			Domains:     domains,
+			Identifiers: identifiers,
+		})
+	}
+	return deploy.PlanResponse{Field: "website", Multiple: false, Objects: objects}, nil
 }
 
 func deployOnePanelSite(cert *deploy.Certificate, cfg map[string]string) error {

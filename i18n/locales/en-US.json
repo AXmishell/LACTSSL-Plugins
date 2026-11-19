@@ -57,6 +57,7 @@
   "service.deploy.baota_sites_invalid": "Failed to parse the BaoTa website list",
   "service.deploy.baota_options_unsupported": "This BaoTa deploy target does not support listing websites",
   "service.deploy.options_unsupported": "This deploy plugin does not support dynamic options",
+  "service.deploy.plan_unsupported": "This deploy plugin does not support pre-reading deploy objects",
   "service.deploy.baota_request_failed": "BaoTa panel API request failed: {error}",
   "service.deploy.baota_status": "BaoTa panel returned status {status}: {body}",
   "service.deploy.baota_error": "BaoTa panel error: {message}",

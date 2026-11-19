@@ -166,6 +166,57 @@ func TestDeployBaotaPanel(t *testing.T) {
 	}
 }
 
+func TestBaotaPlan(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/data" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.String())
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":1,"name":"example.com"},{"id":2,"name":"blog.example.com"}]}`))
+	}))
+	defer server.Close()
+
+	result, err := (baotaPlugin{}).Plan(context.Background(), deploy.PlanRequest{
+		Auth: map[string]string{"panel_url": server.URL, "api_secret": "secret"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Field != "sites" || !result.Multiple || len(result.Objects) != 2 {
+		t.Fatalf("unexpected plan: %+v", result)
+	}
+	if result.Objects[0].Value != "example.com" || len(result.Objects[0].Domains) != 1 {
+		t.Fatalf("unexpected object: %+v", result.Objects[0])
+	}
+}
+
+func TestOnePanelPlan(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v2/websites/search" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(`{"code":200,"data":{"total":1,"items":[{"id":7,"primaryDomain":"example.com","alias":"www.example.com,demo"}]}}`))
+	}))
+	defer server.Close()
+
+	result, err := (onePanelPlugin{}).Plan(context.Background(), deploy.PlanRequest{
+		Auth: map[string]string{"panel_url": server.URL, "api_key": "test-key", "api_version": "v2"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Field != "website" || result.Multiple || len(result.Objects) != 1 {
+		t.Fatalf("unexpected plan: %+v", result)
+	}
+	object := result.Objects[0]
+	if object.Value != "example.com" || len(object.Domains) != 3 {
+		t.Fatalf("unexpected object: %+v", object)
+	}
+}
+
 func TestDeployOnePanelSite(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		timestamp := r.Header.Get("1Panel-Timestamp")

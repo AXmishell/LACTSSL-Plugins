@@ -55,6 +55,34 @@ type Verifier interface {
 	Verify(ctx context.Context, req Request) ([]protocol.VerifyCheck, error)
 }
 
+// PlanRequest 是读取可部署对象的请求。
+type PlanRequest struct {
+	Auth   map[string]string
+	Config map[string]string
+	Locale string
+}
+
+// PlanObject 是一个可部署对象。
+type PlanObject struct {
+	Value       string
+	Name        string
+	Domains     []string
+	Identifiers []string
+}
+
+// PlanResponse 描述目标字段和当前可部署对象。
+type PlanResponse struct {
+	Field    string
+	Multiple bool
+	Objects  []PlanObject
+}
+
+// Planner 是可选接口：部署目标通过只读 API 返回网站清单。
+// 实现方不得写入证书或修改目标系统。
+type Planner interface {
+	Plan(ctx context.Context, req PlanRequest) (PlanResponse, error)
+}
+
 // verifiable 记录实现了 Verifier 的部署目标，供 manifest 输出能力位。
 // 用显式清单而不是反射，避免某个目标暂时未实现时误报能力。
 var verifiable = struct {
@@ -78,6 +106,30 @@ func IsVerifiable(id string) bool {
 	verifiable.RLock()
 	defer verifiable.RUnlock()
 	return verifiable.ids[normalize(id)]
+}
+
+// plannable 记录实现了 Planner 的部署目标，供 manifest 输出能力位。
+var plannable = struct {
+	sync.RWMutex
+	ids map[string]bool
+}{ids: make(map[string]bool)}
+
+// MarkPlannable 在 init 中声明部署目标支持 plan。
+func MarkPlannable(ids ...string) {
+	plannable.Lock()
+	defer plannable.Unlock()
+	for _, id := range ids {
+		if id = normalize(id); id != "" {
+			plannable.ids[id] = true
+		}
+	}
+}
+
+// IsPlannable 判断部署目标是否声明了 plan-v1 能力。
+func IsPlannable(id string) bool {
+	plannable.RLock()
+	defer plannable.RUnlock()
+	return plannable.ids[normalize(id)]
 }
 
 var registry = struct {
