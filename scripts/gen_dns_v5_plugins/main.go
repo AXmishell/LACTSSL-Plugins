@@ -300,6 +300,11 @@ func repoRoot() string {
 }
 
 func moduleDir(root, module string) string {
+	// CI 的干净缓存里 go list -m 不会主动下载模块源码，先显式下载。
+	download := exec.Command("go", "mod", "download", module)
+	download.Dir = root
+	_ = download.Run()
+
 	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", module)
 	cmd.Dir = root
 	var out bytes.Buffer
