@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/AXmishell/LACTSSL-Plugins/catalog"
+	dnsv5meta "github.com/AXmishell/LACTSSL-Plugins/dnsv5/meta"
 	"github.com/AXmishell/LACTSSL-Plugins/i18n"
 	"github.com/AXmishell/LACTSSL-Plugins/notify/providers/channels"
 	"github.com/AXmishell/LACTSSL-Plugins/scripts/buildver"
@@ -50,6 +51,7 @@ const (
 	deployBaseVer = "1.0"
 	notifyBaseVer = "1.0"
 	legoModule    = "github.com/go-acme/lego/v4"
+	legoV5Module  = "github.com/go-acme/lego/v5"
 )
 
 type pluginEntry struct {
@@ -224,7 +226,7 @@ func cmdManifest(args []string) {
 	}
 
 	for i := range entries {
-		hash, err := buildver.HashPaths(".", sourcePaths(entries[i].Kind))
+		hash, err := buildver.HashPaths(".", sourcePaths(entries[i]))
 		if err != nil {
 			fail("计算 " + entries[i].Kind + "/" + entries[i].ID + " 内容指纹失败: " + err.Error())
 		}
@@ -269,14 +271,17 @@ var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z
 // 公共构建输入（go.mod/go.sum、许可证、图标别名表）变化才同时影响全部包；
 // protocol、sdk、i18n、outbound、catalog 等共享源码目录不计入，避免一处改动
 // 导致 deploy/all、dns/all-native、notify/all 同时升版。
-func sourcePaths(kind string) []string {
+func sourcePaths(entry pluginEntry) []string {
 	paths := []string{
 		"go.mod",
 		"go.sum",
 		"LICENSE",
 		"assets/icons/icons.json",
 	}
-	switch kind {
+	if entry.SDK == "lego-v5" {
+		return append(paths, "cmd/dns-helper-v5", "dnsv5", "catalog/data.json")
+	}
+	switch entry.Kind {
 	case "dns":
 		return append(paths, "cmd/dns-helper", "dns", "assets/icons/dns")
 	case "deploy":
@@ -303,18 +308,26 @@ func buildEntries() []pluginEntry {
 		deployIDs = append(deployIDs, p.Value)
 	}
 	notifyIDs := channels.IDs()
+	v5IDs := dnsv5meta.IDs()
 	return []pluginEntry{
 		{
 			Kind: "dns", ID: "all-lego", Version: "0.0.0", Tag: "bundle_dns_all_lego",
 			Name: "DNS 插件包（全量·lego）", Description: "194 个服务商合并构建，全部使用 lego 官方实现，保留完整上游能力（如 rfc2136 GSS-TSIG）。",
 			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "lego",
-			ConflictsWith: []string{"all-native"}, upstreamModule: legoModule,
+			ConflictsWith: []string{"all-native", "all-lego-v5"}, upstreamModule: legoModule,
+		},
+		{
+			Kind: "dns", ID: "all-lego-v5", Version: "0.0.0", Tag: "bundle_dns_all_lego_v5",
+			Name: "DNS 插件包（全量·lego v5）", Description: "228 个 lego v5 上游服务商，另保留 7 个已移除 ID 的兼容占位。",
+			Bundle: true, Providers: v5IDs, HideIcon: true, SDK: "lego-v5",
+			VariantOf: "all-lego", ConflictsWith: []string{"all-lego", "all-native"},
+			upstreamModule: legoV5Module,
 		},
 		{
 			Kind: "dns", ID: "all-native", Version: dnsBaseVer + ".0", Tag: "bundle_dns_all_native",
 			Name: "DNS 插件包（全量·重构）", Description: "194 个服务商合并重构构建；已迁移 provider 使用仓库实现，其余暂时继续使用 lego。",
 			Bundle: true, Providers: allIDs, HideIcon: true, SDK: "native",
-			VariantOf: "all-lego", ConflictsWith: []string{"all-lego"}, baseVersion: dnsBaseVer,
+			VariantOf: "all-lego", ConflictsWith: []string{"all-lego", "all-lego-v5"}, baseVersion: dnsBaseVer,
 		},
 		{
 			Kind: "deploy", ID: "all", Version: deployBaseVer + ".0", Tag: "bundle_deploy_all",
@@ -395,6 +408,10 @@ func cmdGen() {
 	allTags := make([]string, 0, 4)
 	for _, e := range entries {
 		if e.Kind != "dns" || !e.Bundle {
+			continue
+		}
+		// v5 helper 直接导入 dnsv5/groups/all，不使用 v4 的构建标签分组。
+		if e.SDK == "lego-v5" {
 			continue
 		}
 		groupID := strings.ReplaceAll(e.ID, "-", "_")
@@ -693,7 +710,14 @@ func buildPlugin(entry pluginEntry, version, goos, goarch, outdir string) (strin
 	if !strings.Contains(tags, "http2legacy") {
 		tags += ",http2legacy"
 	}
-	cmd := exec.Command("go", "build", "-trimpath", "-tags", tags, "-ldflags", ldflags, "-o", bin, "./cmd/"+entry.Kind+"-helper")
+	buildDir := "./cmd/" + entry.Kind + "-helper"
+	if entry.SDK == "lego-v5" {
+		buildDir = "./cmd/dns-helper-v5"
+		// 与 lego v5 上游 release 一致，裁掉 validator/ozzo/urfave 的模板代码。
+		// v5 provider 依赖会引入这些包，实测可减少约 23MB。
+		tags += ",urfave_cli_no_template,ozzo_validation_no_template,grpcnotrace,validator_novalidatefn"
+	}
+	cmd := exec.Command("go", "build", "-trimpath", "-tags", tags, "-ldflags", ldflags, "-o", bin, buildDir)
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+goos, "GOARCH="+goarch)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return "", assetMeta{}, fmt.Errorf("构建 %s/%s 失败: %v\n%s", entry.Kind, entry.ID, err, out)

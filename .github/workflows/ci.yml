@@ -30,16 +30,20 @@ jobs:
       - name: Verify bundle manifest
         run: |
           make manifest
-          if [ -n "$(git status --porcelain -- plugins.json cmd/dns-helper dns/groups)" ]; then
+          if [ -n "$(git status --porcelain -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5)" ]; then
             echo "生成产物与仓库不一致，以下为差异：" >&2
-            git --no-pager diff -- plugins.json cmd/dns-helper dns/groups >&2
-            git status --porcelain -- plugins.json cmd/dns-helper dns/groups >&2
-            echo "::error::生成产物未提交，请运行 make manifest 并提交 plugins.json / cmd/dns-helper / dns/groups 的变更" >&2
+            git --no-pager diff -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 >&2
+            git status --porcelain -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 >&2
+            echo "::error::生成产物未提交，请运行 make manifest 并提交 plugins.json / cmd/dns-helper / dns/groups / dnsv5 的变更" >&2
             exit 1
           fi
-          lego_version=$(awk '$1 == "github.com/go-acme/lego/v4" { sub(/^v/, "", $2); print $2 }' go.mod)
-          test -n "$lego_version"
-          test "$(jq -r '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .version' plugins.json)" = "$lego_version"
+          for module in v4 v5; do
+            lego_version=$(awk -v mod="github.com/go-acme/lego/${module}" '$1 == mod { sub(/^v/, "", $2); print $2 }' go.mod)
+            test -n "$lego_version"
+            id="all-lego"
+            if [ "$module" = "v5" ]; then id="all-lego-v5"; fi
+            test "$(jq -r --arg id "$id" '.plugins[] | select(.kind == "dns" and .id == $id) | .version' plugins.json)" = "$lego_version"
+          done
 
       - name: Vet
         run: go vet ./...
@@ -53,6 +57,7 @@ jobs:
       - name: Build bundle helpers
         run: |
           CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/dns-helper
+          CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/dns-helper-v5
           CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/deploy-helper
           CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/notify-helper
 
@@ -60,10 +65,12 @@ jobs:
         run: |
           go build -trimpath -tags "bundle_dns_all_lego,nethttpomithttp2,http2legacy" -o /tmp/dns-all-lego ./cmd/dns-helper
           go build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -o /tmp/dns-all-native ./cmd/dns-helper
+          go build -trimpath -tags "nethttpomithttp2,http2legacy,urfave_cli_no_template,ozzo_validation_no_template,grpcnotrace,validator_novalidatefn" -o /tmp/dns-all-lego-v5 ./cmd/dns-helper-v5
           go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/deploy-all ./cmd/deploy-helper
           go build -trimpath -tags nethttpomithttp2,http2legacy -o /tmp/notify-all ./cmd/notify-helper
           test "$(/tmp/dns-all-lego manifest | jq '.providers | length')" = "194"
           test "$(/tmp/dns-all-native manifest | jq '.providers | length')" = "194"
+          test "$(/tmp/dns-all-lego-v5 manifest | jq '.providers | length')" = "235"
           diff <(/tmp/dns-all-lego manifest | jq -r '.providers[].id' | sort) \
                <(/tmp/dns-all-native manifest | jq -r '.providers[].id' | sort)
           manifest="$(/tmp/dns-all-native manifest)"
@@ -75,7 +82,7 @@ jobs:
 
       - name: Package smoke
         run: |
-          for id in all-lego all-native; do
+          for id in all-lego all-lego-v5 all-native; do
             version=$(jq -r --arg id "$id" '.plugins[] | select(.kind == "dns" and .id == $id) | .version' plugins.json)
             go run scripts/pluginctl/main.go build -kind dns -id "$id" -goos linux -goarch amd64 -out /tmp/dist
             tar -tzf "/tmp/dist/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
@@ -85,6 +92,8 @@ jobs:
           jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
           jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .bundle == true' /tmp/index.json >/dev/null
           jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .sdk == "lego"' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego-v5") | .sdk == "lego-v5"' /tmp/index.json >/dev/null
+          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego-v5") | .providers | length == 235' /tmp/index.json >/dev/null
           jq -e '.plugins[] | select(.kind == "dns" and .id == "all-native") | .uncompressed_size > 0' /tmp/index.json >/dev/null
           jq -e '[.icons[] | select(.id == "cloudflare")] | length == 1' /tmp/index.json >/dev/null
           jq -e '.icons[] | select(.id == "cloudflare") | .data | startswith("data:image/svg+xml;base64,")' /tmp/index.json >/dev/null

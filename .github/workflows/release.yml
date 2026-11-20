@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "$RELEASE_VERSION" ]; then
-            # tag 构建：其余合并包统一使用 tag 版本，all-lego 跟随 lego 版本；只改 CI 工作区，不提交。
+            # tag 构建：其余合并包统一使用 tag 版本，all-lego / all-lego-v5 跟随各自 lego 版本；只改 CI 工作区，不提交。
             go run scripts/pluginctl/main.go manifest -version "$RELEASE_VERSION"
           else
             go run scripts/pluginctl/main.go manifest
@@ -98,7 +98,7 @@ jobs:
           fi
           if [ -n "$TAG_VERSION" ]; then
             # tag 版本对所有插件包生效，必须全量重建，避免索引里混入旧 tag 的资产。
-            echo "tag 构建：全量重建（all-lego 使用 go.mod 中的 lego 版本）"
+            echo "tag 构建：全量重建（all-lego / all-lego-v5 使用 go.mod 中的 lego 版本）"
             jq '[.plugins[]]' plugins.json > changed.json
           elif [ -s "$prev" ]; then
             # 只构建需要重建的插件：新增、版本变化、或索引里仍是旧的直链布局

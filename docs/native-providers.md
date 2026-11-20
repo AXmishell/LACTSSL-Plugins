@@ -1,11 +1,12 @@
 # Native Provider 实现说明
 
-DNS 目前发布两个全量变体，均覆盖 194 个 provider，provider ID、字段、别名与 manifest 完全一致：
+DNS 目前发布三个全量变体：
 
-- `lactssl-dns-all-lego`：全部使用 lego 官方实现，保留完整上游能力（例如 `rfc2136` 的 GSS-TSIG）；版本号直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 的版本（如 `4.35.2`）。
-- `lactssl-dns-all-native`：已迁移 provider 的实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK；其余继续使用 lego 包装。
+- `lactssl-dns-all-lego`：194 个 provider，全部使用 lego v4 官方实现，保留完整上游能力（例如 `rfc2136` 的 GSS-TSIG）；版本号直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 的版本（如 `4.35.2`）。
+- `lactssl-dns-all-native`：194 个 provider，已迁移实现位于本仓库，不再链接对应的 lego 包装与上游云 SDK；其余继续使用 lego v4 包装。
+- `lactssl-dns-all-lego-v5`：独立插件包，228 个 lego v5 provider，另保留 7 个 v5 已移除 ID 的兼容占位；版本号跟随 `github.com/go-acme/lego/v5`（如 `5.6.0`）。该包不包含 `dns/native` 实现，首版用于验证 lego v5 与新增 provider。
 
-两个变体不能同时安装，`plugins.json` 通过 `conflicts_with` 声明互斥，`all-native` 的 `variant_of` 指向 `all-lego`。旧 `core` / `heavy` 及 `core-native` / `heavy-native` 包已停止发布。
+三个变体不能同时安装，`plugins.json` 通过 `conflicts_with` 声明互斥，`all-native` 和 `all-lego-v5` 的 `variant_of` 指向 `all-lego`。旧 `core` / `heavy` 及 `core-native` / `heavy-native` 包已停止发布。
 
 ## 1. 已实现 provider
 
@@ -83,7 +84,7 @@ DNS 目前发布两个全量变体，均覆盖 194 个 provider，provider ID、
 ## 6. 验证
 
 ```bash
-go test ./dns/native/... ./sdk/...
+go test ./dns/native/... ./sdk/... ./dnsv5/... ./cmd/dns-helper-v5
 ./scripts/check_native.sh
 ```
 
