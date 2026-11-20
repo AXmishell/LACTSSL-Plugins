@@ -226,11 +226,13 @@ jobs:
 
       - name: Download metadata
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        # v8 的 download-artifact 已移除 if-no-files-found；
+        # 没有待构建插件时允许继续，由后续 mergeIndex 重写索引。
+        continue-on-error: true
         with:
           pattern: plugin-meta-*
           path: dist
           merge-multiple: true
-          if-no-files-found: ignore
 
       - name: Fetch previous index
         env:
