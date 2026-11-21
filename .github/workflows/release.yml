@@ -215,7 +215,8 @@ jobs:
     needs: [matrix, build]
     # 即使本次没有需要构建的插件（例如仅从 plugins.json 删除插件），
     # 也要重写索引，让 mergeIndex 丢弃已删除条目并触发后续资产清理。
-    if: always() && !cancelled() && needs.matrix.result == 'success'
+    # 有构建任务但构建失败时不发布索引，避免线上出现部分更新。
+    if: always() && !cancelled() && needs.matrix.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

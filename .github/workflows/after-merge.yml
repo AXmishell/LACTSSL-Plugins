@@ -1,0 +1,50 @@
+name: Refresh generated files on main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generated-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    # bot 自己的提交不再触发刷新（兼容 GITHUB_TOKEN 与 BOT_TOKEN）。
+    if: "github.actor != 'github-actions[bot]' && !startsWith(github.event.head_commit.message, 'chore: 合并后刷新插件生成物')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          # 配置 BOT_TOKEN 后，刷新提交会触发 main 的 CI；否则只提交生成物。
+          token: ${{ secrets.BOT_TOKEN || github.token }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate
+        run: make manifest
+      - name: Commit generated changes
+        run: |
+          set -euo pipefail
+          paths="catalog/data.json i18n/locales cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 cmd/deploy-helper/imports_gen.go plugins.json"
+          if [ -z "$(git status --porcelain -- $paths)" ]; then
+            echo "生成物已是最新"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $paths
+          git commit -m "chore: 合并后刷新插件生成物"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push 失败，尝试 rebase 后重试（$attempt/3）"
+            git pull --rebase origin main
+          done
+          exit 1

@@ -4,7 +4,7 @@ BUILD_ENV := CGO_ENABLED=0
 LDFLAGS := -s -w
 BIN := bin
 
-.PHONY: all build bundle bundle-lego bundle-lego-v5 bundle-native gen gen-v5 manifest plugins test fmt vet check check-native clean index
+.PHONY: all build bundle bundle-lego bundle-lego-v5 bundle-native generated catalog i18n deployimports gen gen-v5 manifest plugins test fmt vet check check-native clean index
 
 all: build
 
@@ -36,15 +36,31 @@ bundle-native:
 	mkdir -p $(BIN)
 	$(BUILD_ENV) $(GO) build -trimpath -tags "bundle_dns_all_native,nethttpomithttp2,http2legacy" -ldflags "$(LDFLAGS)" -o $(BIN)/$(APP)-dns-all-native ./cmd/dns-helper
 
+# 生成所有聚合文件。各聚合文件都来自单 provider 源文件，禁止手改。
+generated: catalog i18n deployimports gen-v5
+
+# 把 catalog/dns、catalog/deploy 合并为 catalog/data.json。
+catalog:
+	$(GO) run scripts/cataloggen/main.go
+
+# 把 i18n/core、i18n/providers 合并为 i18n/locales。
+i18n:
+	$(GO) run scripts/i18ngen/main.go
+
+# 生成 cmd/deploy-helper/imports_gen.go。
+deployimports:
+	$(GO) run scripts/deployimports/main.go
+
 # 生成 plugins.json 与各合并包的分组注册文件（manifest + gen）。
 # 改动会被链接进产物的代码后运行本目标，并把变更一起提交；CI 会校验是否遗漏。
 # gen 为历史名称，与 manifest 等价。
-manifest gen: gen-v5
+manifest gen: generated
 	$(GO) run scripts/pluginctl/main.go manifest
 	$(GO) run scripts/pluginctl/main.go gen
 
 # 生成 lego v5 的包装包、分组与补充元数据。
-gen-v5:
+# v5 生成器读取 catalog 元数据，因此显式依赖 catalog。
+gen-v5: catalog
 	$(GO) run scripts/gen_dns_v5_plugins/main.go
 
 # 构建单个合并包：make plugin KIND=dns ID=all-lego GOOS=linux GOARCH=amd64

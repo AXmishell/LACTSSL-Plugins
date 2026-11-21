@@ -1,0 +1,19 @@
+{
+  "value": "lightsail",
+  "label_key": "meta.dns.lightsail.label",
+  "desc_key": "meta.dns.lightsail.desc",
+  "fields": [
+    {
+      "key": "dns_zone",
+      "label": "DNS Zone",
+      "type": "text",
+      "env": "DNS_ZONE"
+    },
+    {
+      "key": "lightsail_region",
+      "label": "Lightsail Region",
+      "type": "text",
+      "env": "LIGHTSAIL_REGION"
+    }
+  ]
+}

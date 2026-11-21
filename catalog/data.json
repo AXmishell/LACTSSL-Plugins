@@ -1,6 +1,58 @@
 {
   "dns": [
     {
+      "value": "acmedns",
+      "label_key": "meta.dns.acmedns.label",
+      "desc_key": "meta.dns.acmedns.desc",
+      "fields": [
+        {
+          "key": "acme_dns_api_base",
+          "label": "API Base",
+          "type": "text",
+          "env": "ACME_DNS_API_BASE"
+        },
+        {
+          "key": "acme_dns_storage_path",
+          "label": "Storage Path",
+          "type": "text",
+          "env": "ACME_DNS_STORAGE_PATH"
+        },
+        {
+          "key": "acme_dns_storage_base_url",
+          "label": "Storage Base URL",
+          "type": "text",
+          "env": "ACME_DNS_STORAGE_BASE_URL"
+        },
+        {
+          "key": "acme_dns_allowlist",
+          "label": "Allowlist",
+          "type": "text",
+          "env": "ACME_DNS_ALLOWLIST"
+        }
+      ]
+    },
+    {
+      "value": "active24",
+      "label_key": "meta.dns.active24.label",
+      "desc_key": "meta.dns.active24.desc",
+      "fields": [
+        {
+          "key": "active24_api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "ACTIVE24_API_KEY"
+        },
+        {
+          "key": "active24_secret",
+          "label_key": "meta.field.api_secret.label",
+          "type": "password",
+          "required": true,
+          "env": "ACTIVE24_SECRET"
+        }
+      ]
+    },
+    {
       "value": "alidns",
       "label_key": "meta.dns.alidns.label",
       "desc_key": "meta.dns.alidns.desc",
@@ -57,927 +109,6 @@
           "placeholder_key": "meta.field.region_id.placeholder",
           "default": "cn-hangzhou",
           "env": "ALIESA_REGION_ID"
-        }
-      ]
-    },
-    {
-      "value": "cloudflare",
-      "label_key": "meta.dns.cloudflare.label",
-      "desc_key": "meta.dns.cloudflare.desc",
-      "fields": [
-        {
-          "key": "api_token",
-          "label_key": "meta.field.api_token.label",
-          "type": "password",
-          "help_key": "meta.field.api_token.help",
-          "env": "CLOUDFLARE_DNS_API_TOKEN"
-        },
-        {
-          "key": "email",
-          "label_key": "meta.field.email.label",
-          "type": "text",
-          "help_key": "meta.field.email.help",
-          "env": "CLOUDFLARE_EMAIL"
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label",
-          "type": "password",
-          "help_key": "meta.field.api_key.help",
-          "env": "CLOUDFLARE_API_KEY"
-        },
-        {
-          "key": "base_url",
-          "label_key": "meta.field.base_url.label",
-          "type": "text",
-          "placeholder_key": "meta.field.base_url.placeholder",
-          "help_key": "meta.field.base_url.help",
-          "env": "CLOUDFLARE_BASE_URL"
-        }
-      ]
-    },
-    {
-      "value": "dnspod",
-      "label_key": "meta.dns.dnspod.label",
-      "desc_key": "meta.dns.dnspod.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.dnspod",
-          "type": "password",
-          "required": true,
-          "placeholder_key": "meta.field.api_key.placeholder.dnspod",
-          "env": "DNSPOD_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "tencentcloud",
-      "label_key": "meta.dns.tencentcloud.label",
-      "desc_key": "meta.dns.tencentcloud.desc",
-      "fields": [
-        {
-          "key": "secret_id",
-          "label_key": "meta.field.secret_id.label",
-          "type": "text",
-          "required": true,
-          "env": "TENCENTCLOUD_SECRET_ID"
-        },
-        {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
-          "type": "password",
-          "required": true,
-          "env": "TENCENTCLOUD_SECRET_KEY"
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "placeholder_key": "meta.field.region.placeholder",
-          "default": "ap-guangzhou",
-          "env": "TENCENTCLOUD_REGION"
-        }
-      ]
-    },
-    {
-      "value": "huaweicloud",
-      "label_key": "meta.dns.huaweicloud.label",
-      "desc_key": "meta.dns.huaweicloud.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.access_key_id.placeholder",
-          "env": "HUAWEICLOUD_ACCESS_KEY_ID"
-        },
-        {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
-          "type": "password",
-          "required": true,
-          "env": "HUAWEICLOUD_SECRET_ACCESS_KEY"
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.region.placeholder.huaweicloud",
-          "env": "HUAWEICLOUD_REGION"
-        }
-      ]
-    },
-    {
-      "value": "volcengine",
-      "label_key": "meta.dns.volcengine.label",
-      "desc_key": "meta.dns.volcengine.desc",
-      "fields": [
-        {
-          "key": "access_key",
-          "label_key": "meta.field.access_key.label",
-          "type": "text",
-          "required": true,
-          "env": "VOLC_ACCESSKEY"
-        },
-        {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
-          "type": "password",
-          "required": true,
-          "env": "VOLC_SECRETKEY"
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "placeholder_key": "meta.field.region.placeholder.volcengine",
-          "env": "VOLC_REGION"
-        },
-        {
-          "key": "api_host",
-          "label_key": "meta.field.api_host.label",
-          "type": "text",
-          "placeholder_key": "meta.field.api_host.placeholder",
-          "help_key": "meta.field.api_host.help",
-          "env": "VOLC_HOST"
-        },
-        {
-          "key": "api_scheme",
-          "label_key": "meta.field.api_scheme.label",
-          "type": "select",
-          "default": "https",
-          "env": "VOLC_SCHEME",
-          "options": [
-            {
-              "label": "https",
-              "value": "https"
-            },
-            {
-              "label": "http",
-              "value": "http"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "baiducloud",
-      "label_key": "meta.dns.baiducloud.label",
-      "desc_key": "meta.dns.baiducloud.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.access_key_id.placeholder",
-          "env": "BAIDUCLOUD_ACCESS_KEY_ID"
-        },
-        {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
-          "type": "password",
-          "required": true,
-          "env": "BAIDUCLOUD_SECRET_ACCESS_KEY"
-        }
-      ]
-    },
-    {
-      "value": "jdcloud",
-      "label_key": "meta.dns.jdcloud.label",
-      "desc_key": "meta.dns.jdcloud.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.access_key_id.placeholder",
-          "env": "JDCLOUD_ACCESS_KEY_ID"
-        },
-        {
-          "key": "access_key_secret",
-          "label_key": "meta.field.access_key_secret.label",
-          "type": "password",
-          "required": true,
-          "env": "JDCLOUD_ACCESS_KEY_SECRET"
-        },
-        {
-          "key": "region_id",
-          "label_key": "meta.field.region_id.label",
-          "type": "text",
-          "placeholder_key": "meta.field.region_id.placeholder.jdcloud",
-          "default": "cn-north-1",
-          "env": "JDCLOUD_REGION_ID"
-        }
-      ]
-    },
-    {
-      "value": "digitalocean",
-      "label_key": "meta.dns.digitalocean.label",
-      "desc_key": "meta.dns.digitalocean.desc",
-      "fields": [
-        {
-          "key": "token",
-          "label_key": "meta.field.token.label",
-          "type": "password",
-          "required": true,
-          "env": "DO_AUTH_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "godaddy",
-      "label_key": "meta.dns.godaddy.label",
-      "desc_key": "meta.dns.godaddy.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "text",
-          "required": true,
-          "env": "GODADDY_API_KEY"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.api_secret.label",
-          "type": "password",
-          "required": true,
-          "env": "GODADDY_API_SECRET"
-        }
-      ]
-    },
-    {
-      "value": "namecheap",
-      "label_key": "meta.dns.namecheap.label",
-      "desc_key": "meta.dns.namecheap.desc",
-      "fields": [
-        {
-          "key": "api_user",
-          "label_key": "meta.field.api_user.label",
-          "type": "text",
-          "required": true,
-          "env": "NAMECHEAP_API_USER"
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "NAMECHEAP_API_KEY"
-        },
-        {
-          "key": "source_ip",
-          "label_key": "meta.field.source_ip.label",
-          "type": "text",
-          "help_key": "meta.field.source_ip.help",
-          "env": "NAMECHEAP_SOURCE_IP"
-        }
-      ]
-    },
-    {
-      "value": "namesilo",
-      "label_key": "meta.dns.namesilo.label",
-      "desc_key": "meta.dns.namesilo.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "NAMESILO_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "porkbun",
-      "label_key": "meta.dns.porkbun.label",
-      "desc_key": "meta.dns.porkbun.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "text",
-          "required": true,
-          "env": "PORKBUN_API_KEY"
-        },
-        {
-          "key": "secret_api_key",
-          "label_key": "meta.field.secret_api_key.label",
-          "type": "password",
-          "required": true,
-          "env": "PORKBUN_SECRET_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "spaceship",
-      "label_key": "meta.dns.spaceship.label",
-      "desc_key": "meta.dns.spaceship.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "text",
-          "required": true,
-          "env": "SPACESHIP_API_KEY"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.api_secret.label",
-          "type": "password",
-          "required": true,
-          "env": "SPACESHIP_API_SECRET"
-        }
-      ]
-    },
-    {
-      "value": "cloudns",
-      "label_key": "meta.dns.cloudns.label",
-      "desc_key": "meta.dns.cloudns.desc",
-      "fields": [
-        {
-          "key": "auth_id",
-          "label_key": "meta.field.auth_id.label",
-          "type": "text",
-          "required": true,
-          "env": "CLOUDNS_AUTH_ID"
-        },
-        {
-          "key": "sub_auth_id",
-          "label_key": "meta.field.sub_auth_id.label",
-          "type": "text",
-          "help_key": "meta.field.sub_auth_id.help",
-          "env": "CLOUDNS_SUB_AUTH_ID"
-        },
-        {
-          "key": "auth_password",
-          "label_key": "meta.field.auth_password.label",
-          "type": "password",
-          "required": true,
-          "env": "CLOUDNS_AUTH_PASSWORD"
-        }
-      ]
-    },
-    {
-      "value": "bunny",
-      "label_key": "meta.dns.bunny.label",
-      "desc_key": "meta.dns.bunny.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "BUNNY_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "rainyun",
-      "label_key": "meta.dns.rainyun.label",
-      "desc_key": "meta.dns.rainyun.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "RAINYUN_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "westcn",
-      "label_key": "meta.dns.westcn.label",
-      "desc_key": "meta.dns.westcn.desc",
-      "fields": [
-        {
-          "key": "username",
-          "label_key": "meta.field.username.label",
-          "type": "text",
-          "required": true,
-          "env": "WESTCN_USERNAME"
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true,
-          "env": "WESTCN_PASSWORD"
-        }
-      ]
-    },
-    {
-      "value": "pdns",
-      "label_key": "meta.dns.pdns.label",
-      "desc_key": "meta.dns.pdns.desc",
-      "fields": [
-        {
-          "key": "api_url",
-          "label_key": "meta.field.api_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.api_url.placeholder",
-          "help_key": "meta.field.api_url.help",
-          "env": "PDNS_API_URL"
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.pdns",
-          "type": "password",
-          "required": true,
-          "env": "PDNS_API_KEY"
-        },
-        {
-          "key": "server_name",
-          "label_key": "meta.field.server_name.label",
-          "type": "text",
-          "help_key": "meta.field.server_name.help",
-          "default": "localhost",
-          "env": "PDNS_SERVER_NAME"
-        },
-        {
-          "key": "api_version",
-          "label_key": "meta.field.api_version.label",
-          "type": "number",
-          "help_key": "meta.field.api_version.help.pdns",
-          "default": "0",
-          "env": "PDNS_API_VERSION"
-        }
-      ]
-    },
-    {
-      "value": "dnsimple",
-      "label_key": "meta.dns.dnsimple.label",
-      "desc_key": "meta.dns.dnsimple.desc",
-      "fields": [
-        {
-          "key": "oauth_token",
-          "label_key": "meta.field.oauth_token.label",
-          "type": "password",
-          "required": true,
-          "env": "DNSIMPLE_OAUTH_TOKEN"
-        },
-        {
-          "key": "base_url",
-          "label_key": "meta.field.base_url.label",
-          "type": "text",
-          "placeholder_key": "meta.field.base_url.placeholder",
-          "help_key": "meta.field.base_url.help",
-          "env": "DNSIMPLE_BASE_URL"
-        }
-      ]
-    },
-    {
-      "value": "dnsmadeeasy",
-      "label_key": "meta.dns.dnsmadeeasy.label",
-      "desc_key": "meta.dns.dnsmadeeasy.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "text",
-          "required": true,
-          "env": "DNSMADEEASY_API_KEY"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.api_secret.label",
-          "type": "password",
-          "required": true,
-          "env": "DNSMADEEASY_API_SECRET"
-        },
-        {
-          "key": "sandbox",
-          "label_key": "meta.field.sandbox.label",
-          "type": "select",
-          "help_key": "meta.field.sandbox.help",
-          "default": "false",
-          "env": "DNSMADEEASY_SANDBOX",
-          "options": [
-            {
-              "label_key": "meta.field.boolean.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.boolean.true",
-              "value": "true"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "route53",
-      "label_key": "meta.dns.route53.label",
-      "desc_key": "meta.dns.route53.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "help_key": "meta.field.access_key_id.help.route53",
-          "env": "AWS_ACCESS_KEY_ID"
-        },
-        {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
-          "type": "password",
-          "help_key": "meta.field.secret_access_key.help.route53",
-          "env": "AWS_SECRET_ACCESS_KEY"
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "placeholder_key": "meta.field.region.placeholder.aws",
-          "env": "AWS_REGION"
-        },
-        {
-          "key": "hosted_zone_id",
-          "label_key": "meta.field.hosted_zone_id.label",
-          "type": "text",
-          "help_key": "meta.field.hosted_zone_id.help",
-          "env": "AWS_HOSTED_ZONE_ID"
-        },
-        {
-          "key": "private_zone",
-          "label_key": "meta.field.private_zone.label",
-          "type": "select",
-          "help_key": "meta.field.private_zone.help",
-          "default": "false",
-          "env": "AWS_PRIVATE_ZONE",
-          "options": [
-            {
-              "label_key": "meta.field.boolean.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.boolean.true",
-              "value": "true"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "gcloud",
-      "label_key": "meta.dns.gcloud.label",
-      "desc_key": "meta.dns.gcloud.desc",
-      "fields": [
-        {
-          "key": "service_account",
-          "label_key": "meta.field.service_account.label",
-          "type": "textarea",
-          "secret": true,
-          "help_key": "meta.field.service_account.help",
-          "env": "GCE_SERVICE_ACCOUNT"
-        },
-        {
-          "key": "project",
-          "label_key": "meta.field.project.label",
-          "type": "text",
-          "help_key": "meta.field.project.help",
-          "env": "GCE_PROJECT"
-        },
-        {
-          "key": "allow_private_zone",
-          "label_key": "meta.field.allow_private_zone.label",
-          "type": "select",
-          "help_key": "meta.field.allow_private_zone.help",
-          "default": "false",
-          "env": "GCE_ALLOW_PRIVATE_ZONE",
-          "options": [
-            {
-              "label_key": "meta.field.boolean.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.boolean.true",
-              "value": "true"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "azuredns",
-      "label_key": "meta.dns.azuredns.label",
-      "desc_key": "meta.dns.azuredns.desc",
-      "fields": [
-        {
-          "key": "tenant_id",
-          "label_key": "meta.field.tenant_id.label",
-          "type": "text",
-          "help_key": "meta.field.azure_credentials.help",
-          "env": "AZURE_TENANT_ID"
-        },
-        {
-          "key": "client_id",
-          "label_key": "meta.field.client_id.label",
-          "type": "text",
-          "help_key": "meta.field.azure_credentials.help",
-          "env": "AZURE_CLIENT_ID"
-        },
-        {
-          "key": "client_secret",
-          "label_key": "meta.field.client_secret.label",
-          "type": "password",
-          "help_key": "meta.field.azure_credentials.help",
-          "env": "AZURE_CLIENT_SECRET"
-        },
-        {
-          "key": "subscription_id",
-          "label_key": "meta.field.subscription_id.label",
-          "type": "text",
-          "help_key": "meta.field.azure_credentials.help",
-          "env": "AZURE_SUBSCRIPTION_ID"
-        },
-        {
-          "key": "resource_group",
-          "label_key": "meta.field.resource_group.label",
-          "type": "text",
-          "help_key": "meta.field.azure_credentials.help",
-          "env": "AZURE_RESOURCE_GROUP"
-        },
-        {
-          "key": "zone_name",
-          "label_key": "meta.field.zone_name.label",
-          "type": "text",
-          "help_key": "meta.field.zone_name.help",
-          "env": "AZURE_ZONE_NAME"
-        },
-        {
-          "key": "azure_environment",
-          "label_key": "meta.field.azure_environment.label",
-          "type": "select",
-          "default": "public",
-          "env": "AZURE_ENVIRONMENT",
-          "options": [
-            {
-              "label": "public",
-              "value": "public"
-            },
-            {
-              "label": "china",
-              "value": "china"
-            },
-            {
-              "label": "usgovernment",
-              "value": "usgovernment"
-            }
-          ]
-        },
-        {
-          "key": "private_zone",
-          "label_key": "meta.field.private_zone.label",
-          "type": "select",
-          "help_key": "meta.field.private_zone.help",
-          "default": "false",
-          "env": "AZURE_PRIVATE_ZONE",
-          "options": [
-            {
-              "label_key": "meta.field.boolean.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.boolean.true",
-              "value": "true"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "netlify",
-      "label_key": "meta.dns.netlify.label",
-      "desc_key": "meta.dns.netlify.desc",
-      "fields": [
-        {
-          "key": "token",
-          "label_key": "meta.field.token.label",
-          "type": "password",
-          "required": true,
-          "env": "NETLIFY_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "vercel",
-      "label_key": "meta.dns.vercel.label",
-      "desc_key": "meta.dns.vercel.desc",
-      "fields": [
-        {
-          "key": "api_token",
-          "label_key": "meta.field.api_token.label",
-          "type": "password",
-          "required": true,
-          "env": "VERCEL_API_TOKEN"
-        },
-        {
-          "key": "team_id",
-          "label_key": "meta.field.team_id.label",
-          "type": "text",
-          "help_key": "meta.field.team_id.help",
-          "env": "VERCEL_TEAM_ID"
-        }
-      ]
-    },
-    {
-      "value": "duckdns",
-      "label_key": "meta.dns.duckdns.label",
-      "desc_key": "meta.dns.duckdns.desc",
-      "fields": [
-        {
-          "key": "token",
-          "label_key": "meta.field.token.label",
-          "type": "password",
-          "required": true,
-          "env": "DUCKDNS_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "freemyip",
-      "label_key": "meta.dns.freemyip.label",
-      "desc_key": "meta.dns.freemyip.desc",
-      "fields": [
-        {
-          "key": "token",
-          "label_key": "meta.field.token.label",
-          "type": "password",
-          "required": true,
-          "env": "FREEMYIP_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "vultr",
-      "label_key": "meta.dns.vultr.label",
-      "desc_key": "meta.dns.vultr.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "VULTR_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "linode",
-      "label_key": "meta.dns.linode.label",
-      "desc_key": "meta.dns.linode.desc",
-      "fields": [
-        {
-          "key": "token",
-          "label_key": "meta.field.token.label",
-          "type": "password",
-          "required": true,
-          "env": "LINODE_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "hetzner",
-      "label_key": "meta.dns.hetzner.label",
-      "desc_key": "meta.dns.hetzner.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "HETZNER_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "gandi",
-      "label_key": "meta.dns.gandi.label",
-      "desc_key": "meta.dns.gandi.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "GANDI_API_KEY"
-        }
-      ]
-    },
-    {
-      "value": "gandiv5",
-      "label_key": "meta.dns.gandiv5.label",
-      "desc_key": "meta.dns.gandiv5.desc",
-      "fields": [
-        {
-          "key": "personal_access_token",
-          "label_key": "meta.field.personal_access_token.label",
-          "type": "password",
-          "required": true,
-          "env": "GANDIV5_PERSONAL_ACCESS_TOKEN"
-        }
-      ]
-    },
-    {
-      "value": "rfc2136",
-      "label_key": "meta.dns.rfc2136.label",
-      "desc_key": "meta.dns.rfc2136.desc",
-      "fields": [
-        {
-          "key": "nameserver",
-          "label_key": "meta.field.nameserver.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.nameserver.placeholder",
-          "help_key": "meta.field.nameserver.help",
-          "env": "DNSUPDATE_NAMESERVER"
-        },
-        {
-          "key": "tsig_key",
-          "label_key": "meta.field.tsig_key.label",
-          "type": "text",
-          "help_key": "meta.field.tsig_key.help",
-          "env": "DNSUPDATE_TSIG_KEY"
-        },
-        {
-          "key": "tsig_secret",
-          "label_key": "meta.field.tsig_secret.label",
-          "type": "password",
-          "env": "DNSUPDATE_TSIG_SECRET"
-        },
-        {
-          "key": "tsig_algorithm",
-          "label_key": "meta.field.tsig_algorithm.label",
-          "type": "text",
-          "placeholder_key": "meta.field.tsig_algorithm.placeholder",
-          "help_key": "meta.field.tsig_algorithm.help",
-          "env": "DNSUPDATE_TSIG_ALGORITHM"
-        },
-        {
-          "key": "zones",
-          "label_key": "meta.field.zones.label",
-          "type": "text",
-          "help_key": "meta.field.zones.help",
-          "env": "DNSUPDATE_ZONES"
-        }
-      ]
-    },
-    {
-      "value": "acmedns",
-      "label_key": "meta.dns.acmedns.label",
-      "desc_key": "meta.dns.acmedns.desc",
-      "fields": [
-        {
-          "key": "acme_dns_api_base",
-          "label": "API Base",
-          "type": "text",
-          "env": "ACME_DNS_API_BASE"
-        },
-        {
-          "key": "acme_dns_storage_path",
-          "label": "Storage Path",
-          "type": "text",
-          "env": "ACME_DNS_STORAGE_PATH"
-        },
-        {
-          "key": "acme_dns_storage_base_url",
-          "label": "Storage Base URL",
-          "type": "text",
-          "env": "ACME_DNS_STORAGE_BASE_URL"
-        },
-        {
-          "key": "acme_dns_allowlist",
-          "label": "Allowlist",
-          "type": "text",
-          "env": "ACME_DNS_ALLOWLIST"
-        }
-      ]
-    },
-    {
-      "value": "active24",
-      "label_key": "meta.dns.active24.label",
-      "desc_key": "meta.dns.active24.desc",
-      "fields": [
-        {
-          "key": "active24_api_key",
-          "label_key": "meta.field.api_key.label.godaddy",
-          "type": "password",
-          "required": true,
-          "env": "ACTIVE24_API_KEY"
-        },
-        {
-          "key": "active24_secret",
-          "label_key": "meta.field.api_secret.label",
-          "type": "password",
-          "required": true,
-          "env": "ACTIVE24_SECRET"
         }
       ]
     },
@@ -1233,6 +364,116 @@
       ]
     },
     {
+      "value": "azuredns",
+      "label_key": "meta.dns.azuredns.label",
+      "desc_key": "meta.dns.azuredns.desc",
+      "fields": [
+        {
+          "key": "tenant_id",
+          "label_key": "meta.field.tenant_id.label",
+          "type": "text",
+          "help_key": "meta.field.azure_credentials.help",
+          "env": "AZURE_TENANT_ID"
+        },
+        {
+          "key": "client_id",
+          "label_key": "meta.field.client_id.label",
+          "type": "text",
+          "help_key": "meta.field.azure_credentials.help",
+          "env": "AZURE_CLIENT_ID"
+        },
+        {
+          "key": "client_secret",
+          "label_key": "meta.field.client_secret.label",
+          "type": "password",
+          "help_key": "meta.field.azure_credentials.help",
+          "env": "AZURE_CLIENT_SECRET"
+        },
+        {
+          "key": "subscription_id",
+          "label_key": "meta.field.subscription_id.label",
+          "type": "text",
+          "help_key": "meta.field.azure_credentials.help",
+          "env": "AZURE_SUBSCRIPTION_ID"
+        },
+        {
+          "key": "resource_group",
+          "label_key": "meta.field.resource_group.label",
+          "type": "text",
+          "help_key": "meta.field.azure_credentials.help",
+          "env": "AZURE_RESOURCE_GROUP"
+        },
+        {
+          "key": "zone_name",
+          "label_key": "meta.field.zone_name.label",
+          "type": "text",
+          "help_key": "meta.field.zone_name.help",
+          "env": "AZURE_ZONE_NAME"
+        },
+        {
+          "key": "azure_environment",
+          "label_key": "meta.field.azure_environment.label",
+          "type": "select",
+          "default": "public",
+          "env": "AZURE_ENVIRONMENT",
+          "options": [
+            {
+              "label": "public",
+              "value": "public"
+            },
+            {
+              "label": "china",
+              "value": "china"
+            },
+            {
+              "label": "usgovernment",
+              "value": "usgovernment"
+            }
+          ]
+        },
+        {
+          "key": "private_zone",
+          "label_key": "meta.field.private_zone.label",
+          "type": "select",
+          "help_key": "meta.field.private_zone.help",
+          "default": "false",
+          "env": "AZURE_PRIVATE_ZONE",
+          "options": [
+            {
+              "label_key": "meta.field.boolean.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.boolean.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "value": "baiducloud",
+      "label_key": "meta.dns.baiducloud.label",
+      "desc_key": "meta.dns.baiducloud.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.access_key_id.placeholder",
+          "env": "BAIDUCLOUD_ACCESS_KEY_ID"
+        },
+        {
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
+          "type": "password",
+          "required": true,
+          "env": "BAIDUCLOUD_SECRET_ACCESS_KEY"
+        }
+      ]
+    },
+    {
       "value": "beget",
       "label_key": "meta.dns.beget.label",
       "desc_key": "meta.dns.beget.desc",
@@ -1410,6 +651,20 @@
       ]
     },
     {
+      "value": "bunny",
+      "label_key": "meta.dns.bunny.label",
+      "desc_key": "meta.dns.bunny.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "BUNNY_API_KEY"
+        }
+      ]
+    },
+    {
       "value": "checkdomain",
       "label_key": "meta.dns.checkdomain.label",
       "desc_key": "meta.dns.checkdomain.desc",
@@ -1467,6 +722,70 @@
           "type": "password",
           "required": true,
           "env": "CLOUDDNS_PASSWORD"
+        }
+      ]
+    },
+    {
+      "value": "cloudflare",
+      "label_key": "meta.dns.cloudflare.label",
+      "desc_key": "meta.dns.cloudflare.desc",
+      "fields": [
+        {
+          "key": "api_token",
+          "label_key": "meta.field.api_token.label",
+          "type": "password",
+          "help_key": "meta.field.api_token.help",
+          "env": "CLOUDFLARE_DNS_API_TOKEN"
+        },
+        {
+          "key": "email",
+          "label_key": "meta.field.email.label",
+          "type": "text",
+          "help_key": "meta.field.email.help",
+          "env": "CLOUDFLARE_EMAIL"
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label",
+          "type": "password",
+          "help_key": "meta.field.api_key.help",
+          "env": "CLOUDFLARE_API_KEY"
+        },
+        {
+          "key": "base_url",
+          "label_key": "meta.field.base_url.label",
+          "type": "text",
+          "placeholder_key": "meta.field.base_url.placeholder",
+          "help_key": "meta.field.base_url.help",
+          "env": "CLOUDFLARE_BASE_URL"
+        }
+      ]
+    },
+    {
+      "value": "cloudns",
+      "label_key": "meta.dns.cloudns.label",
+      "desc_key": "meta.dns.cloudns.desc",
+      "fields": [
+        {
+          "key": "auth_id",
+          "label_key": "meta.field.auth_id.label",
+          "type": "text",
+          "required": true,
+          "env": "CLOUDNS_AUTH_ID"
+        },
+        {
+          "key": "sub_auth_id",
+          "label_key": "meta.field.sub_auth_id.label",
+          "type": "text",
+          "help_key": "meta.field.sub_auth_id.help",
+          "env": "CLOUDNS_SUB_AUTH_ID"
+        },
+        {
+          "key": "auth_password",
+          "label_key": "meta.field.auth_password.label",
+          "type": "password",
+          "required": true,
+          "env": "CLOUDNS_AUTH_PASSWORD"
         }
       ]
     },
@@ -1814,6 +1133,20 @@
       ]
     },
     {
+      "value": "digitalocean",
+      "label_key": "meta.dns.digitalocean.label",
+      "desc_key": "meta.dns.digitalocean.desc",
+      "fields": [
+        {
+          "key": "token",
+          "label_key": "meta.field.token.label",
+          "type": "password",
+          "required": true,
+          "env": "DO_AUTH_TOKEN"
+        }
+      ]
+    },
+    {
       "value": "directadmin",
       "label_key": "meta.dns.directadmin.label",
       "desc_key": "meta.dns.directadmin.desc",
@@ -1874,6 +1207,82 @@
       ]
     },
     {
+      "value": "dnsimple",
+      "label_key": "meta.dns.dnsimple.label",
+      "desc_key": "meta.dns.dnsimple.desc",
+      "fields": [
+        {
+          "key": "oauth_token",
+          "label_key": "meta.field.oauth_token.label",
+          "type": "password",
+          "required": true,
+          "env": "DNSIMPLE_OAUTH_TOKEN"
+        },
+        {
+          "key": "base_url",
+          "label_key": "meta.field.base_url.label",
+          "type": "text",
+          "placeholder_key": "meta.field.base_url.placeholder",
+          "help_key": "meta.field.base_url.help",
+          "env": "DNSIMPLE_BASE_URL"
+        }
+      ]
+    },
+    {
+      "value": "dnsmadeeasy",
+      "label_key": "meta.dns.dnsmadeeasy.label",
+      "desc_key": "meta.dns.dnsmadeeasy.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "text",
+          "required": true,
+          "env": "DNSMADEEASY_API_KEY"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.api_secret.label",
+          "type": "password",
+          "required": true,
+          "env": "DNSMADEEASY_API_SECRET"
+        },
+        {
+          "key": "sandbox",
+          "label_key": "meta.field.sandbox.label",
+          "type": "select",
+          "help_key": "meta.field.sandbox.help",
+          "default": "false",
+          "env": "DNSMADEEASY_SANDBOX",
+          "options": [
+            {
+              "label_key": "meta.field.boolean.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.boolean.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "value": "dnspod",
+      "label_key": "meta.dns.dnspod.label",
+      "desc_key": "meta.dns.dnspod.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.dnspod",
+          "type": "password",
+          "required": true,
+          "placeholder_key": "meta.field.api_key.placeholder.dnspod",
+          "env": "DNSPOD_API_KEY"
+        }
+      ]
+    },
+    {
       "value": "dode",
       "label_key": "meta.dns.dode.label",
       "desc_key": "meta.dns.dode.desc",
@@ -1919,6 +1328,20 @@
           "type": "password",
           "required": true,
           "env": "DREAMHOST_API_KEY"
+        }
+      ]
+    },
+    {
+      "value": "duckdns",
+      "label_key": "meta.dns.duckdns.label",
+      "desc_key": "meta.dns.duckdns.desc",
+      "fields": [
+        {
+          "key": "token",
+          "label_key": "meta.field.token.label",
+          "type": "password",
+          "required": true,
+          "env": "DUCKDNS_TOKEN"
         }
       ]
     },
@@ -2285,6 +1708,88 @@
       ]
     },
     {
+      "value": "freemyip",
+      "label_key": "meta.dns.freemyip.label",
+      "desc_key": "meta.dns.freemyip.desc",
+      "fields": [
+        {
+          "key": "token",
+          "label_key": "meta.field.token.label",
+          "type": "password",
+          "required": true,
+          "env": "FREEMYIP_TOKEN"
+        }
+      ]
+    },
+    {
+      "value": "gandi",
+      "label_key": "meta.dns.gandi.label",
+      "desc_key": "meta.dns.gandi.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "GANDI_API_KEY"
+        }
+      ]
+    },
+    {
+      "value": "gandiv5",
+      "label_key": "meta.dns.gandiv5.label",
+      "desc_key": "meta.dns.gandiv5.desc",
+      "fields": [
+        {
+          "key": "personal_access_token",
+          "label_key": "meta.field.personal_access_token.label",
+          "type": "password",
+          "required": true,
+          "env": "GANDIV5_PERSONAL_ACCESS_TOKEN"
+        }
+      ]
+    },
+    {
+      "value": "gcloud",
+      "label_key": "meta.dns.gcloud.label",
+      "desc_key": "meta.dns.gcloud.desc",
+      "fields": [
+        {
+          "key": "service_account",
+          "label_key": "meta.field.service_account.label",
+          "type": "textarea",
+          "secret": true,
+          "help_key": "meta.field.service_account.help",
+          "env": "GCE_SERVICE_ACCOUNT"
+        },
+        {
+          "key": "project",
+          "label_key": "meta.field.project.label",
+          "type": "text",
+          "help_key": "meta.field.project.help",
+          "env": "GCE_PROJECT"
+        },
+        {
+          "key": "allow_private_zone",
+          "label_key": "meta.field.allow_private_zone.label",
+          "type": "select",
+          "help_key": "meta.field.allow_private_zone.help",
+          "default": "false",
+          "env": "GCE_ALLOW_PRIVATE_ZONE",
+          "options": [
+            {
+              "label_key": "meta.field.boolean.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.boolean.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "value": "gcore",
       "label_key": "meta.dns.gcore.label",
       "desc_key": "meta.dns.gcore.desc",
@@ -2345,6 +1850,27 @@
       ]
     },
     {
+      "value": "godaddy",
+      "label_key": "meta.dns.godaddy.label",
+      "desc_key": "meta.dns.godaddy.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "text",
+          "required": true,
+          "env": "GODADDY_API_KEY"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.api_secret.label",
+          "type": "password",
+          "required": true,
+          "env": "GODADDY_API_SECRET"
+        }
+      ]
+    },
+    {
       "value": "googledomains",
       "label_key": "meta.dns.googledomains.label",
       "desc_key": "meta.dns.googledomains.desc",
@@ -2383,6 +1909,20 @@
           "type": "text",
           "required": true,
           "env": "GRAVITY_SERVER_URL"
+        }
+      ]
+    },
+    {
+      "value": "hetzner",
+      "label_key": "meta.dns.hetzner.label",
+      "desc_key": "meta.dns.hetzner.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "HETZNER_API_KEY"
         }
       ]
     },
@@ -2494,6 +2034,36 @@
           "label_key": "meta.field.password.label",
           "type": "password",
           "env": "HTTPREQ_PASSWORD"
+        }
+      ]
+    },
+    {
+      "value": "huaweicloud",
+      "label_key": "meta.dns.huaweicloud.label",
+      "desc_key": "meta.dns.huaweicloud.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.access_key_id.placeholder",
+          "env": "HUAWEICLOUD_ACCESS_KEY_ID"
+        },
+        {
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
+          "type": "password",
+          "required": true,
+          "env": "HUAWEICLOUD_SECRET_ACCESS_KEY"
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.region.placeholder.huaweicloud",
+          "env": "HUAWEICLOUD_REGION"
         }
       ]
     },
@@ -2852,6 +2422,36 @@
       ]
     },
     {
+      "value": "jdcloud",
+      "label_key": "meta.dns.jdcloud.label",
+      "desc_key": "meta.dns.jdcloud.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.access_key_id.placeholder",
+          "env": "JDCLOUD_ACCESS_KEY_ID"
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true,
+          "env": "JDCLOUD_ACCESS_KEY_SECRET"
+        },
+        {
+          "key": "region_id",
+          "label_key": "meta.field.region_id.label",
+          "type": "text",
+          "placeholder_key": "meta.field.region_id.placeholder.jdcloud",
+          "default": "cn-north-1",
+          "env": "JDCLOUD_REGION_ID"
+        }
+      ]
+    },
+    {
       "value": "joker",
       "label_key": "meta.dns.joker.label",
       "desc_key": "meta.dns.joker.desc",
@@ -2966,6 +2566,20 @@
           "type": "password",
           "required": true,
           "env": "LIMACITY_API_KEY"
+        }
+      ]
+    },
+    {
+      "value": "linode",
+      "label_key": "meta.dns.linode.label",
+      "desc_key": "meta.dns.linode.desc",
+      "fields": [
+        {
+          "key": "token",
+          "label_key": "meta.field.token.label",
+          "type": "password",
+          "required": true,
+          "env": "LINODE_TOKEN"
         }
       ]
     },
@@ -3225,6 +2839,34 @@
       ]
     },
     {
+      "value": "namecheap",
+      "label_key": "meta.dns.namecheap.label",
+      "desc_key": "meta.dns.namecheap.desc",
+      "fields": [
+        {
+          "key": "api_user",
+          "label_key": "meta.field.api_user.label",
+          "type": "text",
+          "required": true,
+          "env": "NAMECHEAP_API_USER"
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "NAMECHEAP_API_KEY"
+        },
+        {
+          "key": "source_ip",
+          "label_key": "meta.field.source_ip.label",
+          "type": "text",
+          "help_key": "meta.field.source_ip.help",
+          "env": "NAMECHEAP_SOURCE_IP"
+        }
+      ]
+    },
+    {
       "value": "namedotcom",
       "label_key": "meta.dns.namedotcom.label",
       "desc_key": "meta.dns.namedotcom.desc",
@@ -3246,6 +2888,20 @@
           "label": "Server",
           "type": "text",
           "env": "NAMECOM_SERVER"
+        }
+      ]
+    },
+    {
+      "value": "namesilo",
+      "label_key": "meta.dns.namesilo.label",
+      "desc_key": "meta.dns.namesilo.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "NAMESILO_API_KEY"
         }
       ]
     },
@@ -3346,6 +3002,20 @@
           "type": "password",
           "required": true,
           "env": "NETCUP_API_PASSWORD"
+        }
+      ]
+    },
+    {
+      "value": "netlify",
+      "label_key": "meta.dns.netlify.label",
+      "desc_key": "meta.dns.netlify.desc",
+      "fields": [
+        {
+          "key": "token",
+          "label_key": "meta.field.token.label",
+          "type": "password",
+          "required": true,
+          "env": "NETLIFY_TOKEN"
         }
       ]
     },
@@ -3704,6 +3374,45 @@
       ]
     },
     {
+      "value": "pdns",
+      "label_key": "meta.dns.pdns.label",
+      "desc_key": "meta.dns.pdns.desc",
+      "fields": [
+        {
+          "key": "api_url",
+          "label_key": "meta.field.api_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.api_url.placeholder",
+          "help_key": "meta.field.api_url.help",
+          "env": "PDNS_API_URL"
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.pdns",
+          "type": "password",
+          "required": true,
+          "env": "PDNS_API_KEY"
+        },
+        {
+          "key": "server_name",
+          "label_key": "meta.field.server_name.label",
+          "type": "text",
+          "help_key": "meta.field.server_name.help",
+          "default": "localhost",
+          "env": "PDNS_SERVER_NAME"
+        },
+        {
+          "key": "api_version",
+          "label_key": "meta.field.api_version.label",
+          "type": "number",
+          "help_key": "meta.field.api_version.help.pdns",
+          "default": "0",
+          "env": "PDNS_API_VERSION"
+        }
+      ]
+    },
+    {
       "value": "plesk",
       "label_key": "meta.dns.plesk.label",
       "desc_key": "meta.dns.plesk.desc",
@@ -3732,6 +3441,27 @@
       ]
     },
     {
+      "value": "porkbun",
+      "label_key": "meta.dns.porkbun.label",
+      "desc_key": "meta.dns.porkbun.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "text",
+          "required": true,
+          "env": "PORKBUN_API_KEY"
+        },
+        {
+          "key": "secret_api_key",
+          "label_key": "meta.field.secret_api_key.label",
+          "type": "password",
+          "required": true,
+          "env": "PORKBUN_SECRET_API_KEY"
+        }
+      ]
+    },
+    {
       "value": "rackspace",
       "label_key": "meta.dns.rackspace.label",
       "desc_key": "meta.dns.rackspace.desc",
@@ -3749,6 +3479,20 @@
           "type": "password",
           "required": true,
           "env": "RACKSPACE_API_KEY"
+        }
+      ]
+    },
+    {
+      "value": "rainyun",
+      "label_key": "meta.dns.rainyun.label",
+      "desc_key": "meta.dns.rainyun.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "RAINYUN_API_KEY"
         }
       ]
     },
@@ -3812,6 +3556,50 @@
       ]
     },
     {
+      "value": "rfc2136",
+      "label_key": "meta.dns.rfc2136.label",
+      "desc_key": "meta.dns.rfc2136.desc",
+      "fields": [
+        {
+          "key": "nameserver",
+          "label_key": "meta.field.nameserver.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.nameserver.placeholder",
+          "help_key": "meta.field.nameserver.help",
+          "env": "DNSUPDATE_NAMESERVER"
+        },
+        {
+          "key": "tsig_key",
+          "label_key": "meta.field.tsig_key.label",
+          "type": "text",
+          "help_key": "meta.field.tsig_key.help",
+          "env": "DNSUPDATE_TSIG_KEY"
+        },
+        {
+          "key": "tsig_secret",
+          "label_key": "meta.field.tsig_secret.label",
+          "type": "password",
+          "env": "DNSUPDATE_TSIG_SECRET"
+        },
+        {
+          "key": "tsig_algorithm",
+          "label_key": "meta.field.tsig_algorithm.label",
+          "type": "text",
+          "placeholder_key": "meta.field.tsig_algorithm.placeholder",
+          "help_key": "meta.field.tsig_algorithm.help",
+          "env": "DNSUPDATE_TSIG_ALGORITHM"
+        },
+        {
+          "key": "zones",
+          "label_key": "meta.field.zones.label",
+          "type": "text",
+          "help_key": "meta.field.zones.help",
+          "env": "DNSUPDATE_ZONES"
+        }
+      ]
+    },
+    {
       "value": "rimuhosting",
       "label_key": "meta.dns.rimuhosting.label",
       "desc_key": "meta.dns.rimuhosting.desc",
@@ -3822,6 +3610,59 @@
           "type": "password",
           "required": true,
           "env": "RIMUHOSTING_API_KEY"
+        }
+      ]
+    },
+    {
+      "value": "route53",
+      "label_key": "meta.dns.route53.label",
+      "desc_key": "meta.dns.route53.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "help_key": "meta.field.access_key_id.help.route53",
+          "env": "AWS_ACCESS_KEY_ID"
+        },
+        {
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
+          "type": "password",
+          "help_key": "meta.field.secret_access_key.help.route53",
+          "env": "AWS_SECRET_ACCESS_KEY"
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "placeholder_key": "meta.field.region.placeholder.aws",
+          "env": "AWS_REGION"
+        },
+        {
+          "key": "hosted_zone_id",
+          "label_key": "meta.field.hosted_zone_id.label",
+          "type": "text",
+          "help_key": "meta.field.hosted_zone_id.help",
+          "env": "AWS_HOSTED_ZONE_ID"
+        },
+        {
+          "key": "private_zone",
+          "label_key": "meta.field.private_zone.label",
+          "type": "select",
+          "help_key": "meta.field.private_zone.help",
+          "default": "false",
+          "env": "AWS_PRIVATE_ZONE",
+          "options": [
+            {
+              "label_key": "meta.field.boolean.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.boolean.true",
+              "value": "true"
+            }
+          ]
         }
       ]
     },
@@ -4078,6 +3919,27 @@
       ]
     },
     {
+      "value": "spaceship",
+      "label_key": "meta.dns.spaceship.label",
+      "desc_key": "meta.dns.spaceship.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "text",
+          "required": true,
+          "env": "SPACESHIP_API_KEY"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.api_secret.label",
+          "type": "password",
+          "required": true,
+          "env": "SPACESHIP_API_SECRET"
+        }
+      ]
+    },
+    {
       "value": "stackpath",
       "label_key": "meta.dns.stackpath.label",
       "desc_key": "meta.dns.stackpath.desc",
@@ -4138,6 +4000,35 @@
           "type": "password",
           "required": true,
           "env": "TECHNITIUM_API_TOKEN"
+        }
+      ]
+    },
+    {
+      "value": "tencentcloud",
+      "label_key": "meta.dns.tencentcloud.label",
+      "desc_key": "meta.dns.tencentcloud.desc",
+      "fields": [
+        {
+          "key": "secret_id",
+          "label_key": "meta.field.secret_id.label",
+          "type": "text",
+          "required": true,
+          "env": "TENCENTCLOUD_SECRET_ID"
+        },
+        {
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
+          "type": "password",
+          "required": true,
+          "env": "TENCENTCLOUD_SECRET_KEY"
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "placeholder_key": "meta.field.region.placeholder",
+          "default": "ap-guangzhou",
+          "env": "TENCENTCLOUD_REGION"
         }
       ]
     },
@@ -4307,6 +4198,27 @@
       ]
     },
     {
+      "value": "vercel",
+      "label_key": "meta.dns.vercel.label",
+      "desc_key": "meta.dns.vercel.desc",
+      "fields": [
+        {
+          "key": "api_token",
+          "label_key": "meta.field.api_token.label",
+          "type": "password",
+          "required": true,
+          "env": "VERCEL_API_TOKEN"
+        },
+        {
+          "key": "team_id",
+          "label_key": "meta.field.team_id.label",
+          "type": "text",
+          "help_key": "meta.field.team_id.help",
+          "env": "VERCEL_TEAM_ID"
+        }
+      ]
+    },
+    {
       "value": "versio",
       "label_key": "meta.dns.versio.label",
       "desc_key": "meta.dns.versio.desc",
@@ -4420,6 +4332,59 @@
       ]
     },
     {
+      "value": "volcengine",
+      "label_key": "meta.dns.volcengine.label",
+      "desc_key": "meta.dns.volcengine.desc",
+      "fields": [
+        {
+          "key": "access_key",
+          "label_key": "meta.field.access_key.label",
+          "type": "text",
+          "required": true,
+          "env": "VOLC_ACCESSKEY"
+        },
+        {
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
+          "type": "password",
+          "required": true,
+          "env": "VOLC_SECRETKEY"
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "placeholder_key": "meta.field.region.placeholder.volcengine",
+          "env": "VOLC_REGION"
+        },
+        {
+          "key": "api_host",
+          "label_key": "meta.field.api_host.label",
+          "type": "text",
+          "placeholder_key": "meta.field.api_host.placeholder",
+          "help_key": "meta.field.api_host.help",
+          "env": "VOLC_HOST"
+        },
+        {
+          "key": "api_scheme",
+          "label_key": "meta.field.api_scheme.label",
+          "type": "select",
+          "default": "https",
+          "env": "VOLC_SCHEME",
+          "options": [
+            {
+              "label": "https",
+              "value": "https"
+            },
+            {
+              "label": "http",
+              "value": "http"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "value": "vscale",
       "label_key": "meta.dns.vscale.label",
       "desc_key": "meta.dns.vscale.desc",
@@ -4435,6 +4400,20 @@
           "label_key": "meta.field.api_token.label",
           "type": "password",
           "env": "VSCALE_API_TOKEN"
+        }
+      ]
+    },
+    {
+      "value": "vultr",
+      "label_key": "meta.dns.vultr.label",
+      "desc_key": "meta.dns.vultr.desc",
+      "fields": [
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label.godaddy",
+          "type": "password",
+          "required": true,
+          "env": "VULTR_API_KEY"
         }
       ]
     },
@@ -4512,6 +4491,27 @@
           "type": "password",
           "required": true,
           "env": "WEDOS_WAPI_PASSWORD"
+        }
+      ]
+    },
+    {
+      "value": "westcn",
+      "label_key": "meta.dns.westcn.label",
+      "desc_key": "meta.dns.westcn.desc",
+      "fields": [
+        {
+          "key": "username",
+          "label_key": "meta.field.username.label",
+          "type": "text",
+          "required": true,
+          "env": "WESTCN_USERNAME"
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true,
+          "env": "WESTCN_PASSWORD"
         }
       ]
     },
@@ -4634,54 +4634,38 @@
   ],
   "deploy": [
     {
-      "value": "ftp",
-      "label_key": "meta.deploy.ftp.label",
-      "desc_key": "meta.deploy.ftp.desc",
+      "value": "1panel",
+      "label_key": "meta.deploy.1panel.label",
+      "desc_key": "meta.deploy.1panel.desc",
       "fields": [
         {
-          "key": "host",
-          "label_key": "meta.field.host.label",
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
           "type": "text",
           "required": true,
-          "placeholder_key": "meta.field.host.placeholder"
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
         },
         {
-          "key": "port",
-          "label_key": "meta.field.ftp_port.label",
-          "type": "number",
-          "default": "21"
-        },
-        {
-          "key": "user",
-          "label_key": "meta.field.user.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.user.placeholder"
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
+          "key": "api_key",
+          "label_key": "meta.field.panel_api_key.label",
           "type": "password",
-          "required": true
+          "required": true,
+          "help_key": "meta.field.panel_api_key.help"
         },
         {
-          "key": "tls",
-          "label_key": "meta.field.ftp_tls.label",
+          "key": "api_version",
+          "label_key": "meta.field.api_version.label",
           "type": "select",
-          "help_key": "meta.field.ftp_tls.help",
-          "default": "explicit",
+          "default": "v2",
           "options": [
             {
-              "label_key": "meta.field.ftp_tls.option.none",
-              "value": "none"
+              "label": "v2",
+              "value": "v2"
             },
             {
-              "label_key": "meta.field.ftp_tls.option.explicit",
-              "value": "explicit"
-            },
-            {
-              "label_key": "meta.field.ftp_tls.option.implicit",
-              "value": "implicit"
+              "label": "v1",
+              "value": "v1"
             }
           ]
         },
@@ -4689,7 +4673,6 @@
           "key": "skip_verify",
           "label_key": "meta.field.skip_verify.label",
           "type": "select",
-          "help_key": "meta.field.ftp_skip_verify.help",
           "default": "false",
           "options": [
             {
@@ -4705,38 +4688,304 @@
       ],
       "deploy_fields": [
         {
-          "key": "cert_path",
-          "label_key": "meta.field.remote_cert_path.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.remote_cert_path.placeholder"
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "site",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.site",
+              "value": "site"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.panel",
+              "value": "panel"
+            }
+          ]
         },
         {
-          "key": "key_path",
-          "label_key": "meta.field.remote_key_path.label",
+          "key": "website",
+          "label_key": "meta.field.website.label",
           "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.remote_key_path.placeholder"
+          "help_key": "meta.field.website.help",
+          "show_if": {
+            "key": "target",
+            "value": "site"
+          }
+        },
+        {
+          "key": "ssl_mode",
+          "label_key": "meta.field.ssl_mode.label",
+          "type": "select",
+          "help_key": "meta.field.ssl_mode.help",
+          "default": "Enable",
+          "options": [
+            {
+              "label_key": "meta.field.ssl_mode.option.enable",
+              "value": "Enable"
+            },
+            {
+              "label_key": "meta.field.ssl_mode.option.mux",
+              "value": "Mux"
+            }
+          ],
+          "show_if": {
+            "key": "target",
+            "value": "panel"
+          }
         }
       ]
     },
     {
-      "value": "webhook",
-      "label_key": "meta.deploy.webhook.label",
-      "desc_key": "meta.deploy.webhook.desc",
+      "value": "1panel_panel",
+      "label_key": "meta.deploy.1panel_panel.label",
+      "desc_key": "meta.deploy.1panel_panel.desc",
+      "deprecated": true,
       "fields": [
         {
-          "key": "url",
-          "label_key": "meta.field.url.label",
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
           "type": "text",
           "required": true,
-          "placeholder_key": "meta.field.url.placeholder"
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
         },
         {
-          "key": "auth_header",
-          "label_key": "meta.field.auth_header.label",
+          "key": "api_key",
+          "label_key": "meta.field.panel_api_key.label",
           "type": "password",
-          "help_key": "meta.field.auth_header.help"
+          "required": true,
+          "help_key": "meta.field.panel_api_key.help"
+        },
+        {
+          "key": "api_version",
+          "label_key": "meta.field.api_version.label",
+          "type": "select",
+          "default": "v2",
+          "options": [
+            {
+              "label": "v2",
+              "value": "v2"
+            },
+            {
+              "label": "v1",
+              "value": "v1"
+            }
+          ]
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "ssl_mode",
+          "label_key": "meta.field.ssl_mode.label",
+          "type": "select",
+          "help_key": "meta.field.ssl_mode.help",
+          "default": "Enable",
+          "options": [
+            {
+              "label_key": "meta.field.ssl_mode.option.enable",
+              "value": "Enable"
+            },
+            {
+              "label_key": "meta.field.ssl_mode.option.mux",
+              "value": "Mux"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "value": "1panel_site",
+      "label_key": "meta.deploy.1panel_site.label",
+      "desc_key": "meta.deploy.1panel_site.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.panel_api_key.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_key.help"
+        },
+        {
+          "key": "api_version",
+          "label_key": "meta.field.api_version.label",
+          "type": "select",
+          "default": "v2",
+          "options": [
+            {
+              "label": "v2",
+              "value": "v2"
+            },
+            {
+              "label": "v1",
+              "value": "v1"
+            }
+          ]
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "website",
+          "label_key": "meta.field.website.label",
+          "type": "text",
+          "help_key": "meta.field.website.help"
+        }
+      ]
+    },
+    {
+      "value": "acepanel",
+      "label_key": "meta.deploy.acepanel.label",
+      "desc_key": "meta.deploy.acepanel.desc",
+      "legacy_keep": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.acepanel_url.help"
+        },
+        {
+          "key": "token_id",
+          "label_key": "meta.field.acepanel_token_id.label",
+          "type": "number",
+          "required": true,
+          "help_key": "meta.field.acepanel_token_id.help"
+        },
+        {
+          "key": "access_token",
+          "label_key": "meta.field.acepanel_access_token.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.acepanel_access_token.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "site",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.site",
+              "value": "site"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.panel",
+              "value": "panel"
+            }
+          ]
+        },
+        {
+          "key": "websites",
+          "label_key": "meta.field.acepanel_websites.label",
+          "type": "text",
+          "help_key": "meta.field.acepanel_websites.help",
+          "show_if": {
+            "key": "target",
+            "value": "site"
+          }
+        },
+        {
+          "key": "enable_https",
+          "label_key": "meta.field.enable_https.label",
+          "type": "switch",
+          "default": "true",
+          "show_if": {
+            "key": "target",
+            "value": "site"
+          }
+        }
+      ]
+    },
+    {
+      "value": "acepanel_panel",
+      "label_key": "meta.deploy.acepanel_panel.label",
+      "desc_key": "meta.deploy.acepanel_panel.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.acepanel_url.help"
+        },
+        {
+          "key": "token_id",
+          "label_key": "meta.field.acepanel_token_id.label",
+          "type": "number",
+          "required": true,
+          "help_key": "meta.field.acepanel_token_id.help"
+        },
+        {
+          "key": "access_token",
+          "label_key": "meta.field.acepanel_access_token.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.acepanel_access_token.help"
         },
         {
           "key": "skip_verify",
@@ -4892,6 +5141,7 @@
       "value": "aliyun_cdn",
       "label_key": "meta.deploy.aliyun_cdn.label",
       "desc_key": "meta.deploy.aliyun_cdn.desc",
+      "deprecated": true,
       "fields": [
         {
           "key": "access_key_id",
@@ -4919,8 +5169,1006 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
+      ]
+    },
+    {
+      "value": "aliyun_dcdn",
+      "label_key": "meta.deploy.aliyun_dcdn.label",
+      "desc_key": "meta.deploy.aliyun_dcdn.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true
+        }
       ],
-      "deprecated": true
+      "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        }
+      ]
+    },
+    {
+      "value": "aliyun_esa",
+      "label_key": "meta.deploy.aliyun_esa.label",
+      "desc_key": "meta.deploy.aliyun_esa.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "site_id",
+          "label_key": "meta.field.site_id.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.site_id.help"
+        }
+      ]
+    },
+    {
+      "value": "aliyun_oss",
+      "label_key": "meta.deploy.aliyun_oss.label",
+      "desc_key": "meta.deploy.aliyun_oss.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.oss_region.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.oss_region.placeholder"
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "bucket",
+          "label_key": "meta.field.bucket.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        }
+      ]
+    },
+    {
+      "value": "aliyun_waf",
+      "label_key": "meta.deploy.aliyun_waf.label",
+      "desc_key": "meta.deploy.aliyun_waf.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "access_key_secret",
+          "label_key": "meta.field.access_key_secret.label",
+          "type": "password",
+          "required": true
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.aliyun_waf_region.help",
+          "default": "cn-hangzhou"
+        },
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        },
+        {
+          "key": "tls_version",
+          "label_key": "meta.field.tls_version.label",
+          "type": "text",
+          "default": "tlsv1.2"
+        },
+        {
+          "key": "enable_tlsv3",
+          "label_key": "meta.field.enable_tlsv3.label",
+          "type": "switch",
+          "default": "true"
+        }
+      ]
+    },
+    {
+      "value": "baidu_cdn",
+      "label_key": "meta.deploy.baidu_cdn.label",
+      "desc_key": "meta.deploy.baidu_cdn.desc",
+      "fields": [
+        {
+          "key": "access_key",
+          "label_key": "meta.field.access_key.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
+          "type": "password",
+          "required": true
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        }
+      ]
+    },
+    {
+      "value": "baota",
+      "label_key": "meta.deploy.baota.label",
+      "desc_key": "meta.deploy.baota.desc",
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.panel_api_secret.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_secret.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "site",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.site",
+              "value": "site"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.panel",
+              "value": "panel"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.docker",
+              "value": "docker"
+            }
+          ]
+        },
+        {
+          "key": "sites",
+          "label_key": "meta.field.sites.label",
+          "type": "text",
+          "help_key": "meta.field.baota_deploy_sites.help",
+          "show_if": {
+            "key": "target",
+            "values": [
+              "site",
+              "docker"
+            ]
+          },
+          "options_source": "baota_sites",
+          "multiple": true
+        }
+      ]
+    },
+    {
+      "value": "baota_docker",
+      "label_key": "meta.deploy.baota_docker.label",
+      "desc_key": "meta.deploy.baota_docker.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.panel_api_secret.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_secret.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "sites",
+          "label_key": "meta.field.sites.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.baota_sites.help",
+          "options_source": "baota_sites",
+          "multiple": true
+        }
+      ]
+    },
+    {
+      "value": "baota_panel",
+      "label_key": "meta.deploy.baota_panel.label",
+      "desc_key": "meta.deploy.baota_panel.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.panel_api_secret.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_secret.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "value": "baota_site",
+      "label_key": "meta.deploy.baota_site.label",
+      "desc_key": "meta.deploy.baota_site.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.panel_api_secret.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_secret.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "sites",
+          "label_key": "meta.field.sites.label",
+          "type": "text",
+          "help_key": "meta.field.sites.help"
+        }
+      ]
+    },
+    {
+      "value": "btwaf",
+      "label_key": "meta.deploy.btwaf.label",
+      "desc_key": "meta.deploy.btwaf.desc",
+      "fields": [
+        {
+          "key": "url",
+          "label_key": "meta.field.url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.url.placeholder"
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.api_key.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.btwaf_api_key.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "sites",
+          "label_key": "meta.field.btwaf_sites.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.btwaf_sites.help"
+        }
+      ]
+    },
+    {
+      "value": "cdnfly",
+      "label_key": "meta.deploy.cdnfly.label",
+      "desc_key": "meta.deploy.cdnfly.desc",
+      "fields": [
+        {
+          "key": "url",
+          "label_key": "meta.field.cdnfly_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.cdnfly_url.placeholder"
+        },
+        {
+          "key": "auth_type",
+          "label_key": "meta.field.cdnfly_auth_type.label",
+          "type": "select",
+          "default": "apikey",
+          "options": [
+            {
+              "label_key": "meta.field.cdnfly_auth_type.option.apikey",
+              "value": "apikey"
+            },
+            {
+              "label_key": "meta.field.cdnfly_auth_type.option.password",
+              "value": "password"
+            }
+          ]
+        },
+        {
+          "key": "api_key",
+          "label_key": "meta.field.cdnfly_api_key.label",
+          "type": "password",
+          "help_key": "meta.field.cdnfly_api_key.help",
+          "show_if": {
+            "key": "auth_type",
+            "value": "apikey"
+          }
+        },
+        {
+          "key": "api_secret",
+          "label_key": "meta.field.cdnfly_api_secret.label",
+          "type": "password",
+          "show_if": {
+            "key": "auth_type",
+            "value": "apikey"
+          }
+        },
+        {
+          "key": "username",
+          "label_key": "meta.field.username.label",
+          "type": "text",
+          "show_if": {
+            "key": "auth_type",
+            "value": "password"
+          }
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "show_if": {
+            "key": "auth_type",
+            "value": "password"
+          }
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "sites",
+          "label_key": "meta.field.cdnfly_sites.label",
+          "type": "text",
+          "help_key": "meta.field.cdnfly_sites.help"
+        },
+        {
+          "key": "cert_ids",
+          "label_key": "meta.field.cdnfly_cert_ids.label",
+          "type": "text",
+          "help_key": "meta.field.cdnfly_cert_ids.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        }
+      ]
+    },
+    {
+      "value": "doge",
+      "label_key": "meta.deploy.doge.label",
+      "desc_key": "meta.deploy.doge.desc",
+      "fields": [
+        {
+          "key": "access_key",
+          "label_key": "meta.field.access_key.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.doge_key.help"
+        },
+        {
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
+          "type": "password",
+          "required": true
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        },
+        {
+          "key": "ignore_error",
+          "label_key": "meta.field.doge_ignore_error.label",
+          "type": "switch",
+          "help_key": "meta.field.doge_ignore_error.help",
+          "default": "false"
+        }
+      ]
+    },
+    {
+      "value": "ftp",
+      "label_key": "meta.deploy.ftp.label",
+      "desc_key": "meta.deploy.ftp.desc",
+      "fields": [
+        {
+          "key": "host",
+          "label_key": "meta.field.host.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.host.placeholder"
+        },
+        {
+          "key": "port",
+          "label_key": "meta.field.ftp_port.label",
+          "type": "number",
+          "default": "21"
+        },
+        {
+          "key": "user",
+          "label_key": "meta.field.user.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.user.placeholder"
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "tls",
+          "label_key": "meta.field.ftp_tls.label",
+          "type": "select",
+          "help_key": "meta.field.ftp_tls.help",
+          "default": "explicit",
+          "options": [
+            {
+              "label_key": "meta.field.ftp_tls.option.none",
+              "value": "none"
+            },
+            {
+              "label_key": "meta.field.ftp_tls.option.explicit",
+              "value": "explicit"
+            },
+            {
+              "label_key": "meta.field.ftp_tls.option.implicit",
+              "value": "implicit"
+            }
+          ]
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "help_key": "meta.field.ftp_skip_verify.help",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "cert_path",
+          "label_key": "meta.field.remote_cert_path.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.remote_cert_path.placeholder"
+        },
+        {
+          "key": "key_path",
+          "label_key": "meta.field.remote_key_path.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.remote_key_path.placeholder"
+        }
+      ]
+    },
+    {
+      "value": "huawei_cdn",
+      "label_key": "meta.deploy.huawei_cdn.label",
+      "desc_key": "meta.deploy.huawei_cdn.desc",
+      "fields": [
+        {
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "enterprise_project_id",
+          "label_key": "meta.field.enterprise_project_id.label",
+          "type": "text",
+          "help_key": "meta.field.enterprise_project_id.help"
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.domains.label",
+          "type": "text",
+          "help_key": "meta.field.domains.help"
+        },
+        {
+          "key": "cert_name",
+          "label_key": "meta.field.cert_name.label",
+          "type": "text",
+          "help_key": "meta.field.cert_name.help"
+        }
+      ]
+    },
+    {
+      "value": "lecdn",
+      "label_key": "meta.deploy.lecdn.label",
+      "desc_key": "meta.deploy.lecdn.desc",
+      "fields": [
+        {
+          "key": "url",
+          "label_key": "meta.field.lecdn_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.lecdn_url.placeholder"
+        },
+        {
+          "key": "username",
+          "label_key": "meta.field.username.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "domain",
+          "label_key": "meta.field.domain.label",
+          "type": "text",
+          "help_key": "meta.field.lecdn_domain.help"
+        },
+        {
+          "key": "site_id",
+          "label_key": "meta.field.site_id.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.lecdn_site_id.help"
+        }
+      ]
+    },
+    {
+      "value": "lucky",
+      "label_key": "meta.deploy.lucky.label",
+      "desc_key": "meta.deploy.lucky.desc",
+      "fields": [
+        {
+          "key": "url",
+          "label_key": "meta.field.lucky_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.lucky_url.placeholder",
+          "help_key": "meta.field.lucky_url.help"
+        },
+        {
+          "key": "safe_path",
+          "label_key": "meta.field.lucky_safe_path.label",
+          "type": "text",
+          "help_key": "meta.field.lucky_safe_path.help"
+        },
+        {
+          "key": "open_token",
+          "label_key": "meta.field.lucky_open_token.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.lucky_open_token.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "cert_keys",
+          "label_key": "meta.field.lucky_cert_keys.label",
+          "type": "text",
+          "help_key": "meta.field.lucky_cert_keys.help"
+        }
+      ]
+    },
+    {
+      "value": "nginx_proxy_manager",
+      "label_key": "meta.deploy.nginx_proxy_manager.label",
+      "desc_key": "meta.deploy.nginx_proxy_manager.desc",
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.npm_url.help"
+        },
+        {
+          "key": "email",
+          "label_key": "meta.field.email.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "totp_secret",
+          "label_key": "meta.field.totp_secret.label",
+          "type": "password",
+          "help_key": "meta.field.totp_secret.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "proxy_hosts",
+          "label_key": "meta.field.npm_proxy_hosts.label",
+          "type": "text",
+          "help_key": "meta.field.npm_proxy_hosts.help"
+        },
+        {
+          "key": "certificate_label",
+          "label_key": "meta.field.npm_cert_label.label",
+          "type": "text",
+          "help_key": "meta.field.npm_cert_label.help"
+        }
+      ]
+    },
+    {
+      "value": "plesk",
+      "label_key": "meta.deploy.plesk.label",
+      "desc_key": "meta.deploy.plesk.desc",
+      "fields": [
+        {
+          "key": "url",
+          "label_key": "meta.field.plesk_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.plesk_url.placeholder"
+        },
+        {
+          "key": "username",
+          "label_key": "meta.field.username.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "domains",
+          "label_key": "meta.field.plesk_domains.label",
+          "type": "text",
+          "help_key": "meta.field.plesk_domains.help"
+        }
+      ]
+    },
+    {
+      "value": "proxmox",
+      "label_key": "meta.deploy.proxmox.label",
+      "desc_key": "meta.deploy.proxmox.desc",
+      "fields": [
+        {
+          "key": "host",
+          "label_key": "meta.field.host.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.host.placeholder"
+        },
+        {
+          "key": "port",
+          "label_key": "meta.field.service_port.label",
+          "type": "number",
+          "default": "8006"
+        },
+        {
+          "key": "username",
+          "label_key": "meta.field.username.label",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "password",
+          "label_key": "meta.field.password.label",
+          "type": "password",
+          "required": true
+        },
+        {
+          "key": "realm",
+          "label_key": "meta.field.proxmox_realm.label",
+          "type": "text",
+          "help_key": "meta.field.proxmox_realm.help",
+          "default": "pam"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "deploy_fields": [
+        {
+          "key": "nodes",
+          "label_key": "meta.field.proxmox_nodes.label",
+          "type": "text",
+          "required": true,
+          "help_key": "meta.field.proxmox_nodes.help"
+        }
+      ]
     },
     {
       "value": "qiniu",
@@ -5041,405 +6289,24 @@
       ]
     },
     {
-      "value": "baota",
-      "label_key": "meta.deploy.baota.label",
-      "desc_key": "meta.deploy.baota.desc",
+      "value": "rainyun",
+      "label_key": "meta.deploy.rainyun.label",
+      "desc_key": "meta.deploy.rainyun.desc",
       "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.panel_api_secret.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_secret.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "target",
-          "label_key": "meta.field.deploy_target.label",
-          "type": "select",
-          "help_key": "meta.field.deploy_target.help",
-          "default": "site",
-          "options": [
-            {
-              "label_key": "meta.field.deploy_target.option.site",
-              "value": "site"
-            },
-            {
-              "label_key": "meta.field.deploy_target.option.panel",
-              "value": "panel"
-            },
-            {
-              "label_key": "meta.field.deploy_target.option.docker",
-              "value": "docker"
-            }
-          ]
-        },
-        {
-          "key": "sites",
-          "label_key": "meta.field.sites.label",
-          "type": "text",
-          "help_key": "meta.field.baota_deploy_sites.help",
-          "options_source": "baota_sites",
-          "multiple": true,
-          "show_if": {
-            "key": "target",
-            "values": [
-              "site",
-              "docker"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "value": "baota_site",
-      "label_key": "meta.deploy.baota_site.label",
-      "desc_key": "meta.deploy.baota_site.desc",
-      "deprecated": true,
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.panel_api_secret.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_secret.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "sites",
-          "label_key": "meta.field.sites.label",
-          "type": "text",
-          "help_key": "meta.field.sites.help"
-        }
-      ]
-    },
-    {
-      "value": "baota_panel",
-      "label_key": "meta.deploy.baota_panel.label",
-      "desc_key": "meta.deploy.baota_panel.desc",
-      "deprecated": true,
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.panel_api_secret.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_secret.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "value": "1panel",
-      "label_key": "meta.deploy.1panel.label",
-      "desc_key": "meta.deploy.1panel.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
         {
           "key": "api_key",
-          "label_key": "meta.field.panel_api_key.label",
+          "label_key": "meta.field.api_key.label",
           "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_key.help"
-        },
-        {
-          "key": "api_version",
-          "label_key": "meta.field.api_version.label",
-          "type": "select",
-          "default": "v2",
-          "options": [
-            {
-              "label": "v2",
-              "value": "v2"
-            },
-            {
-              "label": "v1",
-              "value": "v1"
-            }
-          ]
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
+          "required": true
         }
       ],
       "deploy_fields": [
         {
-          "key": "target",
-          "label_key": "meta.field.deploy_target.label",
-          "type": "select",
-          "help_key": "meta.field.deploy_target.help",
-          "default": "site",
-          "options": [
-            {
-              "label_key": "meta.field.deploy_target.option.site",
-              "value": "site"
-            },
-            {
-              "label_key": "meta.field.deploy_target.option.panel",
-              "value": "panel"
-            }
-          ]
-        },
-        {
-          "key": "website",
-          "label_key": "meta.field.website.label",
-          "type": "text",
-          "help_key": "meta.field.website.help",
-          "show_if": {
-            "key": "target",
-            "value": "site"
-          }
-        },
-        {
-          "key": "ssl_mode",
-          "label_key": "meta.field.ssl_mode.label",
-          "type": "select",
-          "help_key": "meta.field.ssl_mode.help",
-          "default": "Enable",
-          "options": [
-            {
-              "label_key": "meta.field.ssl_mode.option.enable",
-              "value": "Enable"
-            },
-            {
-              "label_key": "meta.field.ssl_mode.option.mux",
-              "value": "Mux"
-            }
-          ],
-          "show_if": {
-            "key": "target",
-            "value": "panel"
-          }
-        }
-      ]
-    },
-    {
-      "value": "1panel_site",
-      "label_key": "meta.deploy.1panel_site.label",
-      "desc_key": "meta.deploy.1panel_site.desc",
-      "deprecated": true,
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
+          "key": "cert_id",
+          "label_key": "meta.field.rainyun_cert_id.label",
           "type": "text",
           "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.panel_api_key.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_key.help"
-        },
-        {
-          "key": "api_version",
-          "label_key": "meta.field.api_version.label",
-          "type": "select",
-          "default": "v2",
-          "options": [
-            {
-              "label": "v2",
-              "value": "v2"
-            },
-            {
-              "label": "v1",
-              "value": "v1"
-            }
-          ]
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "website",
-          "label_key": "meta.field.website.label",
-          "type": "text",
-          "help_key": "meta.field.website.help"
-        }
-      ]
-    },
-    {
-      "value": "1panel_panel",
-      "label_key": "meta.deploy.1panel_panel.label",
-      "desc_key": "meta.deploy.1panel_panel.desc",
-      "deprecated": true,
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.panel_api_key.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_key.help"
-        },
-        {
-          "key": "api_version",
-          "label_key": "meta.field.api_version.label",
-          "type": "select",
-          "default": "v2",
-          "options": [
-            {
-              "label": "v2",
-              "value": "v2"
-            },
-            {
-              "label": "v1",
-              "value": "v1"
-            }
-          ]
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "ssl_mode",
-          "label_key": "meta.field.ssl_mode.label",
-          "type": "select",
-          "help_key": "meta.field.ssl_mode.help",
-          "default": "Enable",
-          "options": [
-            {
-              "label_key": "meta.field.ssl_mode.option.enable",
-              "value": "Enable"
-            },
-            {
-              "label_key": "meta.field.ssl_mode.option.mux",
-              "value": "Mux"
-            }
-          ]
+          "help_key": "meta.field.rainyun_cert_id.help"
         }
       ]
     },
@@ -5447,6 +6314,7 @@
       "value": "safeline",
       "label_key": "meta.deploy.safeline.label",
       "desc_key": "meta.deploy.safeline.desc",
+      "legacy_keep": true,
       "fields": [
         {
           "key": "panel_url",
@@ -5512,8 +6380,85 @@
             "value": "waf"
           }
         }
-      ],
-      "legacy_keep": true
+      ]
+    },
+    {
+      "value": "safeline_panel",
+      "label_key": "meta.deploy.safeline_panel.label",
+      "desc_key": "meta.deploy.safeline_panel.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_token",
+          "label_key": "meta.field.panel_api_token.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_token.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "value": "safeline_portal",
+      "label_key": "meta.deploy.safeline_portal.label",
+      "desc_key": "meta.deploy.safeline_portal.desc",
+      "deprecated": true,
+      "fields": [
+        {
+          "key": "panel_url",
+          "label_key": "meta.field.panel_url.label",
+          "type": "text",
+          "required": true,
+          "placeholder_key": "meta.field.panel_url.placeholder",
+          "help_key": "meta.field.panel_url.help"
+        },
+        {
+          "key": "api_token",
+          "label_key": "meta.field.panel_api_token.label",
+          "type": "password",
+          "required": true,
+          "help_key": "meta.field.panel_api_token.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
+        }
+      ]
     },
     {
       "value": "smtp",
@@ -5604,392 +6549,78 @@
       ]
     },
     {
-      "value": "nginx_proxy_manager",
-      "label_key": "meta.deploy.nginx_proxy_manager.label",
-      "desc_key": "meta.deploy.nginx_proxy_manager.desc",
+      "value": "synology",
+      "label_key": "meta.deploy.synology.label",
+      "desc_key": "meta.deploy.synology.desc",
       "fields": [
         {
           "key": "panel_url",
           "label_key": "meta.field.panel_url.label",
           "type": "text",
           "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.npm_url.help"
-        },
-        {
-          "key": "email",
-          "label_key": "meta.field.email.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "totp_secret",
-          "label_key": "meta.field.totp_secret.label",
-          "type": "password",
-          "help_key": "meta.field.totp_secret.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "proxy_hosts",
-          "label_key": "meta.field.npm_proxy_hosts.label",
-          "type": "text",
-          "help_key": "meta.field.npm_proxy_hosts.help"
-        },
-        {
-          "key": "certificate_label",
-          "label_key": "meta.field.npm_cert_label.label",
-          "type": "text",
-          "help_key": "meta.field.npm_cert_label.help"
-        }
-      ]
-    },
-    {
-      "value": "acepanel",
-      "label_key": "meta.deploy.acepanel.label",
-      "desc_key": "meta.deploy.acepanel.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.acepanel_url.help"
-        },
-        {
-          "key": "token_id",
-          "label_key": "meta.field.acepanel_token_id.label",
-          "type": "number",
-          "required": true,
-          "help_key": "meta.field.acepanel_token_id.help"
-        },
-        {
-          "key": "access_token",
-          "label_key": "meta.field.acepanel_access_token.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.acepanel_access_token.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "target",
-          "label_key": "meta.field.deploy_target.label",
-          "type": "select",
-          "help_key": "meta.field.deploy_target.help",
-          "default": "site",
-          "options": [
-            {
-              "label_key": "meta.field.deploy_target.option.site",
-              "value": "site"
-            },
-            {
-              "label_key": "meta.field.deploy_target.option.panel",
-              "value": "panel"
-            }
-          ]
-        },
-        {
-          "key": "websites",
-          "label_key": "meta.field.acepanel_websites.label",
-          "type": "text",
-          "help_key": "meta.field.acepanel_websites.help",
-          "show_if": {
-            "key": "target",
-            "value": "site"
-          }
-        },
-        {
-          "key": "enable_https",
-          "label_key": "meta.field.enable_https.label",
-          "type": "switch",
-          "default": "true",
-          "show_if": {
-            "key": "target",
-            "value": "site"
-          }
-        }
-      ],
-      "legacy_keep": true
-    },
-    {
-      "value": "acepanel_panel",
-      "label_key": "meta.deploy.acepanel_panel.label",
-      "desc_key": "meta.deploy.acepanel_panel.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.acepanel_url.help"
-        },
-        {
-          "key": "token_id",
-          "label_key": "meta.field.acepanel_token_id.label",
-          "type": "number",
-          "required": true,
-          "help_key": "meta.field.acepanel_token_id.help"
-        },
-        {
-          "key": "access_token",
-          "label_key": "meta.field.acepanel_access_token.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.acepanel_access_token.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "cdnfly",
-      "label_key": "meta.deploy.cdnfly.label",
-      "desc_key": "meta.deploy.cdnfly.desc",
-      "fields": [
-        {
-          "key": "url",
-          "label_key": "meta.field.cdnfly_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.cdnfly_url.placeholder"
-        },
-        {
-          "key": "auth_type",
-          "label_key": "meta.field.cdnfly_auth_type.label",
-          "type": "select",
-          "default": "apikey",
-          "options": [
-            {
-              "label_key": "meta.field.cdnfly_auth_type.option.apikey",
-              "value": "apikey"
-            },
-            {
-              "label_key": "meta.field.cdnfly_auth_type.option.password",
-              "value": "password"
-            }
-          ]
-        },
-        {
-          "key": "api_key",
-          "label_key": "meta.field.cdnfly_api_key.label",
-          "type": "password",
-          "help_key": "meta.field.cdnfly_api_key.help",
-          "show_if": {
-            "key": "auth_type",
-            "value": "apikey"
-          }
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.cdnfly_api_secret.label",
-          "type": "password",
-          "show_if": {
-            "key": "auth_type",
-            "value": "apikey"
-          }
+          "placeholder_key": "meta.field.synology_url.placeholder",
+          "help_key": "meta.field.synology_url.help"
         },
         {
           "key": "username",
           "label_key": "meta.field.username.label",
           "type": "text",
-          "show_if": {
-            "key": "auth_type",
-            "value": "password"
-          }
+          "required": true
         },
         {
           "key": "password",
           "label_key": "meta.field.password.label",
           "type": "password",
-          "show_if": {
-            "key": "auth_type",
-            "value": "password"
-          }
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "sites",
-          "label_key": "meta.field.cdnfly_sites.label",
-          "type": "text",
-          "help_key": "meta.field.cdnfly_sites.help"
-        },
-        {
-          "key": "cert_ids",
-          "label_key": "meta.field.cdnfly_cert_ids.label",
-          "type": "text",
-          "help_key": "meta.field.cdnfly_cert_ids.help"
-        },
-        {
-          "key": "cert_name",
-          "label_key": "meta.field.cert_name.label",
-          "type": "text",
-          "help_key": "meta.field.cert_name.help"
-        }
-      ]
-    },
-    {
-      "value": "lucky",
-      "label_key": "meta.deploy.lucky.label",
-      "desc_key": "meta.deploy.lucky.desc",
-      "fields": [
-        {
-          "key": "url",
-          "label_key": "meta.field.lucky_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.lucky_url.placeholder",
-          "help_key": "meta.field.lucky_url.help"
-        },
-        {
-          "key": "safe_path",
-          "label_key": "meta.field.lucky_safe_path.label",
-          "type": "text",
-          "help_key": "meta.field.lucky_safe_path.help"
-        },
-        {
-          "key": "open_token",
-          "label_key": "meta.field.lucky_open_token.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.lucky_open_token.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "cert_keys",
-          "label_key": "meta.field.lucky_cert_keys.label",
-          "type": "text",
-          "help_key": "meta.field.lucky_cert_keys.help"
-        }
-      ]
-    },
-    {
-      "value": "doge",
-      "label_key": "meta.deploy.doge.label",
-      "desc_key": "meta.deploy.doge.desc",
-      "fields": [
-        {
-          "key": "access_key",
-          "label_key": "meta.field.access_key.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.doge_key.help"
-        },
-        {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
-          "type": "password",
           "required": true
+        },
+        {
+          "key": "otp_secret",
+          "label_key": "meta.field.synology_otp_secret.label",
+          "type": "password",
+          "help_key": "meta.field.synology_otp_secret.help"
+        },
+        {
+          "key": "device_id",
+          "label_key": "meta.field.synology_device_id.label",
+          "type": "password",
+          "help_key": "meta.field.synology_device_id.help"
+        },
+        {
+          "key": "device_name",
+          "label_key": "meta.field.synology_device_name.label",
+          "type": "text",
+          "help_key": "meta.field.synology_device_name.help"
+        },
+        {
+          "key": "skip_verify",
+          "label_key": "meta.field.skip_verify.label",
+          "type": "select",
+          "default": "false",
+          "options": [
+            {
+              "label_key": "meta.field.skip_verify.option.false",
+              "value": "false"
+            },
+            {
+              "label_key": "meta.field.skip_verify.option.true",
+              "value": "true"
+            }
+          ]
         }
       ],
       "deploy_fields": [
         {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
+          "key": "certificate",
+          "label_key": "meta.field.synology_certificate.label",
           "type": "text",
-          "help_key": "meta.field.domains.help"
+          "help_key": "meta.field.synology_certificate.help"
         },
         {
-          "key": "cert_name",
-          "label_key": "meta.field.cert_name.label",
-          "type": "text",
-          "help_key": "meta.field.cert_name.help"
-        },
-        {
-          "key": "ignore_error",
-          "label_key": "meta.field.doge_ignore_error.label",
+          "key": "create",
+          "label_key": "meta.field.synology_create.label",
           "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.doge_ignore_error.help"
+          "help_key": "meta.field.synology_create.help",
+          "default": "false"
         }
       ]
     },
@@ -6014,8 +6645,8 @@
           "key": "intl",
           "label_key": "meta.field.tencent_intl.label",
           "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.tencent_intl.help"
+          "help_key": "meta.field.tencent_intl.help",
+          "default": "false"
         }
       ],
       "deploy_fields": [
@@ -6083,6 +6714,7 @@
       "value": "tencent_cdn",
       "label_key": "meta.deploy.tencent_cdn.label",
       "desc_key": "meta.deploy.tencent_cdn.desc",
+      "deprecated": true,
       "fields": [
         {
           "key": "secret_id",
@@ -6100,8 +6732,8 @@
           "key": "intl",
           "label_key": "meta.field.tencent_intl.label",
           "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.tencent_intl.help"
+          "help_key": "meta.field.tencent_intl.help",
+          "default": "false"
         }
       ],
       "deploy_fields": [
@@ -6117,13 +6749,13 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ],
-      "deprecated": true
+      ]
     },
     {
       "value": "tencent_cos",
       "label_key": "meta.deploy.tencent_cos.label",
       "desc_key": "meta.deploy.tencent_cos.desc",
+      "deprecated": true,
       "fields": [
         {
           "key": "secret_id",
@@ -6141,8 +6773,8 @@
           "key": "intl",
           "label_key": "meta.field.tencent_intl.label",
           "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.tencent_intl.help"
+          "help_key": "meta.field.tencent_intl.help",
+          "default": "false"
         }
       ],
       "deploy_fields": [
@@ -6171,31 +6803,32 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ],
-      "deprecated": true
+      ]
     },
     {
-      "value": "huawei_cdn",
-      "label_key": "meta.deploy.huawei_cdn.label",
-      "desc_key": "meta.deploy.huawei_cdn.desc",
+      "value": "tencent_teo",
+      "label_key": "meta.deploy.tencent_teo.label",
+      "desc_key": "meta.deploy.tencent_teo.desc",
+      "deprecated": true,
       "fields": [
         {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
+          "key": "secret_id",
+          "label_key": "meta.field.secret_id.label",
           "type": "text",
           "required": true
         },
         {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
           "type": "password",
           "required": true
         },
         {
-          "key": "enterprise_project_id",
-          "label_key": "meta.field.enterprise_project_id.label",
-          "type": "text",
-          "help_key": "meta.field.enterprise_project_id.help"
+          "key": "intl",
+          "label_key": "meta.field.tencent_intl.label",
+          "type": "switch",
+          "help_key": "meta.field.tencent_intl.help",
+          "default": "false"
         }
       ],
       "deploy_fields": [
@@ -6214,49 +6847,32 @@
       ]
     },
     {
-      "value": "volcengine",
-      "label_key": "meta.deploy.volcengine.label",
-      "desc_key": "meta.deploy.volcengine.desc",
+      "value": "tencent_waf",
+      "label_key": "meta.deploy.tencent_waf.label",
+      "desc_key": "meta.deploy.tencent_waf.desc",
+      "deprecated": true,
       "fields": [
         {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
+          "key": "secret_id",
+          "label_key": "meta.field.secret_id.label",
           "type": "text",
           "required": true
         },
         {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
+          "key": "secret_key",
+          "label_key": "meta.field.secret_key.label",
           "type": "password",
           "required": true
+        },
+        {
+          "key": "intl",
+          "label_key": "meta.field.tencent_intl.label",
+          "type": "switch",
+          "help_key": "meta.field.tencent_intl.help",
+          "default": "false"
         }
       ],
       "deploy_fields": [
-        {
-          "key": "target",
-          "label_key": "meta.field.deploy_target.label",
-          "type": "select",
-          "help_key": "meta.field.deploy_target.help",
-          "default": "cdn",
-          "options": [
-            {
-              "label_key": "meta.field.deploy_target.option.cdn",
-              "value": "cdn"
-            },
-            {
-              "label_key": "meta.field.deploy_target.option.dcdn",
-              "value": "dcdn"
-            }
-          ]
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "default": "cn-north-1",
-          "placeholder_key": "meta.field.region.placeholder.volcengine",
-          "help_key": "meta.field.region.help.volcengine"
-        },
         {
           "key": "domains",
           "label_key": "meta.field.domains.label",
@@ -6270,88 +6886,6 @@
           "help_key": "meta.field.cert_name.help"
         }
       ]
-    },
-    {
-      "value": "volcengine_cdn",
-      "label_key": "meta.deploy.volcengine_cdn.label",
-      "desc_key": "meta.deploy.volcengine_cdn.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "secret_access_key",
-          "label_key": "meta.field.secret_access_key.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.region.label",
-          "type": "text",
-          "default": "cn-north-1",
-          "placeholder_key": "meta.field.region.placeholder.volcengine"
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
-          "type": "text",
-          "help_key": "meta.field.domains.help"
-        },
-        {
-          "key": "cert_name",
-          "label_key": "meta.field.cert_name.label",
-          "type": "text",
-          "help_key": "meta.field.cert_name.help"
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "aliyun_oss",
-      "label_key": "meta.deploy.aliyun_oss.label",
-      "desc_key": "meta.deploy.aliyun_oss.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "access_key_secret",
-          "label_key": "meta.field.access_key_secret.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "region",
-          "label_key": "meta.field.oss_region.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.oss_region.placeholder"
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "bucket",
-          "label_key": "meta.field.bucket.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
-          "type": "text",
-          "help_key": "meta.field.domains.help"
-        }
-      ],
-      "deprecated": true
     },
     {
       "value": "ucloud_cdn",
@@ -6467,281 +7001,9 @@
       ]
     },
     {
-      "value": "proxmox",
-      "label_key": "meta.deploy.proxmox.label",
-      "desc_key": "meta.deploy.proxmox.desc",
-      "fields": [
-        {
-          "key": "host",
-          "label_key": "meta.field.host.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.host.placeholder"
-        },
-        {
-          "key": "port",
-          "label_key": "meta.field.service_port.label",
-          "type": "number",
-          "default": "8006"
-        },
-        {
-          "key": "username",
-          "label_key": "meta.field.username.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "realm",
-          "label_key": "meta.field.proxmox_realm.label",
-          "type": "text",
-          "default": "pam",
-          "help_key": "meta.field.proxmox_realm.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "nodes",
-          "label_key": "meta.field.proxmox_nodes.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.proxmox_nodes.help"
-        }
-      ]
-    },
-    {
-      "value": "synology",
-      "label_key": "meta.deploy.synology.label",
-      "desc_key": "meta.deploy.synology.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.synology_url.placeholder",
-          "help_key": "meta.field.synology_url.help"
-        },
-        {
-          "key": "username",
-          "label_key": "meta.field.username.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "otp_secret",
-          "label_key": "meta.field.synology_otp_secret.label",
-          "type": "password",
-          "help_key": "meta.field.synology_otp_secret.help"
-        },
-        {
-          "key": "device_id",
-          "label_key": "meta.field.synology_device_id.label",
-          "type": "password",
-          "help_key": "meta.field.synology_device_id.help"
-        },
-        {
-          "key": "device_name",
-          "label_key": "meta.field.synology_device_name.label",
-          "type": "text",
-          "help_key": "meta.field.synology_device_name.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "certificate",
-          "label_key": "meta.field.synology_certificate.label",
-          "type": "text",
-          "help_key": "meta.field.synology_certificate.help"
-        },
-        {
-          "key": "create",
-          "label_key": "meta.field.synology_create.label",
-          "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.synology_create.help"
-        }
-      ]
-    },
-    {
-      "value": "plesk",
-      "label_key": "meta.deploy.plesk.label",
-      "desc_key": "meta.deploy.plesk.desc",
-      "fields": [
-        {
-          "key": "url",
-          "label_key": "meta.field.plesk_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.plesk_url.placeholder"
-        },
-        {
-          "key": "username",
-          "label_key": "meta.field.username.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "domains",
-          "label_key": "meta.field.plesk_domains.label",
-          "type": "text",
-          "help_key": "meta.field.plesk_domains.help"
-        }
-      ]
-    },
-    {
-      "value": "tencent_waf",
-      "label_key": "meta.deploy.tencent_waf.label",
-      "desc_key": "meta.deploy.tencent_waf.desc",
-      "fields": [
-        {
-          "key": "secret_id",
-          "label_key": "meta.field.secret_id.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "intl",
-          "label_key": "meta.field.tencent_intl.label",
-          "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.tencent_intl.help"
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
-          "type": "text",
-          "help_key": "meta.field.domains.help"
-        },
-        {
-          "key": "cert_name",
-          "label_key": "meta.field.cert_name.label",
-          "type": "text",
-          "help_key": "meta.field.cert_name.help"
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "tencent_teo",
-      "label_key": "meta.deploy.tencent_teo.label",
-      "desc_key": "meta.deploy.tencent_teo.desc",
-      "fields": [
-        {
-          "key": "secret_id",
-          "label_key": "meta.field.secret_id.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "intl",
-          "label_key": "meta.field.tencent_intl.label",
-          "type": "switch",
-          "default": "false",
-          "help_key": "meta.field.tencent_intl.help"
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
-          "type": "text",
-          "help_key": "meta.field.domains.help"
-        },
-        {
-          "key": "cert_name",
-          "label_key": "meta.field.cert_name.label",
-          "type": "text",
-          "help_key": "meta.field.cert_name.help"
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "aliyun_dcdn",
-      "label_key": "meta.deploy.aliyun_dcdn.label",
-      "desc_key": "meta.deploy.aliyun_dcdn.desc",
+      "value": "volcengine",
+      "label_key": "meta.deploy.volcengine.label",
+      "desc_key": "meta.deploy.volcengine.desc",
       "fields": [
         {
           "key": "access_key_id",
@@ -6750,77 +7012,37 @@
           "required": true
         },
         {
-          "key": "access_key_secret",
-          "label_key": "meta.field.access_key_secret.label",
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
           "type": "password",
           "required": true
         }
       ],
       "deploy_fields": [
         {
-          "key": "domains",
-          "label_key": "meta.field.domains.label",
-          "type": "text",
-          "help_key": "meta.field.domains.help"
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "aliyun_esa",
-      "label_key": "meta.deploy.aliyun_esa.label",
-      "desc_key": "meta.deploy.aliyun_esa.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true
+          "key": "target",
+          "label_key": "meta.field.deploy_target.label",
+          "type": "select",
+          "help_key": "meta.field.deploy_target.help",
+          "default": "cdn",
+          "options": [
+            {
+              "label_key": "meta.field.deploy_target.option.cdn",
+              "value": "cdn"
+            },
+            {
+              "label_key": "meta.field.deploy_target.option.dcdn",
+              "value": "dcdn"
+            }
+          ]
         },
-        {
-          "key": "access_key_secret",
-          "label_key": "meta.field.access_key_secret.label",
-          "type": "password",
-          "required": true
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "site_id",
-          "label_key": "meta.field.site_id.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.site_id.help"
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "aliyun_waf",
-      "label_key": "meta.deploy.aliyun_waf.label",
-      "desc_key": "meta.deploy.aliyun_waf.desc",
-      "fields": [
-        {
-          "key": "access_key_id",
-          "label_key": "meta.field.access_key_id.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "access_key_secret",
-          "label_key": "meta.field.access_key_secret.label",
-          "type": "password",
-          "required": true
-        }
-      ],
-      "deploy_fields": [
         {
           "key": "region",
           "label_key": "meta.field.region.label",
           "type": "text",
-          "required": true,
-          "default": "cn-hangzhou",
-          "help_key": "meta.field.aliyun_waf_region.help"
+          "placeholder_key": "meta.field.region.placeholder.volcengine",
+          "help_key": "meta.field.region.help.volcengine",
+          "default": "cn-north-1"
         },
         {
           "key": "domains",
@@ -6833,38 +7055,33 @@
           "label_key": "meta.field.cert_name.label",
           "type": "text",
           "help_key": "meta.field.cert_name.help"
-        },
-        {
-          "key": "tls_version",
-          "label_key": "meta.field.tls_version.label",
-          "type": "text",
-          "default": "tlsv1.2"
-        },
-        {
-          "key": "enable_tlsv3",
-          "label_key": "meta.field.enable_tlsv3.label",
-          "type": "switch",
-          "default": "true"
         }
-      ],
-      "deprecated": true
+      ]
     },
     {
-      "value": "baidu_cdn",
-      "label_key": "meta.deploy.baidu_cdn.label",
-      "desc_key": "meta.deploy.baidu_cdn.desc",
+      "value": "volcengine_cdn",
+      "label_key": "meta.deploy.volcengine_cdn.label",
+      "desc_key": "meta.deploy.volcengine_cdn.desc",
+      "deprecated": true,
       "fields": [
         {
-          "key": "access_key",
-          "label_key": "meta.field.access_key.label",
+          "key": "access_key_id",
+          "label_key": "meta.field.access_key_id.label",
           "type": "text",
           "required": true
         },
         {
-          "key": "secret_key",
-          "label_key": "meta.field.secret_key.label",
+          "key": "secret_access_key",
+          "label_key": "meta.field.secret_access_key.label",
           "type": "password",
           "required": true
+        },
+        {
+          "key": "region",
+          "label_key": "meta.field.region.label",
+          "type": "text",
+          "placeholder_key": "meta.field.region.placeholder.volcengine",
+          "default": "cn-north-1"
         }
       ],
       "deploy_fields": [
@@ -6886,6 +7103,7 @@
       "value": "volcengine_dcdn",
       "label_key": "meta.deploy.volcengine_dcdn.label",
       "desc_key": "meta.deploy.volcengine_dcdn.desc",
+      "deprecated": true,
       "fields": [
         {
           "key": "access_key_id",
@@ -6903,8 +7121,8 @@
           "key": "region",
           "label_key": "meta.field.region.label",
           "type": "text",
-          "default": "cn-north-1",
-          "placeholder_key": "meta.field.region.placeholder.volcengine"
+          "placeholder_key": "meta.field.region.placeholder.volcengine",
+          "default": "cn-north-1"
         }
       ],
       "deploy_fields": [
@@ -6920,92 +7138,12 @@
           "type": "text",
           "help_key": "meta.field.cert_name.help"
         }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "lecdn",
-      "label_key": "meta.deploy.lecdn.label",
-      "desc_key": "meta.deploy.lecdn.desc",
-      "fields": [
-        {
-          "key": "url",
-          "label_key": "meta.field.lecdn_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.lecdn_url.placeholder"
-        },
-        {
-          "key": "username",
-          "label_key": "meta.field.username.label",
-          "type": "text",
-          "required": true
-        },
-        {
-          "key": "password",
-          "label_key": "meta.field.password.label",
-          "type": "password",
-          "required": true
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "domain",
-          "label_key": "meta.field.domain.label",
-          "type": "text",
-          "help_key": "meta.field.lecdn_domain.help"
-        },
-        {
-          "key": "site_id",
-          "label_key": "meta.field.site_id.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.lecdn_site_id.help"
-        }
       ]
     },
     {
-      "value": "rainyun",
-      "label_key": "meta.deploy.rainyun.label",
-      "desc_key": "meta.deploy.rainyun.desc",
-      "fields": [
-        {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label",
-          "type": "password",
-          "required": true
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "cert_id",
-          "label_key": "meta.field.rainyun_cert_id.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.rainyun_cert_id.help"
-        }
-      ]
-    },
-    {
-      "value": "btwaf",
-      "label_key": "meta.deploy.btwaf.label",
-      "desc_key": "meta.deploy.btwaf.desc",
+      "value": "webhook",
+      "label_key": "meta.deploy.webhook.label",
+      "desc_key": "meta.deploy.webhook.desc",
       "fields": [
         {
           "key": "url",
@@ -7015,11 +7153,10 @@
           "placeholder_key": "meta.field.url.placeholder"
         },
         {
-          "key": "api_key",
-          "label_key": "meta.field.api_key.label",
+          "key": "auth_header",
+          "label_key": "meta.field.auth_header.label",
           "type": "password",
-          "required": true,
-          "help_key": "meta.field.btwaf_api_key.help"
+          "help_key": "meta.field.auth_header.help"
         },
         {
           "key": "skip_verify",
@@ -7036,147 +7173,33 @@
               "value": "true"
             }
           ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "sites",
-          "label_key": "meta.field.btwaf_sites.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.btwaf_sites.help"
         }
       ]
-    },
-    {
-      "value": "safeline_panel",
-      "label_key": "meta.deploy.safeline_panel.label",
-      "desc_key": "meta.deploy.safeline_panel.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_token",
-          "label_key": "meta.field.panel_api_token.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_token.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "safeline_portal",
-      "label_key": "meta.deploy.safeline_portal.label",
-      "desc_key": "meta.deploy.safeline_portal.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_token",
-          "label_key": "meta.field.panel_api_token.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_token.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deprecated": true
-    },
-    {
-      "value": "baota_docker",
-      "label_key": "meta.deploy.baota_docker.label",
-      "desc_key": "meta.deploy.baota_docker.desc",
-      "fields": [
-        {
-          "key": "panel_url",
-          "label_key": "meta.field.panel_url.label",
-          "type": "text",
-          "required": true,
-          "placeholder_key": "meta.field.panel_url.placeholder",
-          "help_key": "meta.field.panel_url.help"
-        },
-        {
-          "key": "api_secret",
-          "label_key": "meta.field.panel_api_secret.label",
-          "type": "password",
-          "required": true,
-          "help_key": "meta.field.panel_api_secret.help"
-        },
-        {
-          "key": "skip_verify",
-          "label_key": "meta.field.skip_verify.label",
-          "type": "select",
-          "default": "false",
-          "options": [
-            {
-              "label_key": "meta.field.skip_verify.option.false",
-              "value": "false"
-            },
-            {
-              "label_key": "meta.field.skip_verify.option.true",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "deploy_fields": [
-        {
-          "key": "sites",
-          "label_key": "meta.field.sites.label",
-          "type": "text",
-          "required": true,
-          "help_key": "meta.field.baota_sites.help",
-          "options_source": "baota_sites",
-          "multiple": true
-        }
-      ],
-      "deprecated": true
     }
   ],
+  "deprecated_deploy_types": {
+    "1panel_panel": "1panel",
+    "1panel_site": "1panel",
+    "acepanel_panel": "acepanel",
+    "aliyun_cdn": "aliyun",
+    "aliyun_dcdn": "aliyun",
+    "aliyun_esa": "aliyun",
+    "aliyun_oss": "aliyun",
+    "aliyun_waf": "aliyun",
+    "baota_docker": "baota",
+    "baota_panel": "baota",
+    "baota_site": "baota",
+    "qiniu_cdn": "qiniu",
+    "qiniu_kodo": "qiniu",
+    "safeline_panel": "safeline",
+    "safeline_portal": "safeline",
+    "tencent_cdn": "tencent",
+    "tencent_cos": "tencent",
+    "tencent_teo": "tencent",
+    "tencent_waf": "tencent",
+    "volcengine_cdn": "volcengine",
+    "volcengine_dcdn": "volcengine"
+  },
   "deploy_migrations": {
     "1panel_panel": {
       "provider": "1panel",
@@ -7190,76 +7213,10 @@
         "target": "site"
       }
     },
-    "baota_panel": {
-      "provider": "baota",
-      "config": {
-        "target": "panel"
-      }
-    },
-    "baota_site": {
-      "provider": "baota",
-      "config": {
-        "target": "site"
-      }
-    },
-    "baota_docker": {
-      "provider": "baota",
-      "config": {
-        "target": "docker"
-      }
-    },
-    "qiniu_cdn": {
-      "provider": "qiniu",
-      "config": {
-        "domain_type": "cdn"
-      }
-    },
-    "qiniu_kodo": {
-      "provider": "qiniu",
-      "config": {
-        "domain_type": "kodo"
-      }
-    },
-    "safeline_panel": {
-      "provider": "safeline",
-      "config": {
-        "target": "panel"
-      }
-    },
-    "safeline_portal": {
-      "provider": "safeline",
-      "config": {
-        "target": "portal"
-      }
-    },
     "acepanel_panel": {
       "provider": "acepanel",
       "config": {
         "target": "panel"
-      }
-    },
-    "tencent_cdn": {
-      "provider": "tencent",
-      "config": {
-        "target": "cdn"
-      }
-    },
-    "tencent_cos": {
-      "provider": "tencent",
-      "config": {
-        "target": "cos"
-      }
-    },
-    "tencent_teo": {
-      "provider": "tencent",
-      "config": {
-        "target": "teo"
-      }
-    },
-    "tencent_waf": {
-      "provider": "tencent",
-      "config": {
-        "target": "waf"
       }
     },
     "aliyun_cdn": {
@@ -7292,6 +7249,72 @@
         "target": "waf"
       }
     },
+    "baota_docker": {
+      "provider": "baota",
+      "config": {
+        "target": "docker"
+      }
+    },
+    "baota_panel": {
+      "provider": "baota",
+      "config": {
+        "target": "panel"
+      }
+    },
+    "baota_site": {
+      "provider": "baota",
+      "config": {
+        "target": "site"
+      }
+    },
+    "qiniu_cdn": {
+      "provider": "qiniu",
+      "config": {
+        "domain_type": "cdn"
+      }
+    },
+    "qiniu_kodo": {
+      "provider": "qiniu",
+      "config": {
+        "domain_type": "kodo"
+      }
+    },
+    "safeline_panel": {
+      "provider": "safeline",
+      "config": {
+        "target": "panel"
+      }
+    },
+    "safeline_portal": {
+      "provider": "safeline",
+      "config": {
+        "target": "portal"
+      }
+    },
+    "tencent_cdn": {
+      "provider": "tencent",
+      "config": {
+        "target": "cdn"
+      }
+    },
+    "tencent_cos": {
+      "provider": "tencent",
+      "config": {
+        "target": "cos"
+      }
+    },
+    "tencent_teo": {
+      "provider": "tencent",
+      "config": {
+        "target": "teo"
+      }
+    },
+    "tencent_waf": {
+      "provider": "tencent",
+      "config": {
+        "target": "waf"
+      }
+    },
     "volcengine_cdn": {
       "provider": "volcengine",
       "config": {
@@ -7304,28 +7327,5 @@
         "target": "dcdn"
       }
     }
-  },
-  "deprecated_deploy_types": {
-    "1panel_panel": "1panel",
-    "1panel_site": "1panel",
-    "baota_panel": "baota",
-    "baota_site": "baota",
-    "qiniu_cdn": "qiniu",
-    "qiniu_kodo": "qiniu",
-    "safeline_panel": "safeline",
-    "safeline_portal": "safeline",
-    "baota_docker": "baota",
-    "acepanel_panel": "acepanel",
-    "tencent_cdn": "tencent",
-    "tencent_cos": "tencent",
-    "tencent_teo": "tencent",
-    "tencent_waf": "tencent",
-    "aliyun_cdn": "aliyun",
-    "aliyun_dcdn": "aliyun",
-    "aliyun_esa": "aliyun",
-    "aliyun_oss": "aliyun",
-    "aliyun_waf": "aliyun",
-    "volcengine_cdn": "volcengine",
-    "volcengine_dcdn": "volcengine"
   }
 }

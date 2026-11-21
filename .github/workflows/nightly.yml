@@ -1,0 +1,32 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # 02:30 Asia/Shanghai
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: true
+
+jobs:
+  full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Full test with race detector
+        run: go test -race ./...
+      - name: Check native bundle
+        run: ./scripts/check_native.sh
+      - name: Build all merged plugins
+        run: make bundle
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

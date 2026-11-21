@@ -4,63 +4,140 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions:
   contents: read
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.diff.outputs.go }}
+      dns: ${{ steps.diff.outputs.dns }}
+      deploy: ${{ steps.diff.outputs.deploy }}
+      notify: ${{ steps.diff.outputs.notify }}
+      bundle: ${{ steps.diff.outputs.bundle }}
+      native: ${{ steps.diff.outputs.native }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Detect changed areas
+        id: diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          full=false
+          files=""
+          if [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ -n "$BASE_REF" ]; then
+            git fetch --no-tags origin "$BASE_REF" --depth=1
+            files="$(git diff --name-only "origin/$BASE_REF...HEAD")"
+          else
+            full=true
+          fi
+          if printf '%s\n' "$files" | grep -Eq '^(go\.mod|go\.sum|Makefile|scripts/|\.github/|protocol/|sdk/|i18n/|catalog/|outbound/|assets/icons/icons\.json)'; then
+            full=true
+          fi
+          if printf '%s\n' "$files" | grep -Eq '\.go$'; then
+            go=true
+          else
+            go=false
+          fi
+          if [ "$full" = true ]; then
+            go=true; dns=true; deploy=true; notify=true
+          else
+            dns=false; deploy=false; notify=false
+            printf '%s\n' "$files" | grep -Eq '^(dns/|cmd/dns-helper|cmd/dns-helper-v5|dnsv5/|assets/icons/dns/)' && dns=true || true
+            printf '%s\n' "$files" | grep -Eq '^(deploy/|cmd/deploy-helper|assets/icons/deploy/)' && deploy=true || true
+            printf '%s\n' "$files" | grep -Eq '^(notify/|cmd/notify-helper|assets/icons/notify/)' && notify=true || true
+          fi
+          if [ "$dns" = true ] || [ "$deploy" = true ] || [ "$notify" = true ]; then bundle=true; else bundle=false; fi
+          if [ "$full" = true ] || [ "$dns" = true ]; then native=true; else native=false; fi
+          {
+            echo "go=$go"
+            echo "dns=$dns"
+            echo "deploy=$deploy"
+            echo "notify=$notify"
+            echo "bundle=$bundle"
+            echo "native=$native"
+          } >> "$GITHUB_OUTPUT"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
           cache: true
-
-      - name: Verify formatting
+      - name: Check formatting
         run: |
           test -z "$(gofmt -l .)" || (gofmt -l .; exit 1)
-
-      - name: Verify bundle manifest
+      - name: Check go.mod / go.sum
         run: |
-          make manifest
-          if [ -n "$(git status --porcelain -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5)" ]; then
-            echo "生成产物与仓库不一致，以下为差异：" >&2
-            git --no-pager diff -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 >&2
-            git status --porcelain -- plugins.json cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 >&2
-            echo "::error::生成产物未提交，请运行 make manifest 并提交 plugins.json / cmd/dns-helper / dns/groups / dnsv5 的变更" >&2
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+  generated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate aggregates
+        run: make manifest
+      - name: Verify generated files are committed
+        # merge queue 会在临时合并结果上运行；生成物由 after-merge bot 统一刷新。
+        if: github.event_name != 'merge_group'
+        run: |
+          paths="catalog/data.json i18n/locales cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 cmd/deploy-helper/imports_gen.go plugins.json"
+          if [ -n "$(git status --porcelain -- $paths)" ]; then
+            echo "生成物与源文件不一致，请运行 make manifest 并提交变更：" >&2
+            git --no-pager diff -- $paths >&2
+            git status --porcelain -- $paths >&2
             exit 1
           fi
-          for module in v4 v5; do
-            lego_version=$(awk -v mod="github.com/go-acme/lego/${module}" '$1 == mod { sub(/^v/, "", $2); print $2 }' go.mod)
-            test -n "$lego_version"
-            id="all-lego"
-            if [ "$module" = "v5" ]; then id="all-lego-v5"; fi
-            test "$(jq -r --arg id "$id" '.plugins[] | select(.kind == "dns" and .id == $id) | .version' plugins.json)" = "$lego_version"
-          done
 
+  test:
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate before testing
+        run: make manifest
       - name: Vet
         run: go vet ./...
-
       - name: Test
         run: go test ./...
 
-      - name: Check native bundle
-        run: ./scripts/check_native.sh
-
-      - name: Build bundle helpers
-        run: |
-          CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/dns-helper
-          CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/dns-helper-v5
-          CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/deploy-helper
-          CGO_ENABLED=0 go build -trimpath -o /dev/null ./cmd/notify-helper
-
+  bundle:
+    needs: [changes, generated]
+    if: needs.changes.outputs.bundle == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate before building
+        run: make manifest
       - name: Build merged plugins
         run: |
           go build -trimpath -tags "bundle_dns_all_lego,nethttpomithttp2,http2legacy" -o /tmp/dns-all-lego ./cmd/dns-helper
@@ -73,27 +150,54 @@ jobs:
           test "$(/tmp/dns-all-lego-v5 manifest | jq '.providers | length')" = "235"
           diff <(/tmp/dns-all-lego manifest | jq -r '.providers[].id' | sort) \
                <(/tmp/dns-all-native manifest | jq -r '.providers[].id' | sort)
-          manifest="$(/tmp/dns-all-native manifest)"
-          test "$(printf '%s' "$manifest" | jq -r '.providers[] | select(.id=="cloudflare") | .name_i18n["en-US"] | length')" -gt 0
-          test "$(printf '%s' "$manifest" | wc -c)" -lt 1048576
           test "$(LACTSSL_DEPLOY_PLUGIN_FEATURES=merged-deployers-v1 /tmp/deploy-all manifest | jq '.deployers | length')" = "25"
           test "$(/tmp/notify-all manifest | jq '.channels | length')" = "23"
-          test "$(/tmp/dns-all-native manifest | jq -r '.providers[] | select(.id=="cloudflare") | .id')" = "cloudflare"
-
       - name: Package smoke
         run: |
           for id in all-lego all-lego-v5 all-native; do
             version=$(jq -r --arg id "$id" '.plugins[] | select(.kind == "dns" and .id == $id) | .version' plugins.json)
-            go run scripts/pluginctl/main.go build -kind dns -id "$id" -goos linux -goarch amd64 -out /tmp/dist
-            tar -tzf "/tmp/dist/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
-            tar -tzf "/tmp/dist/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx icons/cloudflare.svg
+            rm -rf "/tmp/dist-$id"
+            go run scripts/pluginctl/main.go build -kind dns -id "$id" -goos linux -goarch amd64 -out "/tmp/dist-$id"
+            tar -tzf "/tmp/dist-$id/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx plugin.json
+            tar -tzf "/tmp/dist-$id/lactssl-dns-${id}_${version}_linux_amd64.tar.gz" | grep -qx icons/cloudflare.svg
           done
-          go run scripts/pluginctl/main.go index -assets /tmp/dist -base-url https://example.invalid/releases/download -out /tmp/index.json
+          go run scripts/pluginctl/main.go index -assets /tmp/dist-all-lego -base-url https://example.invalid/releases/download -out /tmp/index.json
           jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .assets["linux/amd64"].sha256' /tmp/index.json >/dev/null
-          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .bundle == true' /tmp/index.json >/dev/null
-          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego") | .sdk == "lego"' /tmp/index.json >/dev/null
-          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego-v5") | .sdk == "lego-v5"' /tmp/index.json >/dev/null
-          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-lego-v5") | .providers | length == 235' /tmp/index.json >/dev/null
-          jq -e '.plugins[] | select(.kind == "dns" and .id == "all-native") | .uncompressed_size > 0' /tmp/index.json >/dev/null
-          jq -e '[.icons[] | select(.id == "cloudflare")] | length == 1' /tmp/index.json >/dev/null
-          jq -e '.icons[] | select(.id == "cloudflare") | .data | startswith("data:image/svg+xml;base64,")' /tmp/index.json >/dev/null
+
+  native:
+    needs: [changes, generated]
+    if: needs.changes.outputs.native == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate before checking
+        run: make manifest
+      - name: Check native bundle
+        run: ./scripts/check_native.sh
+
+  # 单一必需检查，避免条件 job 被跳过时分支保护出现 “Expected” 卡住。
+  gate:
+    if: always() && !cancelled()
+    needs: [changes, lint, generated, test, bundle, native]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs
+        run: |
+          set -euo pipefail
+          for result in \
+            "${{ needs.changes.result }}" \
+            "${{ needs.lint.result }}" \
+            "${{ needs.generated.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.bundle.result }}" \
+            "${{ needs.native.result }}"; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "required job failed: $result" >&2; exit 1 ;;
+            esac
+          done

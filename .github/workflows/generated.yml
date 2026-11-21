@@ -1,0 +1,67 @@
+name: Update generated files
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: generated-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    # 只有同仓库分支才能由 bot 回写；fork PR 走下面的只读检查。
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+          # 配置 BOT_TOKEN（fine-grained PAT，contents:write）后，bot 提交会触发新的 CI。
+          # 未配置时退回 GITHUB_TOKEN，提交不会触发 workflow，由 merge queue 重跑最终检查。
+          token: ${{ secrets.BOT_TOKEN || github.token }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Regenerate
+        run: make manifest
+      - name: Commit generated changes
+        run: |
+          set -euo pipefail
+          paths="catalog/data.json i18n/locales cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 cmd/deploy-helper/imports_gen.go plugins.json"
+          if [ -z "$(git status --porcelain -- $paths)" ]; then
+            echo "生成物已是最新"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $paths
+          git commit -m "chore: 更新插件生成物"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+  check-fork:
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify generated files
+        run: |
+          set -euo pipefail
+          make manifest
+          paths="catalog/data.json i18n/locales cmd/dns-helper cmd/dns-helper-v5 dns/groups dnsv5 cmd/deploy-helper/imports_gen.go plugins.json"
+          if [ -n "$(git status --porcelain -- $paths)" ]; then
+            echo "fork PR 无法由 bot 回写，请运行 make manifest 并提交生成物。" >&2
+            git --no-pager diff -- $paths >&2
+            exit 1
+          fi

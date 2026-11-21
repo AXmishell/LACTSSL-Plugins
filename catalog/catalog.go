@@ -87,14 +87,14 @@ func init() {
 	}
 }
 
-// DNSProviders 返回全部官方 DNS 服务商元数据，顺序与历史版本一致。
+// DNSProviders 返回全部官方 DNS 服务商元数据，按 provider ID 排序。
 func DNSProviders() []Provider {
 	out := make([]Provider, len(loaded.DNS))
 	copy(out, loaded.DNS)
 	return out
 }
 
-// Deployers 返回全部官方部署目标元数据，顺序与历史版本一致。
+// Deployers 返回全部官方部署目标元数据，按 provider ID 排序。
 func Deployers() []Provider {
 	out := make([]Provider, len(loaded.Deploy))
 	copy(out, loaded.Deploy)

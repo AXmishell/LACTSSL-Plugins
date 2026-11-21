@@ -1,0 +1,28 @@
+# 默认由核心维护者兜底。
+# 随着团队扩大，把下面的 @AXmishell 替换为对应的 GitHub Team，例如
+# @AXmishell/dns-native、@AXmishell/deploy、@AXmishell/infra。
+*                           @AXmishell
+
+# 协议、SDK、元数据 schema 与生成器需要核心维护者复核。
+/protocol/                  @AXmishell
+/sdk/                       @AXmishell
+/outbound/                  @AXmishell
+/catalog/                   @AXmishell
+/i18n/                      @AXmishell
+/scripts/                   @AXmishell
+
+# DNS 实现与 lego 包装。
+/dns/                       @AXmishell
+/dnsv5/                     @AXmishell
+
+# 部署目标。
+/deploy/                    @AXmishell
+
+# 通知渠道。
+/notify/                    @AXmishell
+
+# CI、发布、依赖与版本策略。
+/.github/                   @AXmishell
+/Makefile                   @AXmishell
+/go.mod                     @AXmishell
+/go.sum                     @AXmishell

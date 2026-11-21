@@ -18,24 +18,35 @@ LACTSSL 主仓库只保留插件宿主：宿主内实现插件协议 v1 的 mani
 
 ```text
 protocol/        插件协议 v1 的线格式（零第三方依赖，插件侧实现）
-catalog/         插件内部的服务商与部署目标元数据（data.json，不对外提供 Go API）
-i18n/            插件侧精简文案与语言选择
+catalog/
+  dns/<id>.json  单 DNS provider 元数据（手写）
+  deploy/<id>.json 单部署目标元数据（手写）
+  migrations.json 历史部署 ID 与迁移配置
+  data.json      生成物：聚合元数据，禁止手改
+i18n/
+  core/          公共文案（按语言）
+  providers/     单 provider 文案
+  locales/       生成物：聚合语言文件
 sdk/             插件共用的实现：HTTP、签名、DNS 工具、helper 框架等
 outbound/        带 SSRF 防护的出站 HTTP 客户端
 dns/
-  providers/     194 个 lego v4 服务商包装与注册表
+  providers/     194 个 lego v4 服务商包装（生成）
   native/        仓库内重构的 21 个 DNS 服务商实现
-  groups/        合并包的 provider 分组
+  groups/        生成物：合并包的 provider 分组
 dnsv5/
-  providers/     228 个 lego v5 服务商包装
-  legacy/        v5 已移除 ID 的兼容占位
-  meta/          v5 全量 provider 的补充元数据
+  providers/     228 个 lego v5 服务商包装（生成）
+  legacy/        v5 已移除 ID 的兼容占位（生成）
+  meta/          v5 全量 provider 的补充元数据（生成）
 deploy/          证书部署目标实现与注册表
-notify/          通知渠道实现与注册表
+notify/          通知渠道实现与注册表（每渠道一个 channel_<id>.go）
 cmd/             dns-helper、dns-helper-v5、deploy-helper、notify-helper 入口
 assets/icons/    服务商与部署目标图标
-plugins.json     合并包清单（kind、id、版本、构建标签、providers）
+plugins.json     生成物：合并包清单（kind、id、版本、构建标签、providers）
 ```
+
+聚合文件由 `make manifest` 生成：`catalog`、`i18n`、`deployimports`、`gen-v5`。
+
+多人协作约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 插件协议
 
@@ -66,10 +77,10 @@ plugins.json     合并包清单（kind、id、版本、构建标签、providers
 `plugins.json` 中的版本由 `make manifest` 自动维护，不需要手工修改补丁号：
 
 - 主/次版本在 `scripts/pluginctl/main.go` 的 `dnsBaseVer`、`deployBaseVer`、`notifyBaseVer` 中调整；修改后该包从 `<主>.<次>.0` 重新计数。
-- 补丁号由各合并包**自身**输入文件的内容指纹决定：只有该包的 `cmd/<kind>-helper/`、`<kind>/`、`assets/icons/<kind>/`，以及公共的 `go.mod`/`go.sum`、`LICENSE`、`assets/icons/icons.json` 变化时才 +1；内容未变化则保持不变。
-- DNS native、部署、通知三个包版本互相独立：`protocol/`、`sdk/`、`i18n/`、`outbound/`、`catalog/` 等共享源码目录的改动不会让三个包同时升版。
+- 补丁号由各合并包**自身**输入文件的内容指纹决定：该包的 `cmd/<kind>-helper/`、`<kind>/`、`assets/icons/<kind>/`，以及公共的 `go.mod`/`go.sum`、`LICENSE`、`assets/icons/icons.json`、`protocol/`、`sdk/`、`i18n/`、`outbound/`、`catalog/` 变化时 +1；内容未变化则保持不变。
+- DNS native、部署、通知三个包仍然独立计数；但共享代码或聚合元数据变化会同时触发这些包升版，避免出现“版本相同、二进制内容不同”。provider 自身源码变化只影响对应类型的包。
 - `all-lego` / `all-lego-v5` 例外：版本号分别直接跟随 `go.mod` 中 `github.com/go-acme/lego/v4` 与 `/v5` 的版本（`v4.35.2` → `4.35.2`，`v5.6.0` → `5.6.0`），不参与补丁递增，也不会被发布 tag 覆盖；升级 lego 后重新运行 `make manifest` 即可。仅包装层变化而 lego 未升级时版本不变，非 tag 发布需使用 `force_all` 或打 tag 重建。
-- 修改代码后运行 `make manifest`（历史名称 `make gen`，两者等价），并把更新后的 `plugins.json`、`cmd/dns-helper`、`cmd/dns-helper-v5`、`dns/groups`、`dnsv5` 一起提交；CI 会校验是否遗漏，失败时直接打印差异。
+- 修改代码后运行 `make manifest`（历史名称 `make gen`，两者等价），并把更新后的 `catalog/data.json`、`i18n/locales`、`plugins.json`、`cmd/dns-helper`、`cmd/dns-helper-v5`、`dns/groups`、`dnsv5`、`cmd/deploy-helper/imports_gen.go` 一起提交；同仓库 PR 会由 `Update generated files` bot 自动回写，CI 仍会校验是否遗漏。
 
 发布时以 git tag 为准：`v1.3.4` 或 `plugins-v1.3.4` 会让发布流程先以 `manifest -version 1.3.4` 生成临时清单，DNS native、部署与通知包的资产名、索引、包内 `plugin.json` 与二进制 manifest 使用 `1.3.4`，并全量重建；`all-lego` / `all-lego-v5` 仍使用各自 go.mod 中的 lego 版本。仓库里的 `plugins.json` 保持按内容指纹维护的内部版本，不被 CI 改写，仅用于非 tag 的手动构建。
 

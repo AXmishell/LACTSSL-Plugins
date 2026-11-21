@@ -267,19 +267,24 @@ func cmdManifest(args []string) {
 var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.-]+)?$`)
 
 // sourcePaths 返回影响某个合并包产物的输入。
-// 各包只统计自己的输入，保证版本独立演进：
-// 公共构建输入（go.mod/go.sum、许可证、图标别名表）变化才同时影响全部包；
-// protocol、sdk、i18n、outbound、catalog 等共享源码目录不计入，避免一处改动
-// 导致 deploy/all、dns/all-native、notify/all 同时升版。
+// 公共构建输入（go.mod/go.sum、许可证、图标别名表、协议、SDK、i18n 运行时、
+// outbound 与生成的 catalog 聚合）会编进每个 helper，因此变化时所有由内容
+// 指纹管理的包都会升版；provider 自身的源码仍只影响对应类型的包。
+// 这样避免“版本相同但二进制内容不同”，代价是共享代码改动会触发多个包升版。
 func sourcePaths(entry pluginEntry) []string {
 	paths := []string{
 		"go.mod",
 		"go.sum",
 		"LICENSE",
 		"assets/icons/icons.json",
+		"protocol",
+		"sdk",
+		"i18n",
+		"outbound",
+		"catalog",
 	}
 	if entry.SDK == "lego-v5" {
-		return append(paths, "cmd/dns-helper-v5", "dnsv5", "catalog/data.json")
+		return append(paths, "cmd/dns-helper-v5", "dnsv5")
 	}
 	switch entry.Kind {
 	case "dns":
